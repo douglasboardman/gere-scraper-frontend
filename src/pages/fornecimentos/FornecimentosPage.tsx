@@ -1,0 +1,179 @@
+import { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { Eye, Search } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { fornecimentosApi } from "@/api/fornecimentos.api";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { DataTable } from "@/components/shared/DataTable";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { formatCurrency } from "@/lib/utils";
+import type { IFornecimento, IItem, IFornecedor } from "@/types";
+
+export function FornecimentosPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const idItemParam = searchParams.get("idItem") ?? undefined;
+  const [uasgFilter, setUasgFilter] = useState("");
+  const [appliedUasg, setAppliedUasg] = useState<string | undefined>(undefined);
+
+  const { data: fornecimentos = [], isLoading } = useQuery({
+    queryKey: ["fornecimentos", appliedUasg, idItemParam],
+    queryFn: () =>
+      fornecimentosApi.listar({
+        ...(idItemParam ? { idItem: idItemParam } : {}),
+        ...(appliedUasg ? { uasgUnParticipante: appliedUasg } : {}),
+      }),
+  });
+
+  const getItemDesc = (idItem: string | IItem): string => {
+    if (typeof idItem === "string") return idItem;
+    return idItem.descricaoBreve ?? idItem.numItem ?? "—";
+  };
+
+  const getFornecedorName = (idFornecedor: string | IFornecedor): string => {
+    if (typeof idFornecedor === "string") return idFornecedor;
+    return idFornecedor.nome ?? idFornecedor.razaoSocial ?? "—";
+  };
+
+  const columns: ColumnDef<IFornecimento, unknown>[] = [
+    {
+      accessorKey: "identificador",
+      header: "Identificador",
+      cell: ({ row }) => (
+        <span className="font-mono text-xs font-medium">
+          {row.original.identificador}
+        </span>
+      ),
+    },
+    {
+      id: "item",
+      header: "Item",
+      cell: ({ row }) => (
+        <span className="text-sm">{getItemDesc(row.original.idItem)}</span>
+      ),
+    },
+    {
+      id: "fornecedor",
+      header: "Fornecedor",
+      cell: ({ row }) => (
+        <span className="text-sm">
+          {getFornecedorName(row.original.idFornecedor)}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "uasgUnParticipante",
+      header: "UASG Part.",
+    },
+    {
+      accessorKey: "qtdAutorizada",
+      header: "Qtd Autorizada",
+      cell: ({ row }) => (
+        <span className="text-sm">{row.original.qtdAutorizada ?? "—"}</span>
+      ),
+    },
+    {
+      accessorKey: "qtdUtilizada",
+      header: "Qtd Utilizada",
+      cell: ({ row }) => (
+        <span className="text-sm">{row.original.qtdUtilizada ?? "—"}</span>
+      ),
+    },
+    {
+      id: "saldo",
+      header: "Saldo",
+      cell: ({ row }) => (
+        <span className="text-sm font-medium">
+          {row.original.saldoDisponivel != null
+            ? row.original.saldoDisponivel
+            : "—"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "valUnitHomologado",
+      header: "Valor Unit.",
+      cell: ({ row }) => (
+        <span className="text-sm">
+          {row.original.valUnitHomologado != null
+            ? formatCurrency(row.original.valUnitHomologado)
+            : "—"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    },
+    {
+      id: "acoes",
+      header: "Ações",
+      cell: ({ row }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          title="Ver detalhes"
+          onClick={() =>
+            navigate(`/fornecimentos/${row.original.identificador}`)
+          }
+        >
+          <Eye className="h-3.5 w-3.5" />
+        </Button>
+      ),
+    },
+  ];
+
+  return (
+    <div>
+      <PageHeader
+        title="Fornecimentos"
+        subtitle="Quantitativos de fornecimentos por unidade participante"
+      />
+
+      <div className="mb-4 flex gap-2">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Filtrar por UASG..."
+            value={uasgFilter}
+            onChange={(e) => setUasgFilter(e.target.value)}
+            className="pl-8 w-48"
+            onKeyDown={(e) =>
+              e.key === "Enter" && setAppliedUasg(uasgFilter || undefined)
+            }
+          />
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => setAppliedUasg(uasgFilter || undefined)}
+        >
+          Filtrar
+        </Button>
+        {appliedUasg && (
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setUasgFilter("");
+              setAppliedUasg(undefined);
+            }}
+          >
+            Limpar
+          </Button>
+        )}
+      </div>
+
+      <DataTable
+        columns={columns}
+        data={fornecimentos}
+        isLoading={isLoading}
+        searchPlaceholder="Buscar fornecimentos..."
+        emptyMessage="Nenhum fornecimento encontrado."
+      />
+    </div>
+  );
+}

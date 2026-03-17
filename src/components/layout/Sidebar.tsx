@@ -1,0 +1,194 @@
+import { NavLink, useNavigate } from 'react-router-dom'
+import {
+  LayoutDashboard,
+  ShoppingCart,
+  FileText,
+  Package,
+  Truck,
+  ArrowLeftRight,
+  ClipboardList,
+  PlusCircle,
+  Building2,
+  Users,
+  LogOut,
+  ChevronRight,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { useAuthStore } from '@/store/auth.store'
+import { usePermission } from '@/hooks/usePermission'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import { Button } from '@/components/ui/button'
+
+interface NavItem {
+  label: string
+  to: string
+  icon: React.ComponentType<{ className?: string }>
+}
+
+interface NavGroup {
+  title: string
+  items: NavItem[]
+  requiresRole?: 'admin' | 'gestor_compras' | 'admin_or_gestor'
+}
+
+function GereLogo() {
+  return (
+    <img src="/logo-branco.svg" alt="GERE" width="40" height="40" />
+  )
+}
+
+const roleLabels: Record<string, string> = {
+  admin: 'Administrador',
+  gestor_compras: 'Gestor de Compras',
+  requerente: 'Requerente',
+}
+
+export function Sidebar() {
+  const { user, logout } = useAuthStore()
+  const { isAdmin, isGestor } = usePermission()
+  const navigate = useNavigate()
+
+  const navGroups: NavGroup[] = [
+    {
+      title: 'Painel',
+      items: [
+        { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
+      ],
+    },
+    {
+      title: 'Gestão de Compras',
+      items: [
+        { label: 'Compras', to: '/compras', icon: ShoppingCart },
+        { label: 'Atas', to: '/atas', icon: FileText },
+        { label: 'Itens', to: '/itens', icon: Package },
+        { label: 'Fornecedores', to: '/fornecedores', icon: Truck },
+        { label: 'Fornecimentos', to: '/fornecimentos', icon: ArrowLeftRight },
+      ],
+    },
+    {
+      title: 'Requisições',
+      items: [
+        { label: 'Minhas Requisições', to: '/requisicoes', icon: ClipboardList },
+        { label: 'Nova Requisição', to: '/requisicoes/nova', icon: PlusCircle },
+      ],
+    },
+    {
+      title: 'Administração',
+      requiresRole: 'admin_or_gestor',
+      items: [
+        { label: 'Unidades', to: '/unidades', icon: Building2 },
+        ...(isAdmin ? [{ label: 'Usuários', to: '/usuarios', icon: Users }] : []),
+      ],
+    },
+  ]
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
+
+  const visibleGroups = navGroups.filter((g) => {
+    if (!g.requiresRole) return true
+    if (g.requiresRole === 'admin_or_gestor') return isAdmin || isGestor
+    if (g.requiresRole === 'admin') return isAdmin
+    return true
+  })
+
+  return (
+    <aside
+      className="flex flex-col h-full w-[260px] shrink-0"
+      style={{ backgroundColor: '#272626' }}
+    >
+      {/* Logo + Name */}
+      <div className="flex items-center gap-3 px-4 py-5">
+        <GereLogo />
+        <div>
+          <div className="text-white font-bold text-lg leading-none">GERE</div>
+          <div className="text-xs leading-tight mt-0.5" style={{ color: '#82ab90' }}>
+            Gestão de Requisições
+          </div>
+        </div>
+      </div>
+
+      <Separator className="bg-white/10 mx-4 my-1" style={{ width: 'calc(100% - 2rem)' }} />
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        {visibleGroups.map((group) => (
+          <div key={group.title} className="mb-4">
+            {group.title !== 'Painel' && (
+              <p className="text-xs font-semibold uppercase tracking-wider px-2 mb-2" style={{ color: '#82ab90' }}>
+                {group.title}
+              </p>
+            )}
+            <div className="space-y-0.5">
+              {group.items.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors group',
+                      isActive
+                        ? 'text-white font-medium'
+                        : 'text-gray-300 hover:text-white'
+                    )
+                  }
+                  style={({ isActive }) =>
+                    isActive
+                      ? { backgroundColor: '#2a593a' }
+                      : undefined
+                  }
+                  onMouseEnter={(e) => {
+                    const target = e.currentTarget
+                    if (!target.style.backgroundColor || target.style.backgroundColor === 'transparent') {
+                      target.style.backgroundColor = 'rgba(74, 137, 96, 0.15)'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    const target = e.currentTarget
+                    if (target.style.backgroundColor === 'rgba(74, 137, 96, 0.15)') {
+                      target.style.backgroundColor = ''
+                    }
+                  }}
+                >
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      {/* Footer with user info */}
+      <Separator className="bg-white/10 mx-4" style={{ width: 'calc(100% - 2rem)' }} />
+      <div className="px-3 py-3">
+        <div className="flex items-center gap-2 px-2 py-2 rounded-md">
+          <div
+            className="h-8 w-8 rounded-full flex items-center justify-center text-white text-sm font-semibold shrink-0"
+            style={{ backgroundColor: '#2a593a' }}
+          >
+            {user?.nome?.charAt(0).toUpperCase() ?? 'U'}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white text-xs font-medium truncate">{user?.nome ?? 'Usuário'}</p>
+            <p className="text-xs truncate" style={{ color: '#82ab90' }}>
+              {roleLabels[user?.role ?? 'requerente']}
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-gray-400 hover:text-white hover:bg-white/10 shrink-0"
+            onClick={handleLogout}
+            title="Sair"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </aside>
+  )
+}
