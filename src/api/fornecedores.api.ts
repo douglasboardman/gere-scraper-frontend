@@ -1,0 +1,25 @@
+import apiClient from './client'
+import type { IFornecedor, SancoesResponse } from '@/types'
+
+export const fornecedoresApi = {
+  async listar(idCompra?: string): Promise<IFornecedor[]> {
+    const params = idCompra ? { idCompra } : {}
+    const { data } = await apiClient.get<IFornecedor[]>('/fornecedores', { params })
+    return data
+  },
+
+  async obter(id: string): Promise<IFornecedor> {
+    const { data } = await apiClient.get<IFornecedor>(`/fornecedores/${id}`)
+    return data
+  },
+
+  async atualizar(id: string, data: Partial<IFornecedor>): Promise<IFornecedor> {
+    const { data: result } = await apiClient.put<IFornecedor>(`/fornecedores/${id}`, data)
+    return result
+  },
+
+  async consultarSancoes(cnpj: string): Promise<SancoesResponse> {
+    const { data } = await apiClient.get<SancoesResponse>(`/fornecedores/${cnpj}/sancoes`)
+    return data
+  },
+}
