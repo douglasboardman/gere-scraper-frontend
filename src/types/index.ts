@@ -164,6 +164,7 @@ export interface IRequisicao {
   idUnidade: string | IUnidade
   status: StatusRequisicao
   observacao?: string
+  justificativa?: string
   motivoRejeicao?: string
   dataEnvio?: string
   dataAprovacao?: string
@@ -271,6 +272,7 @@ export interface CriarCompraData {
 
 export interface CriarRequisicaoData {
   idUnidade: string
+  justificativa: string
   observacao?: string
 }
 

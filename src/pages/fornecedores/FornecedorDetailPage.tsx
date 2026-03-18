@@ -33,7 +33,10 @@ export function FornecedorDetailPage() {
   const [editMode, setEditMode] = useState(false)
   const [editNome, setEditNome] = useState('')
   const [editEmail, setEditEmail] = useState('')
+  const [editEmail2, setEditEmail2] = useState('')
   const [editTelefone, setEditTelefone] = useState('')
+  const [editTelefone2, setEditTelefone2] = useState('')
+  const [editEndereco, setEditEndereco] = useState('')
 
   const { data: fornecedor, isLoading } = useQuery({
     queryKey: ['fornecedor', id],
@@ -60,7 +63,10 @@ export function FornecedorDetailPage() {
   const handleEdit = () => {
     setEditNome(fornecedor?.nome ?? '')
     setEditEmail(fornecedor?.email1 ?? fornecedor?.email ?? '')
+    setEditEmail2(fornecedor?.email2 ?? '')
     setEditTelefone(fornecedor?.telefone1 ?? fornecedor?.telefone ?? '')
+    setEditTelefone2(fornecedor?.telefone2 ?? '')
+    setEditEndereco(fornecedor?.endereco ?? '')
     setEditMode(true)
   }
 
@@ -68,7 +74,10 @@ export function FornecedorDetailPage() {
     updateMutation.mutate({
       nome: editNome || undefined,
       email1: editEmail || undefined,
+      email2: editEmail2 || undefined,
       telefone1: editTelefone || undefined,
+      telefone2: editTelefone2 || undefined,
+      endereco: editEndereco || undefined,
     })
   }
 
@@ -177,7 +186,18 @@ export function FornecedorDetailPage() {
                 email || '—'
               )}
             </Field>
-            {email2 && <Field label="E-mail 2">{email2}</Field>}
+            <Field label="E-mail 2">
+              {editMode ? (
+                <Input
+                  type="email"
+                  value={editEmail2}
+                  onChange={(e) => setEditEmail2(e.target.value)}
+                  placeholder="email2@exemplo.com"
+                />
+              ) : (
+                email2 || '—'
+              )}
+            </Field>
             <Field label="Telefone">
               {editMode ? (
                 <Input
@@ -190,13 +210,31 @@ export function FornecedorDetailPage() {
                 telefone || '—'
               )}
             </Field>
-            {telefone2 && <Field label="Telefone 2">{telefone2}</Field>}
-            {fornecedor.endereco && (
-              <div className="col-span-2 md:col-span-3">
-                <span className="text-xs text-muted-foreground uppercase tracking-wide">Endereço</span>
-                <p className="mt-1 text-sm">{fornecedor.endereco}</p>
-              </div>
-            )}
+            <Field label="Telefone 2">
+              {editMode ? (
+                <Input
+                  value={editTelefone2}
+                  onChange={(e) => setEditTelefone2(e.target.value)}
+                  placeholder="(00) 00000-0000"
+                  className="w-44"
+                />
+              ) : (
+                telefone2 || '—'
+              )}
+            </Field>
+            <div className="col-span-2 md:col-span-3">
+              <span className="text-xs text-muted-foreground uppercase tracking-wide">Endereço</span>
+              {editMode ? (
+                <Input
+                  className="mt-1"
+                  value={editEndereco}
+                  onChange={(e) => setEditEndereco(e.target.value)}
+                  placeholder="Endereço do fornecedor"
+                />
+              ) : (
+                <p className="mt-1 text-sm">{fornecedor.endereco || '—'}</p>
+              )}
+            </div>
           </div>
           <p className="text-xs text-muted-foreground mt-6">
             Atualizado em {format(new Date(fornecedor.updatedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}

@@ -11,16 +11,10 @@ import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import { formatCurrency } from '@/lib/utils'
 import { usePermission } from '@/hooks/usePermission'
-import type { IItem, StatusItem } from '@/types'
+import type { IItem } from '@/types'
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -37,7 +31,8 @@ export function ItemDetailPage() {
   const queryClient = useQueryClient()
   const { can } = usePermission()
   const [editMode, setEditMode] = useState(false)
-  const [editStatus, setEditStatus] = useState<StatusItem | ''>('')
+  const [editDescBreve, setEditDescBreve] = useState('')
+  const [editDescDetalhada, setEditDescDetalhada] = useState('')
 
   const { data: item, isLoading } = useQuery({
     queryKey: ['item', id],
@@ -62,13 +57,16 @@ export function ItemDetailPage() {
   })
 
   const handleEdit = () => {
-    setEditStatus(item?.status ?? '')
+    setEditDescBreve(item?.descBreve ?? item?.descricaoBreve ?? '')
+    setEditDescDetalhada(item?.descDetalhada ?? item?.descricaoDetalhada ?? '')
     setEditMode(true)
   }
 
   const handleSave = () => {
-    if (!editStatus) return
-    updateMutation.mutate({ status: editStatus as StatusItem })
+    updateMutation.mutate({
+      descBreve: editDescBreve,
+      descDetalhada: editDescDetalhada,
+    })
   }
 
   if (isLoading) {
@@ -154,43 +152,40 @@ export function ItemDetailPage() {
               {valUnitario != null ? formatCurrency(valUnitario) : '—'}
             </Field>
             <Field label="Status">
-              {editMode ? (
-                <Select
-                  value={editStatus}
-                  onValueChange={(v) => setEditStatus(v as StatusItem)}
-                >
-                  <SelectTrigger className="w-44">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Em Processamento">Em Processamento</SelectItem>
-                    <SelectItem value="Processada">Processada</SelectItem>
-                    <SelectItem value="Inconsistente">Inconsistente</SelectItem>
-                    <SelectItem value="Aguardando">Aguardando</SelectItem>
-                  </SelectContent>
-                </Select>
-              ) : (
-                <StatusBadge status={item.status} />
-              )}
+              <StatusBadge status={item.status} />
             </Field>
-            {descBreve && (
-              <div className="col-span-2 md:col-span-3">
-                <span className="text-xs text-muted-foreground uppercase tracking-wide">
-                  Descrição Breve
-                </span>
-                <p className="mt-1 text-sm">{descBreve}</p>
-              </div>
-            )}
-            {descDetalhada && (
-              <div className="col-span-2 md:col-span-3">
-                <span className="text-xs text-muted-foreground uppercase tracking-wide">
-                  Descrição Detalhada
-                </span>
+            <div className="col-span-2 md:col-span-3">
+              <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                Descrição Breve
+              </span>
+              {editMode ? (
+                <Textarea
+                  className="mt-1"
+                  rows={2}
+                  value={editDescBreve}
+                  onChange={(e) => setEditDescBreve(e.target.value)}
+                />
+              ) : (
+                <p className="mt-1 text-sm">{descBreve || '—'}</p>
+              )}
+            </div>
+            <div className="col-span-2 md:col-span-3">
+              <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                Descrição Detalhada
+              </span>
+              {editMode ? (
+                <Textarea
+                  className="mt-1"
+                  rows={4}
+                  value={editDescDetalhada}
+                  onChange={(e) => setEditDescDetalhada(e.target.value)}
+                />
+              ) : (
                 <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                  {descDetalhada}
+                  {descDetalhada || '—'}
                 </p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
           <p className="text-xs text-muted-foreground mt-6">
             Atualizado em {format(new Date(item.updatedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}

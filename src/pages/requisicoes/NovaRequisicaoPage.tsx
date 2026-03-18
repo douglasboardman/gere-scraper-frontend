@@ -7,9 +7,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { requisicoesApi } from '@/api/requisicoes.api'
 import { unidadesApi } from '@/api/unidades.api'
+import { useAuthStore } from '@/store/auth.store'
+import { usePermission } from '@/hooks/usePermission'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Form,
@@ -29,6 +32,7 @@ import {
 
 const novaRequisicaoSchema = z.object({
   idUnidade: z.string().min(1, 'Unidade é obrigatória'),
+  justificativa: z.string().min(30, 'Justificativa deve ter pelo menos 30 caracteres'),
   observacao: z.string().optional(),
 })
 
@@ -37,16 +41,28 @@ type NovaRequisicaoFormData = z.infer<typeof novaRequisicaoSchema>
 export function NovaRequisicaoPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const user = useAuthStore((s) => s.user)
+  const { isRequerente } = usePermission()
+
+  // Extrair o ID da unidade do usuário (pode ser string ou objeto populado)
+  const userUnidadeId = typeof user?.unidade === 'object' ? user.unidade._id : user?.unidade
 
   const { data: unidades = [] } = useQuery({
     queryKey: ['unidades'],
     queryFn: unidadesApi.listar,
+    enabled: !isRequerente, // requerente não precisa listar todas
   })
+
+  // Nome da unidade do requerente para exibir no campo desabilitado
+  const userUnidadeNome = typeof user?.unidade === 'object'
+    ? (user.unidade.nomeAbrev ?? user.unidade.nome)
+    : undefined
 
   const form = useForm<NovaRequisicaoFormData>({
     resolver: zodResolver(novaRequisicaoSchema),
     defaultValues: {
-      idUnidade: '',
+      idUnidade: isRequerente && userUnidadeId ? userUnidadeId : '',
+      justificativa: '',
       observacao: '',
     },
   })
@@ -95,20 +111,47 @@ export function NovaRequisicaoPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Unidade Requisitante *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    {isRequerente ? (
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a unidade..." />
-                        </SelectTrigger>
+                        <Input
+                          value={userUnidadeNome ?? 'Unidade vinculada'}
+                          disabled
+                        />
                       </FormControl>
-                      <SelectContent>
-                        {unidades.map((u) => (
-                          <SelectItem key={u._id} value={u._id}>
-                            {u.nomeAbrev ?? u.nome ?? u.uasg}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    ) : (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a unidade..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {unidades.map((u) => (
+                            <SelectItem key={u._id} value={u._id}>
+                              {u.nomeAbrev ?? u.nome ?? u.uasg}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="justificativa"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Justificativa *</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Descreva a justificativa para esta requisição (mín. 30 caracteres)..."
+                        rows={4}
+                        {...field}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

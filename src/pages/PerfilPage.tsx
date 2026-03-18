@@ -3,9 +3,12 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { useMutation } from '@tanstack/react-query'
-import { Loader2, User } from 'lucide-react'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { Loader2, User, Building2, Network } from 'lucide-react'
 import { usuariosApi } from '@/api/usuarios.api'
+import { unidadesApi } from '@/api/unidades.api'
+import { uorgsApi } from '@/api/uorgs.api'
+import type { IUnidade } from '@/types'
 import { useAuthStore } from '@/store/auth.store'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -55,6 +58,24 @@ const roleLabels: Record<string, string> = {
 export function PerfilPage() {
   const { user, setUser } = useAuthStore()
   const [saved, setSaved] = useState(false)
+
+  const unidadeId = user?.unidade
+    ? typeof user.unidade === 'string' ? user.unidade : (user.unidade as IUnidade)._id
+    : null
+
+  const { data: unidade } = useQuery({
+    queryKey: ['unidade', unidadeId],
+    queryFn: () => unidadesApi.obter(unidadeId!),
+    enabled: !!unidadeId && typeof user?.unidade === 'string',
+  })
+
+  const { data: uorg } = useQuery({
+    queryKey: ['uorg', user?.uorg_key],
+    queryFn: () => uorgsApi.obter(user!.uorg_key!),
+    enabled: !!user?.uorg_key,
+  })
+
+  const unidadeResolvida = typeof user?.unidade === 'object' ? user.unidade as IUnidade : unidade
 
   const form = useForm<PerfilFormData>({
     resolver: zodResolver(perfilSchema),
@@ -120,6 +141,47 @@ export function PerfilPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Lotação */}
+      {(unidadeResolvida || uorg) && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-base">Lotação</CardTitle>
+            <CardDescription>Dados de lotação do servidor</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {unidadeResolvida && (
+              <div className="flex items-start gap-3">
+                <Building2 className="h-5 w-5 text-muted-foreground mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium">Unidade</p>
+                  <p className="text-sm text-muted-foreground">
+                    {unidadeResolvida.nomeAbrev ?? unidadeResolvida.nome}
+                  </p>
+                  {unidadeResolvida.nomeAbrev && unidadeResolvida.nome && (
+                    <p className="text-xs text-muted-foreground">{unidadeResolvida.nome}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    UASG {unidadeResolvida.uasg}
+                    {unidadeResolvida.localidade && ` — ${unidadeResolvida.localidade}`}
+                  </p>
+                </div>
+              </div>
+            )}
+            {uorg && (
+              <div className="flex items-start gap-3">
+                <Network className="h-5 w-5 text-muted-foreground mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium">UORG</p>
+                  <p className="text-sm text-muted-foreground">
+                    {uorg.uorg_sg ? `${uorg.uorg_sg} — ${uorg.uorg_no}` : uorg.uorg_no}
+                  </p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Edit form */}
       <Card>
