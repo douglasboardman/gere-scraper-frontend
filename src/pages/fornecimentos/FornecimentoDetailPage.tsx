@@ -12,16 +12,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { formatCurrency } from '@/lib/utils'
 import { usePermission } from '@/hooks/usePermission'
-import type { IFornecimento, IItem, IFornecedor, StatusFornecimento } from '@/types'
+import type { IFornecimento, IItem, IFornecedor } from '@/types'
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -38,9 +31,10 @@ export function FornecimentoDetailPage() {
   const queryClient = useQueryClient()
   const { can } = usePermission()
   const [editMode, setEditMode] = useState(false)
-  const [editStatus, setEditStatus] = useState<StatusFornecimento | ''>('')
+  const [editValUnit, setEditValUnit] = useState('')
   const [editQtdAutorizada, setEditQtdAutorizada] = useState('')
   const [editQtdUtilizada, setEditQtdUtilizada] = useState('')
+  const [editSaldo, setEditSaldo] = useState('')
 
   const { data: fornecimento, isLoading } = useQuery({
     queryKey: ['fornecimento', id],
@@ -65,18 +59,19 @@ export function FornecimentoDetailPage() {
   })
 
   const handleEdit = () => {
-    setEditStatus(fornecimento?.status ?? '')
+    setEditValUnit(fornecimento?.valUnitHomologado?.toString() ?? '')
     setEditQtdAutorizada(fornecimento?.qtdAutorizada?.toString() ?? '')
     setEditQtdUtilizada(fornecimento?.qtdUtilizada?.toString() ?? '')
+    setEditSaldo((fornecimento?.saldoDisponivel ?? fornecimento?.saldo)?.toString() ?? '')
     setEditMode(true)
   }
 
   const handleSave = () => {
-    if (!editStatus) return
     updateMutation.mutate({
-      status: editStatus as StatusFornecimento,
+      valUnitHomologado: editValUnit !== '' ? Number(editValUnit) : undefined,
       qtdAutorizada: editQtdAutorizada !== '' ? Number(editQtdAutorizada) : undefined,
       qtdUtilizada: editQtdUtilizada !== '' ? Number(editQtdUtilizada) : undefined,
+      saldoDisponivel: editSaldo !== '' ? Number(editSaldo) : undefined,
     })
   }
 
@@ -179,7 +174,18 @@ export function FornecimentoDetailPage() {
               )}
             </Field>
             <Field label="Valor Unitário">
-              {fornecimento.valUnitHomologado != null ? formatCurrency(fornecimento.valUnitHomologado) : '—'}
+              {editMode ? (
+                <Input
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  value={editValUnit}
+                  onChange={(e) => setEditValUnit(e.target.value)}
+                  className="w-36"
+                />
+              ) : (
+                fornecimento.valUnitHomologado != null ? formatCurrency(fornecimento.valUnitHomologado) : '—'
+              )}
             </Field>
             <Field label="Qtd Autorizada">
               {editMode ? (
@@ -207,26 +213,21 @@ export function FornecimentoDetailPage() {
                 fornecimento.qtdUtilizada ?? '—'
               )}
             </Field>
-            <Field label="Saldo Disponível">{saldo ?? '—'}</Field>
-            <Field label="Status">
+            <Field label="Saldo Disponível">
               {editMode ? (
-                <Select
-                  value={editStatus}
-                  onValueChange={(v) => setEditStatus(v as StatusFornecimento)}
-                >
-                  <SelectTrigger className="w-44">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Homologado">Homologado</SelectItem>
-                    <SelectItem value="Não Homologado">Não Homologado</SelectItem>
-                    <SelectItem value="Esgotado">Esgotado</SelectItem>
-                    <SelectItem value="Cancelado">Cancelado</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Input
+                  type="number"
+                  min={0}
+                  value={editSaldo}
+                  onChange={(e) => setEditSaldo(e.target.value)}
+                  className="w-32"
+                />
               ) : (
-                <StatusBadge status={fornecimento.status} />
+                saldo ?? '—'
               )}
+            </Field>
+            <Field label="Status">
+              <StatusBadge status={fornecimento.status} />
             </Field>
           </div>
           <p className="text-xs text-muted-foreground mt-6">

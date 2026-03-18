@@ -11,15 +11,9 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { usePermission } from "@/hooks/usePermission";
-import type { ICompra, StatusCompra } from "@/types";
+import type { ICompra } from "@/types";
 
 function Field({
   label,
@@ -44,7 +38,7 @@ export function CompraDetailPage() {
   const queryClient = useQueryClient();
   const { can } = usePermission();
   const [editMode, setEditMode] = useState(false);
-  const [editStatus, setEditStatus] = useState<StatusCompra | "">("");
+  const [editObjeto, setEditObjeto] = useState("");
 
   const { data: compra, isLoading } = useQuery({
     queryKey: ["compra", identificador],
@@ -70,13 +64,12 @@ export function CompraDetailPage() {
   });
 
   const handleEdit = () => {
-    setEditStatus(compra?.status ?? "");
+    setEditObjeto(compra?.objeto ?? "");
     setEditMode(true);
   };
 
   const handleSave = () => {
-    if (!editStatus) return;
-    updateMutation.mutate({ status: editStatus as StatusCompra });
+    updateMutation.mutate({ objeto: editObjeto });
   };
 
   const formatDate = (d?: string) =>
@@ -167,35 +160,23 @@ export function CompraDetailPage() {
             </Field>
             <Field label="Vigência Fim">{formatDate(compra.fimVigencia)}</Field>
             <Field label="Status">
-              {editMode ? (
-                <Select
-                  value={editStatus}
-                  onValueChange={(v) => setEditStatus(v as StatusCompra)}
-                >
-                  <SelectTrigger className="w-44">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Em Processamento">
-                      Em Processamento
-                    </SelectItem>
-                    <SelectItem value="Processada">Processada</SelectItem>
-                    <SelectItem value="Inconsistente">Inconsistente</SelectItem>
-                    <SelectItem value="Aguardando">Aguardando</SelectItem>
-                  </SelectContent>
-                </Select>
-              ) : (
-                <StatusBadge status={compra.status} />
-              )}
+              <StatusBadge status={compra.status} />
             </Field>
-            {compra.objeto && (
-              <div className="col-span-2 md:col-span-3">
-                <span className="text-xs text-muted-foreground uppercase tracking-wide">
-                  Objeto
-                </span>
-                <p className="mt-1 text-sm leading-relaxed">{compra.objeto}</p>
-              </div>
-            )}
+            <div className="col-span-2 md:col-span-3">
+              <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                Objeto
+              </span>
+              {editMode ? (
+                <Textarea
+                  className="mt-1"
+                  rows={4}
+                  value={editObjeto}
+                  onChange={(e) => setEditObjeto(e.target.value)}
+                />
+              ) : (
+                <p className="mt-1 text-sm leading-relaxed">{compra.objeto || "—"}</p>
+              )}
+            </div>
           </div>
           <p className="text-xs text-muted-foreground mt-6">
             Atualizado em{" "}
