@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/auth.store'
 import { useJobStream } from '@/hooks/useJobStream'
 import { Progress } from '@/components/ui/progress'
@@ -9,8 +10,15 @@ import { cn } from '@/lib/utils'
 export function ScrapingProgressBar() {
   const { activeJobId, setActiveJobId } = useAuthStore()
   const [minimized, setMinimized] = useState(false)
+  const queryClient = useQueryClient()
   const { progresso, itensProcessados, totalItens, atasProcessadas, atasTotal, mensagem, status, isActive } =
     useJobStream(activeJobId)
+
+  useEffect(() => {
+    if (status === 'completed' || status === 'failed') {
+      queryClient.invalidateQueries({ queryKey: ['compras'] })
+    }
+  }, [status, queryClient])
 
   // Don't render if no active job
   if (!activeJobId) return null

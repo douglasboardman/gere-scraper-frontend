@@ -157,11 +157,14 @@ export interface IUsuario {
   updatedAt: string
 }
 
+export type TipoRequisicao = 'Material' | 'Serviço'
+
 export interface IRequisicao {
   _id: string
   identificador: string
   idRequisitante: string | IUsuario
   idUnidade: string | IUnidade
+  tipo: TipoRequisicao
   status: StatusRequisicao
   observacao?: string
   justificativa?: string
@@ -271,14 +274,15 @@ export interface CriarCompraData {
 }
 
 export interface CriarRequisicaoData {
-  idUnidade: string
+  idUnidade?: string
+  tipo: TipoRequisicao
   justificativa: string
-  observacao?: string
+  observacoes?: string
 }
 
 export interface CriarItemRequisicaoData {
   idFornecimento: string
-  qtdSolicitada: number
+  quantidadeSolicitada: number
   observacao?: string
 }
 

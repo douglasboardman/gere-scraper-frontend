@@ -128,6 +128,13 @@ export function RequisicoesPage() {
       },
     },
     {
+      accessorKey: 'tipo',
+      header: 'Tipo',
+      cell: ({ row }) => (
+        <span className="text-sm">{row.original.tipo ?? '—'}</span>
+      ),
+    },
+    {
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,

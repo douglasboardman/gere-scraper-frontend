@@ -113,7 +113,7 @@ export function RequisicaoDetailPage() {
       itemRequisicaoApi.criar({
         idRequisicao: id!,
         idFornecimento: selectedFornecimento,
-        qtdSolicitada: Number(qtdSolicitada),
+        quantidadeSolicitada: Number(qtdSolicitada),
       }),
     onSuccess: () => {
       toast.success('Item adicionado.')
@@ -212,6 +212,10 @@ export function RequisicaoDetailPage() {
               <div>
                 <span className="text-muted-foreground">Unidade</span>
                 <p className="font-medium">{unidadeLabel}</p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Tipo</span>
+                <p className="font-medium">{requisicao.tipo ?? '—'}</p>
               </div>
               {requisicao.observacao && (
                 <div className="col-span-2">
