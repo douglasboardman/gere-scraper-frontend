@@ -1,18 +1,38 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  Loader2,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+} from 'lucide-react'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+
 import { requisicoesApi } from '@/api/requisicoes.api'
-import { unidadesApi } from '@/api/unidades.api'
+import { itemRequisicaoApi } from '@/api/itemRequisicao.api'
+import { fornecimentosApi } from '@/api/fornecimentos.api'
+import { itensApi } from '@/api/itens.api'
+import { comprasApi } from '@/api/compras.api'
 import { useAuthStore } from '@/store/auth.store'
-import { usePermission } from '@/hooks/usePermission'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Form,
@@ -29,175 +49,1110 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { cn, formatCurrency } from '@/lib/utils'
+import type { ICompra, IFornecimento, IItem, IRequisicao, IUnidade } from '@/types'
 
-const novaRequisicaoSchema = z.object({
-  idUnidade: z.string().min(1, 'Unidade é obrigatória'),
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+type SelectedItemEntry = {
+  fornecimento: IFornecimento
+  item: IItem
+  quantidade: number
+}
+
+// ---------------------------------------------------------------------------
+// Utilities
+// ---------------------------------------------------------------------------
+
+function formatCNPJ(digits: string): string {
+  const d = digits.replace(/\D/g, '')
+  if (d.length !== 14) return digits
+  return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`
+}
+
+function cnpjFromFornecedorId(idFornecedor: string): string {
+  // idFornecedor format: "F44971159000129" → cnpj "44971159000129"
+  const raw = idFornecedor.startsWith('F') ? idFornecedor.slice(1) : idFornecedor
+  return formatCNPJ(raw)
+}
+
+
+function fmtDate(dateStr?: string): string {
+  if (!dateStr) return '—'
+  try {
+    return format(new Date(dateStr), 'dd/MM/yyyy', { locale: ptBR })
+  } catch {
+    return dateStr
+  }
+}
+
+function valUnitario(f: IFornecimento): number {
+  return f.valUnitHomologado ?? f.valorUnitario ?? 0
+}
+
+function saldoDisp(f: IFornecimento): number {
+  return f.saldoDisponivel ?? f.saldo ?? 0
+}
+
+function descBreve(item: IItem): string {
+  return item.descBreve ?? item.descricaoBreve ?? item.identificador ?? ''
+}
+
+function descDetalhada(item: IItem): string {
+  return item.descDetalhada ?? item.descricaoDetalhada ?? 'Não informada.'
+}
+
+function unMedida(item: IItem): string {
+  return item.unMedida ?? item.unidadeMedida ?? ''
+}
+
+// ---------------------------------------------------------------------------
+// Step Indicator
+// ---------------------------------------------------------------------------
+
+const STEPS = [
+  { num: 1, label: 'Dados' },
+  { num: 2, label: 'Compra' },
+  { num: 3, label: 'Itens' },
+  { num: 4, label: 'Revisão' },
+]
+
+function StepIndicator({ current }: { current: number }) {
+  return (
+    <div className="flex items-center justify-center mb-8 select-none">
+      {STEPS.map((s, i) => {
+        const done = s.num < current
+        const active = s.num === current
+        return (
+          <div key={s.num} className="flex items-center">
+            <div className="flex flex-col items-center">
+              <div
+                className={cn(
+                  'w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-colors',
+                  done && 'bg-primary border-primary text-primary-foreground',
+                  active && 'border-primary text-primary bg-background',
+                  !done && !active && 'border-muted-foreground/30 text-muted-foreground/40 bg-background',
+                )}
+              >
+                {done ? <Check className="w-4 h-4" /> : s.num}
+              </div>
+              <span
+                className={cn(
+                  'text-xs mt-1 font-medium',
+                  active ? 'text-primary' : 'text-muted-foreground',
+                )}
+              >
+                {s.label}
+              </span>
+            </div>
+            {i < STEPS.length - 1 && (
+              <div
+                className={cn(
+                  'h-0.5 w-16 mb-5 mx-1 transition-colors',
+                  done ? 'bg-primary' : 'bg-muted',
+                )}
+              />
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Step 1 — Dados da Requisição
+// ---------------------------------------------------------------------------
+
+const step1Schema = z.object({
+  tipo: z.enum(['Material', 'Serviço'], { required_error: 'Selecione o tipo da requisição' }),
   justificativa: z.string().min(30, 'Justificativa deve ter pelo menos 30 caracteres'),
-  observacao: z.string().optional(),
+  observacoes: z.string().optional(),
 })
 
-type NovaRequisicaoFormData = z.infer<typeof novaRequisicaoSchema>
+type Step1Data = z.infer<typeof step1Schema>
 
-export function NovaRequisicaoPage() {
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const user = useAuthStore((s) => s.user)
-  const { isRequerente } = usePermission()
+function Step1Dados({
+  initialRequisicao,
+  onComplete,
+}: {
+  initialRequisicao?: IRequisicao
+  onComplete: (req: IRequisicao) => void
+}) {
+  const [editing, setEditing] = useState(!initialRequisicao)
 
-  // Extrair o ID da unidade do usuário (pode ser string ou objeto populado)
-  const userUnidadeId = typeof user?.unidade === 'object' ? user.unidade._id : user?.unidade
-
-  const { data: unidades = [] } = useQuery({
-    queryKey: ['unidades'],
-    queryFn: unidadesApi.listar,
-    enabled: !isRequerente, // requerente não precisa listar todas
-  })
-
-  // Nome da unidade do requerente para exibir no campo desabilitado
-  const userUnidadeNome = typeof user?.unidade === 'object'
-    ? (user.unidade.nomeAbrev ?? user.unidade.nome)
-    : undefined
-
-  const form = useForm<NovaRequisicaoFormData>({
-    resolver: zodResolver(novaRequisicaoSchema),
+  const form = useForm<Step1Data>({
+    resolver: zodResolver(step1Schema),
     defaultValues: {
-      idUnidade: isRequerente && userUnidadeId ? userUnidadeId : '',
-      justificativa: '',
-      observacao: '',
+      tipo: (initialRequisicao?.tipo as Step1Data['tipo']) ?? undefined,
+      justificativa: initialRequisicao?.justificativa ?? '',
+      observacoes: initialRequisicao?.observacao ?? '',
     },
   })
 
   const mutation = useMutation({
-    mutationFn: (data: NovaRequisicaoFormData) => requisicoesApi.criar(data),
+    mutationFn: (data: Step1Data) =>
+      initialRequisicao
+        ? requisicoesApi.atualizar(initialRequisicao._id, data)
+        : requisicoesApi.criar(data),
     onSuccess: (req) => {
-      queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
-      toast.success('Requisição criada com sucesso!')
-      navigate(`/requisicoes/${req._id}`)
+      toast.success(initialRequisicao ? 'Requisição atualizada.' : 'Requisição criada. Escolha a compra.')
+      setEditing(false)
+      onComplete(req)
     },
-    onError: (error: unknown) => {
+    onError: (err: unknown) => {
       const msg =
-        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Erro ao criar requisição.'
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+        'Erro ao salvar a requisição.'
+      toast.error(msg)
+    },
+  })
+
+  // ── Modo leitura (campos bloqueados) ─────────────────────────────────────
+  if (!editing && initialRequisicao) {
+    return (
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Dados da Requisição</CardTitle>
+            <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+              <Pencil className="h-3 w-3 mr-1.5" />
+              Editar
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Tipo</p>
+            <p className="text-sm font-medium">{initialRequisicao.tipo}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Justificativa</p>
+            <p className="text-sm whitespace-pre-wrap">{initialRequisicao.justificativa}</p>
+          </div>
+          {initialRequisicao.observacao && (
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Observações</p>
+              <p className="text-sm whitespace-pre-wrap">{initialRequisicao.observacao}</p>
+            </div>
+          )}
+          <div className="flex justify-end pt-1">
+            <Button onClick={() => onComplete(initialRequisicao)}>
+              Avançar
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // ── Modo edição / criação ─────────────────────────────────────────────────
+  return (
+    <Card className="max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle className="text-base">Dados da Requisição</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit((d) => mutation.mutate(d))}
+            className="space-y-5"
+          >
+            <FormField
+              control={form.control}
+              name="tipo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo *</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Material">Material</SelectItem>
+                      <SelectItem value="Serviço">Serviço</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="justificativa"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Justificativa *{' '}
+                    <span className="text-muted-foreground font-normal text-xs">
+                      (mín. 30 caracteres)
+                    </span>
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      rows={5}
+                      placeholder="Descreva a necessidade e justificativa da requisição..."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="observacoes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Observações{' '}
+                    <span className="text-muted-foreground font-normal text-xs">(opcional)</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea rows={3} placeholder="Informações adicionais..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="flex justify-between pt-1">
+              {initialRequisicao && (
+                <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
+                  Cancelar edição
+                </Button>
+              )}
+              <Button type="submit" disabled={mutation.isPending} className="ml-auto">
+                {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {initialRequisicao ? 'Salvar alterações' : 'Gravar Requisição'}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Step 2 — Escolha da Compra
+// ---------------------------------------------------------------------------
+
+/** Extrai o identificador da compra do identificador do fornecimento.
+ *  Formato: U{uasg}I{itemSeq}C{compraId}  ex. U157363I00095C158127900102025
+ *  O compra ID é tudo a partir do último 'C'.
+ */
+function extrairIdCompra(idFornecimento: string): string | null {
+  const idx = idFornecimento.indexOf('C')
+  return idx !== -1 ? idFornecimento.slice(idx) : null
+}
+
+function Step2Compra({
+  userUasg,
+  tipoRequisicao,
+  onComplete,
+  onBack,
+}: {
+  userUasg: string
+  tipoRequisicao: 'Material' | 'Serviço'
+  onComplete: (compra: ICompra) => void
+  onBack: () => void
+}) {
+  const [search, setSearch] = useState('')
+
+  // 1) Busca os fornecimentos da unidade do usuário
+  const { data: fornecimentos = [], isLoading: loadingForn } = useQuery({
+    queryKey: ['fornecimentos-unidade', userUasg],
+    queryFn: () => fornecimentosApi.listarPorUnidade(userUasg),
+    enabled: !!userUasg,
+  })
+
+  // 2) Extrai compra IDs únicos dos identificadores dos fornecimentos
+  const uniqueCompraIds = Array.from(
+    new Set(
+      fornecimentos
+        .map((f) => extrairIdCompra(f.identificador))
+        .filter((id): id is string => id !== null),
+    ),
+  )
+
+  // 3) Busca os detalhes de cada compra
+  const { data: compras = [], isLoading: loadingCompras } = useQuery({
+    queryKey: ['compras-wizard', uniqueCompraIds],
+    queryFn: async () => {
+      if (uniqueCompraIds.length === 0) return []
+      const results = await Promise.allSettled(
+        uniqueCompraIds.map((id) => comprasApi.obter(id)),
+      )
+      return results
+        .filter((r): r is PromiseFulfilledResult<ICompra> => r.status === 'fulfilled')
+        .map((r) => r.value)
+    },
+    enabled: uniqueCompraIds.length > 0,
+  })
+
+  // 4) Busca itens de cada compra para filtrar pelo tipo da requisição
+  const { data: itensPorCompra = {}, isLoading: loadingItens } = useQuery({
+    queryKey: ['itens-tipo-wizard', uniqueCompraIds, tipoRequisicao],
+    queryFn: async () => {
+      const results = await Promise.allSettled(
+        uniqueCompraIds.map(async (id) => {
+          const itens = await itensApi.listar({ idCompra: id })
+          return { id, itens }
+        }),
+      )
+      const map: Record<string, IItem[]> = {}
+      for (const r of results) {
+        if (r.status === 'fulfilled') map[r.value.id] = r.value.itens
+      }
+      return map
+    },
+    enabled: uniqueCompraIds.length > 0,
+  })
+
+  const isLoading = loadingForn || loadingCompras || loadingItens
+
+  // Filtra compras que possuem pelo menos um item do tipo da requisição
+  const comprasFiltradas = compras.filter((c) => {
+    const itens = itensPorCompra[c.identificador]
+    if (!itens) return true // enquanto carrega, não oculta
+    return itens.some((it) => (it.tipo ?? 'Material') === tipoRequisicao)
+  })
+
+  const filtered = comprasFiltradas.filter((c) => {
+    if (!search) return true
+    const q = search.toLowerCase()
+    return (
+      c.objeto?.toLowerCase().includes(q) ||
+      c.numEdital?.toLowerCase().includes(q) ||
+      c.modContratacao?.toLowerCase().includes(q)
+    )
+  })
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-4">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          className="pl-9"
+          placeholder="Pesquisar por objeto, edital ou modalidade..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : fornecimentos.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 text-center text-muted-foreground text-sm">
+            Sua unidade (UASG {userUasg}) não possui fornecimentos registrados como participante.
+          </CardContent>
+        </Card>
+      ) : compras.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 text-center text-muted-foreground text-sm">
+            {uniqueCompraIds.length} fornecimento(s) encontrado(s), mas não foi possível carregar as compras associadas.
+          </CardContent>
+        </Card>
+      ) : comprasFiltradas.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 text-center text-muted-foreground text-sm">
+            Nenhuma compra com itens do tipo <strong>{tipoRequisicao}</strong> encontrada para sua unidade.
+          </CardContent>
+        </Card>
+      ) : filtered.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 text-center text-muted-foreground text-sm">
+            Nenhuma compra corresponde à pesquisa.
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((compra) => (
+            <Card
+              key={compra._id}
+              className="hover:border-primary/50 transition-colors group cursor-default"
+            >
+              <CardContent className="p-4 flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-sm text-primary">{compra.numEdital}</span>
+                    <Badge variant="outline" className="text-xs">
+                      {compra.modContratacao}
+                    </Badge>
+                  </div>
+                  <p className="text-sm leading-snug line-clamp-2">{compra.objeto}</p>
+                  <div className="flex flex-wrap gap-x-4 mt-1.5 text-xs text-muted-foreground">
+                    <span>
+                      Vigência: {fmtDate(compra.iniVigencia)} até {fmtDate(compra.fimVigencia)}
+                    </span>
+                    <span>UASG: {compra.uasgUnGestora}</span>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  className="shrink-0 opacity-75 group-hover:opacity-100 transition-opacity"
+                  onClick={() => onComplete(compra)}
+                >
+                  Selecionar
+                  <ArrowRight className="ml-1 h-3 w-3" />
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <div className="flex justify-start pt-2">
+        <Button variant="ghost" onClick={onBack}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Step 3 — Seleção de Itens
+// ---------------------------------------------------------------------------
+
+function Step3Itens({
+  selectedCompra,
+  userUasg,
+  initialItems,
+  onComplete,
+  onBack,
+}: {
+  selectedCompra: ICompra
+  userUasg: string
+  initialItems: Map<string, SelectedItemEntry>
+  onComplete: (items: Map<string, SelectedItemEntry>) => void
+  onBack: () => void
+}) {
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [selectedItems, setSelectedItems] = useState<Map<string, SelectedItemEntry>>(initialItems)
+
+  const { data: fornecimentos = [], isLoading: loadingForn } = useQuery({
+    queryKey: ['fornecimentos-wizard', selectedCompra.identificador, userUasg],
+    queryFn: () =>
+      fornecimentosApi.listarPorCompraUnidade(selectedCompra.identificador, userUasg),
+  })
+
+  const { data: itens = [], isLoading: loadingItens } = useQuery({
+    queryKey: ['itens-wizard', selectedCompra.identificador],
+    queryFn: () => itensApi.listar({ idCompra: selectedCompra.identificador }),
+  })
+
+  const itemMap = new Map<string, IItem>(itens.map((it) => [it.identificador, it]))
+  const isLoading = loadingForn || loadingItens
+
+  function toggleExpand(id: string) {
+    setExpandedId((prev) => (prev === id ? null : id))
+  }
+
+  function handleAdd(f: IFornecimento) {
+    const item = itemMap.get(f.idItem as string)
+    if (!item) return
+    setSelectedItems((prev) => {
+      if (prev.has(f.identificador)) return prev
+      const next = new Map(prev)
+      next.set(f.identificador, { fornecimento: f, item, quantidade: 1 })
+      return next
+    })
+  }
+
+  function handleRemove(idForn: string) {
+    setSelectedItems((prev) => {
+      const next = new Map(prev)
+      next.delete(idForn)
+      return next
+    })
+  }
+
+  function handleQtd(idForn: string, qtd: number) {
+    setSelectedItems((prev) => {
+      const entry = prev.get(idForn)
+      if (!entry) return prev
+      const next = new Map(prev)
+      next.set(idForn, { ...entry, quantidade: Math.max(0.01, qtd) })
+      return next
+    })
+  }
+
+  const totalValue = Array.from(selectedItems.values()).reduce(
+    (sum, e) => sum + valUnitario(e.fornecimento) * e.quantidade,
+    0,
+  )
+
+  function handleNext() {
+    if (selectedItems.size === 0) {
+      toast.warning('Adicione pelo menos um item antes de prosseguir.')
+      return
+    }
+    onComplete(selectedItems)
+  }
+
+  return (
+    <div className="flex flex-col gap-4" style={{ minHeight: '520px' }}>
+      {/* Compra info banner */}
+      <div className="flex items-center gap-2 rounded-lg border bg-muted/30 px-4 py-2 text-sm shrink-0">
+        <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+        <span className="font-semibold text-primary">{selectedCompra.numEdital}</span>
+        <span className="text-muted-foreground">—</span>
+        <span className="line-clamp-1 text-muted-foreground">{selectedCompra.objeto}</span>
+      </div>
+
+      {isLoading ? (
+        <div className="flex flex-1 items-center justify-center py-16">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-5 gap-4 flex-1 overflow-hidden" style={{ height: '480px' }}>
+          {/* LEFT — catalog */}
+          <div className="col-span-3 flex flex-col border rounded-lg overflow-hidden">
+            <div className="px-4 py-3 border-b bg-muted/20 shrink-0">
+              <p className="text-sm font-semibold">
+                Itens disponíveis{' '}
+                <span className="text-muted-foreground font-normal">
+                  ({fornecimentos.length})
+                </span>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Clique em{' '}
+                <span className="font-medium text-foreground">detalhes</span> para expandir ou{' '}
+                <span className="font-medium text-foreground">(+)</span> para adicionar
+              </p>
+            </div>
+
+            <div className="flex-1 overflow-y-auto divide-y">
+              {fornecimentos.length === 0 ? (
+                <div className="flex items-center justify-center h-40 text-muted-foreground text-sm text-center px-6">
+                  Nenhum fornecimento encontrado para sua unidade nesta compra.
+                </div>
+              ) : (
+                fornecimentos.map((f) => {
+                  const item = itemMap.get(f.idItem as string)
+                  const isExpanded = expandedId === f.identificador
+                  const isAdded = selectedItems.has(f.identificador)
+                  const vUnit = valUnitario(f)
+                  const saldo = saldoDisp(f)
+
+                  return (
+                    <div
+                      key={f.identificador}
+                      className={cn('transition-colors', isAdded && 'bg-primary/5')}
+                    >
+                      {/* Item row */}
+                      <div className="flex items-center gap-2 px-3 py-2.5">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium leading-snug line-clamp-1">
+                            {item ? descBreve(item) : (f.idItem as string)}
+                          </p>
+                          <div className="flex flex-wrap gap-x-3 mt-0.5 text-xs text-muted-foreground">
+                            <span>Saldo: {saldo} {item ? unMedida(item) : ''}</span>
+                            <span className="text-foreground font-medium">
+                              {formatCurrency(vUnit)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-xs gap-1"
+                            onClick={() => toggleExpand(f.identificador)}
+                          >
+                            {isExpanded ? (
+                              <ChevronUp className="h-3.5 w-3.5" />
+                            ) : (
+                              <ChevronDown className="h-3.5 w-3.5" />
+                            )}
+                            {isExpanded ? 'Fechar' : 'Detalhes'}
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant={isAdded ? 'secondary' : 'default'}
+                            className="h-7 w-7"
+                            title={isAdded ? 'Já adicionado' : 'Adicionar item'}
+                            disabled={isAdded}
+                            onClick={() => handleAdd(f)}
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Expand detail panel */}
+                      {isExpanded && item && (
+                        <div className="border-t bg-muted/20 px-4 py-3 space-y-3 text-sm">
+                          <div>
+                            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">
+                              Descrição detalhada
+                            </p>
+                            <p className="leading-relaxed">{descDetalhada(item)}</p>
+                          </div>
+                          <div className="grid grid-cols-3 gap-3">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Qtd Homologada</p>
+                              <p className="font-medium">
+                                {item.qtdHomologada ?? '—'} {unMedida(item)}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Saldo Disponível</p>
+                              <p className="font-medium">
+                                {saldo} {unMedida(item)}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Valor Unitário</p>
+                              <p className="font-medium text-green-700">{formatCurrency(vUnit)}</p>
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground font-mono">
+                            Fornecimento: {f.identificador}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT — cart */}
+          <div className="col-span-2 flex flex-col border rounded-lg overflow-hidden">
+            <div className="px-4 py-3 border-b bg-muted/20 shrink-0">
+              <p className="text-sm font-semibold">
+                Selecionados{' '}
+                <span className="text-muted-foreground font-normal">({selectedItems.size})</span>
+              </p>
+            </div>
+
+            <div className="flex-1 overflow-y-auto divide-y">
+              {selectedItems.size === 0 ? (
+                <div className="flex items-center justify-center h-40 text-muted-foreground text-sm text-center px-4">
+                  Nenhum item adicionado. Use o{' '}
+                  <span className="mx-1 font-bold">(+)</span> para adicionar.
+                </div>
+              ) : (
+                Array.from(selectedItems.entries()).map(([idForn, entry]) => {
+                  const vUnit = valUnitario(entry.fornecimento)
+                  return (
+                    <div key={idForn} className="px-3 py-2.5 space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-xs font-medium leading-snug line-clamp-2 flex-1">
+                          {descBreve(entry.item)}
+                        </p>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6 shrink-0 text-destructive hover:text-destructive"
+                          onClick={() => handleRemove(idForn)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          Qtd:
+                        </span>
+                        <Input
+                          type="number"
+                          min={0.01}
+                          step={1}
+                          value={entry.quantidade}
+                          onChange={(e) => handleQtd(idForn, Number(e.target.value))}
+                          className="h-7 w-20 text-xs"
+                        />
+                        <span className="text-xs text-muted-foreground flex-1 text-right">
+                          {formatCurrency(vUnit * entry.quantidade)}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+
+            {/* Sticky total */}
+            <div className="border-t px-4 py-3 bg-background shrink-0">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Total</span>
+                <span className="text-base font-bold text-green-700">
+                  {formatCurrency(totalValue)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Navigation */}
+      <div className="flex justify-between shrink-0 pt-1">
+        <Button variant="ghost" onClick={onBack}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar
+        </Button>
+        <Button onClick={handleNext} disabled={selectedItems.size === 0 || isLoading}>
+          Revisar Requisição
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Step 4 — Revisão e Envio
+// ---------------------------------------------------------------------------
+
+function Step4Revisao({
+  requisicao,
+  selectedCompra,
+  selectedItems,
+  onBack,
+}: {
+  requisicao: IRequisicao
+  selectedCompra: ICompra
+  selectedItems: Map<string, SelectedItemEntry>
+  onBack: () => void
+}) {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const user = useAuthStore((s) => s.user)
+
+  // Group items by fornecedor identifier
+  const byFornecedor = new Map<string, SelectedItemEntry[]>()
+  for (const entry of selectedItems.values()) {
+    const key = entry.fornecimento.idFornecedor as string
+    if (!byFornecedor.has(key)) byFornecedor.set(key, [])
+    byFornecedor.get(key)!.push(entry)
+  }
+  const documents = Array.from(byFornecedor.entries())
+
+  const totalGeral = Array.from(selectedItems.values()).reduce(
+    (sum, e) => sum + valUnitario(e.fornecimento) * e.quantidade,
+    0,
+  )
+
+  const userUnidade = typeof user?.unidade === 'object' ? (user.unidade as IUnidade) : null
+  const unidadeNome = userUnidade?.nomeAbrev ?? userUnidade?.nome ?? '—'
+
+  const salvarMutation = useMutation({
+    mutationFn: async (enviar: boolean) => {
+      for (const [idForn, entry] of selectedItems.entries()) {
+        await itemRequisicaoApi.criar({
+          idRequisicao: requisicao.identificador,
+          idFornecimento: idForn,
+          quantidadeSolicitada: entry.quantidade,
+        })
+      }
+      if (enviar) {
+        await requisicoesApi.enviar(requisicao._id)
+      }
+    },
+    onSuccess: (_, enviar) => {
+      queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
+      toast.success(
+        enviar ? 'Requisição enviada para análise.' : 'Requisição salva como rascunho.',
+      )
+      navigate(`/requisicoes/${requisicao._id}`)
+    },
+    onError: (err: unknown) => {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+        'Erro ao salvar a requisição. Verifique os itens e tente novamente.'
       toast.error(msg)
     },
   })
 
   return (
-    <div>
+    <div className="max-w-3xl mx-auto space-y-5">
+      {/* ── Cabeçalho do documento ── */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-0.5">
+                Requisição de {requisicao.tipo}
+              </p>
+              <p className="font-mono text-xs text-muted-foreground">{requisicao.identificador}</p>
+            </div>
+            <Badge variant="outline">{requisicao.status}</Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4 text-sm">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">
+                Requerente
+              </p>
+              <p className="font-medium">{user?.nome}</p>
+              <p className="text-xs text-muted-foreground">{user?.email}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">
+                Unidade / Setor
+              </p>
+              <p className="font-medium">{unidadeNome}</p>
+              <p className="text-xs text-muted-foreground font-mono">{user?.uorg_key ?? '—'}</p>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">
+              Justificativa
+            </p>
+            <p className="leading-relaxed whitespace-pre-wrap">{requisicao.justificativa}</p>
+          </div>
+
+          {(requisicao as unknown as { observacoes?: string }).observacoes && (
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">
+                Observações
+              </p>
+              <p className="leading-relaxed whitespace-pre-wrap">
+                {(requisicao as unknown as { observacoes?: string }).observacoes}
+              </p>
+            </div>
+          )}
+
+          <Separator />
+
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">
+              Compra Vinculada
+            </p>
+            <p className="font-medium">
+              {selectedCompra.numEdital} — {selectedCompra.modContratacao}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+              {selectedCompra.objeto}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Vigência: {fmtDate(selectedCompra.iniVigencia)} até{' '}
+              {fmtDate(selectedCompra.fimVigencia)}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Documentos por fornecedor ── */}
+      {documents.map(([idFornecedor, entries], docIdx) => {
+        const cnpj = cnpjFromFornecedorId(idFornecedor)
+        const subTotal = entries.reduce(
+          (s, e) => s + valUnitario(e.fornecimento) * e.quantidade,
+          0,
+        )
+
+        return (
+          <Card key={idFornecedor}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold">
+                Documento {String(docIdx + 1).padStart(2, '0')} — Fornecedor CNPJ {cnpj}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-xs text-muted-foreground">
+                    <th className="text-left py-1.5 pr-4 font-medium">Descrição</th>
+                    <th className="text-right py-1.5 px-2 font-medium w-16">Qtd</th>
+                    <th className="text-right py-1.5 px-2 font-medium w-24">Valor Unit.</th>
+                    <th className="text-right py-1.5 pl-2 font-medium w-24">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {entries.map((entry) => {
+                    const vUnit = valUnitario(entry.fornecimento)
+                    return (
+                      <tr
+                        key={entry.fornecimento.identificador}
+                        className="border-b border-dashed last:border-0"
+                      >
+                        <td className="py-2 pr-4">
+                          <p className="font-medium">{descBreve(entry.item)}</p>
+                          <p className="text-xs text-muted-foreground">{unMedida(entry.item)}</p>
+                        </td>
+                        <td className="py-2 px-2 text-right">{entry.quantidade}</td>
+                        <td className="py-2 px-2 text-right">{formatCurrency(vUnit)}</td>
+                        <td className="py-2 pl-2 text-right font-medium">
+                          {formatCurrency(vUnit * entry.quantidade)}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td
+                      colSpan={3}
+                      className="pt-2.5 text-right text-xs text-muted-foreground font-medium"
+                    >
+                      Subtotal
+                    </td>
+                    <td className="pt-2.5 pl-2 text-right font-semibold">
+                      {formatCurrency(subTotal)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </CardContent>
+          </Card>
+        )
+      })}
+
+      {/* ── Total geral + botões de ação ── */}
+      <Card className="border-primary/20">
+        <CardContent className="py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
+              Valor Total da Requisição
+            </p>
+            <p className="text-2xl font-bold text-green-700">{formatCurrency(totalGeral)}</p>
+          </div>
+          <div className="flex gap-2 self-end sm:self-auto">
+            <Button
+              variant="outline"
+              disabled={salvarMutation.isPending}
+              onClick={() => salvarMutation.mutate(false)}
+            >
+              {salvarMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Salvar Rascunho
+            </Button>
+            <Button
+              disabled={salvarMutation.isPending}
+              onClick={() => salvarMutation.mutate(true)}
+            >
+              {salvarMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Enviar para Análise
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-start">
+        <Button variant="ghost" onClick={onBack} disabled={salvarMutation.isPending}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Main Page — orchestrates wizard state
+// ---------------------------------------------------------------------------
+
+export function NovaRequisicaoPage() {
+  const navigate = useNavigate()
+  const user = useAuthStore((s) => s.user)
+
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
+  const [requisicao, setRequisicao] = useState<IRequisicao | null>(null)
+  const [selectedCompra, setSelectedCompra] = useState<ICompra | null>(null)
+  // selectedItems is lifted here so step 3 preserves selection when user goes back from step 4
+  const [selectedItems, setSelectedItems] = useState<Map<string, SelectedItemEntry>>(new Map())
+
+  const userUasg =
+    typeof user?.unidade === 'object' ? (user.unidade as IUnidade).uasg : undefined
+
+  return (
+    <div className="space-y-6">
       <PageHeader
         title="Nova Requisição"
-        subtitle="Crie uma nova requisição de materiais ou serviços"
+        subtitle="Siga os passos para criar uma requisição de material ou serviço."
         actions={
           <Button variant="outline" onClick={() => navigate('/requisicoes')}>
-            <ArrowLeft className="h-4 w-4" />
-            Voltar
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Cancelar
           </Button>
         }
       />
 
-      <Card className="max-w-lg">
-        <CardHeader>
-          <CardTitle className="text-base">Dados da Requisição</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
-              className="space-y-4"
-            >
-              <FormField
-                control={form.control}
-                name="idUnidade"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Unidade Requisitante *</FormLabel>
-                    {isRequerente ? (
-                      <FormControl>
-                        <Input
-                          value={userUnidadeNome ?? 'Unidade vinculada'}
-                          disabled
-                        />
-                      </FormControl>
-                    ) : (
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione a unidade..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {unidades.map((u) => (
-                            <SelectItem key={u._id} value={u._id}>
-                              {u.nomeAbrev ?? u.nome ?? u.uasg}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+      <StepIndicator current={step} />
 
-              <FormField
-                control={form.control}
-                name="justificativa"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Justificativa *</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Descreva a justificativa para esta requisição (mín. 30 caracteres)..."
-                        rows={4}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+      {step === 1 && (
+        <Step1Dados
+          initialRequisicao={requisicao ?? undefined}
+          onComplete={(req) => {
+            setRequisicao(req)
+            setStep(2)
+          }}
+        />
+      )}
 
-              <FormField
-                control={form.control}
-                name="observacao"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Observações</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Informações adicionais sobre a requisição..."
-                        rows={4}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+      {step === 2 && userUasg && requisicao && (
+        <Step2Compra
+          userUasg={userUasg}
+          tipoRequisicao={requisicao.tipo}
+          onComplete={(compra) => {
+            setSelectedCompra(compra)
+            setStep(3)
+          }}
+          onBack={() => setStep(1)}
+        />
+      )}
 
-              <div className="flex gap-3 pt-2">
-                <Button type="submit" disabled={mutation.isPending}>
-                  {mutation.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Criando...
-                    </>
-                  ) : (
-                    'Criar Requisição'
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate('/requisicoes')}
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+      {step === 2 && !userUasg && (
+        <Card className="max-w-lg mx-auto">
+          <CardContent className="py-10 text-center text-muted-foreground text-sm">
+            Não foi possível determinar sua unidade. Tente fazer login novamente.
+          </CardContent>
+        </Card>
+      )}
+
+      {step === 3 && selectedCompra && userUasg && (
+        <Step3Itens
+          selectedCompra={selectedCompra}
+          userUasg={userUasg}
+          initialItems={selectedItems}
+          onComplete={(items) => {
+            setSelectedItems(items)
+            setStep(4)
+          }}
+          onBack={() => setStep(2)}
+        />
+      )}
+
+      {step === 3 && (!selectedCompra || !userUasg) && (
+        <Card className="max-w-lg mx-auto">
+          <CardContent className="py-10 text-center text-muted-foreground text-sm">
+            Não foi possível determinar sua unidade. Tente fazer login novamente.
+          </CardContent>
+        </Card>
+      )}
+
+      {step === 4 && requisicao && selectedCompra && (
+        <Step4Revisao
+          requisicao={requisicao}
+          selectedCompra={selectedCompra}
+          selectedItems={selectedItems}
+          onBack={() => setStep(3)}
+        />
+      )}
     </div>
   )
 }

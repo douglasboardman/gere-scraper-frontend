@@ -111,7 +111,7 @@ export function ItensPage() {
             className="h-8 w-8 p-0"
             title="Ver Fornecimentos"
             onClick={() =>
-              navigate(`/fornecimentos?idItem=${row.original._id}`)
+              navigate(`/fornecimentos?idItem=${row.original.identificador}`)
             }
           >
             <ManageSearchIcon className="h-3.5 w-3.5" />
