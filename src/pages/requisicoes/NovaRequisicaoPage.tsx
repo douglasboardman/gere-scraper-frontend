@@ -10,6 +10,8 @@ import {
   ArrowRight,
   Check,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ChevronUp,
   FileText,
   Loader2,
@@ -543,6 +545,8 @@ function Step3Itens({
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [selectedItems, setSelectedItems] = useState<Map<string, SelectedItemEntry>>(initialItems)
+  const [catalogPage, setCatalogPage] = useState(1)
+  const [catalogSearch, setCatalogSearch] = useState('')
 
   const { data: fornecimentos = [], isLoading: loadingForn } = useQuery({
     queryKey: ['fornecimentos-wizard', selectedCompra.identificador, userUasg],
@@ -557,6 +561,24 @@ function Step3Itens({
 
   const itemMap = new Map<string, IItem>(itens.map((it) => [it.identificador, it]))
   const isLoading = loadingForn || loadingItens
+
+  const CATALOG_PAGE_SIZE = 10
+  const filteredFornecimentos = catalogSearch.trim()
+    ? fornecimentos.filter((f) => {
+        const item = itemMap.get(f.idItem as string)
+        if (!item) return false
+        const q = catalogSearch.toLowerCase()
+        return (
+          descBreve(item).toLowerCase().includes(q) ||
+          descDetalhada(item).toLowerCase().includes(q)
+        )
+      })
+    : fornecimentos
+  const totalCatalogPages = Math.max(1, Math.ceil(filteredFornecimentos.length / CATALOG_PAGE_SIZE))
+  const paginatedFornecimentos = filteredFornecimentos.slice(
+    (catalogPage - 1) * CATALOG_PAGE_SIZE,
+    catalogPage * CATALOG_PAGE_SIZE,
+  )
 
   function toggleExpand(id: string) {
     setExpandedId((prev) => (prev === id ? null : id))
@@ -585,8 +607,10 @@ function Step3Itens({
     setSelectedItems((prev) => {
       const entry = prev.get(idForn)
       if (!entry) return prev
+      const maxSaldo = saldoDisp(entry.fornecimento)
+      if (qtd <= 0) return prev
       const next = new Map(prev)
-      next.set(idForn, { ...entry, quantidade: Math.max(0.01, qtd) })
+      next.set(idForn, { ...entry, quantidade: Math.min(qtd, maxSaldo) })
       return next
     })
   }
@@ -622,18 +646,25 @@ function Step3Itens({
         <div className="grid grid-cols-5 gap-4 flex-1 overflow-hidden" style={{ height: '480px' }}>
           {/* LEFT — catalog */}
           <div className="col-span-3 flex flex-col border rounded-lg overflow-hidden">
-            <div className="px-4 py-3 border-b bg-muted/20 shrink-0">
+            <div className="px-4 py-3 border-b bg-muted/20 shrink-0 space-y-2">
               <p className="text-sm font-semibold">
                 Itens disponíveis{' '}
                 <span className="text-muted-foreground font-normal">
-                  ({fornecimentos.length})
+                  ({catalogSearch.trim() ? `${filteredFornecimentos.length} de ${fornecimentos.length}` : fornecimentos.length})
                 </span>
               </p>
-              <p className="text-xs text-muted-foreground">
-                Clique em{' '}
-                <span className="font-medium text-foreground">detalhes</span> para expandir ou{' '}
-                <span className="font-medium text-foreground">(+)</span> para adicionar
-              </p>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  className="pl-8 h-7 text-xs"
+                  placeholder="Pesquisar por descrição..."
+                  value={catalogSearch}
+                  onChange={(e) => {
+                    setCatalogSearch(e.target.value)
+                    setCatalogPage(1)
+                  }}
+                />
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto divide-y">
@@ -642,17 +673,22 @@ function Step3Itens({
                   Nenhum fornecimento encontrado para sua unidade nesta compra.
                 </div>
               ) : (
-                fornecimentos.map((f) => {
+                paginatedFornecimentos.map((f) => {
                   const item = itemMap.get(f.idItem as string)
                   const isExpanded = expandedId === f.identificador
                   const isAdded = selectedItems.has(f.identificador)
                   const vUnit = valUnitario(f)
                   const saldo = saldoDisp(f)
+                  const isSaldoZero = saldo <= 0
 
                   return (
                     <div
                       key={f.identificador}
-                      className={cn('transition-colors', isAdded && 'bg-primary/5')}
+                      className={cn(
+                        'transition-colors',
+                        isAdded && !isSaldoZero && 'bg-primary/5',
+                        isSaldoZero && 'bg-muted/40 opacity-60',
+                      )}
                     >
                       {/* Item row */}
                       <div className="flex items-center gap-2 px-3 py-2.5">
@@ -682,16 +718,18 @@ function Step3Itens({
                             )}
                             {isExpanded ? 'Fechar' : 'Detalhes'}
                           </Button>
-                          <Button
-                            size="icon"
-                            variant={isAdded ? 'secondary' : 'default'}
-                            className="h-7 w-7"
-                            title={isAdded ? 'Já adicionado' : 'Adicionar item'}
-                            disabled={isAdded}
-                            onClick={() => handleAdd(f)}
-                          >
-                            <Plus className="h-3.5 w-3.5" />
-                          </Button>
+                          {!isSaldoZero && (
+                            <Button
+                              size="icon"
+                              variant={isAdded ? 'secondary' : 'default'}
+                              className="h-7 w-7"
+                              title={isAdded ? 'Já adicionado' : 'Adicionar item'}
+                              disabled={isAdded}
+                              onClick={() => handleAdd(f)}
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                         </div>
                       </div>
 
@@ -732,15 +770,47 @@ function Step3Itens({
                 })
               )}
             </div>
+
+            {/* Pagination */}
+            {totalCatalogPages > 1 && (
+              <div className="border-t px-3 py-2 bg-muted/10 shrink-0 flex items-center justify-between">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={() => setCatalogPage((p) => Math.max(1, p - 1))}
+                  disabled={catalogPage === 1}
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  {catalogPage} / {totalCatalogPages}
+                </span>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={() => setCatalogPage((p) => Math.min(totalCatalogPages, p + 1))}
+                  disabled={catalogPage === totalCatalogPages}
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* RIGHT — cart */}
           <div className="col-span-2 flex flex-col border rounded-lg overflow-hidden">
             <div className="px-4 py-3 border-b bg-muted/20 shrink-0">
-              <p className="text-sm font-semibold">
-                Selecionados{' '}
-                <span className="text-muted-foreground font-normal">({selectedItems.size})</span>
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold">
+                  Selecionados{' '}
+                  <span className="text-muted-foreground font-normal">({selectedItems.size})</span>
+                </p>
+                <span className="text-sm font-bold text-green-700">
+                  {formatCurrency(totalValue)}
+                </span>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto divide-y">
@@ -752,6 +822,7 @@ function Step3Itens({
               ) : (
                 Array.from(selectedItems.entries()).map(([idForn, entry]) => {
                   const vUnit = valUnitario(entry.fornecimento)
+                  const saldoMax = saldoDisp(entry.fornecimento)
                   return (
                     <div key={idForn} className="px-3 py-2.5 space-y-2">
                       <div className="flex items-start justify-between gap-2">
@@ -773,7 +844,8 @@ function Step3Itens({
                         </span>
                         <Input
                           type="number"
-                          min={0.01}
+                          min={0}
+                          max={saldoMax}
                           step={1}
                           value={entry.quantidade}
                           onChange={(e) => handleQtd(idForn, Number(e.target.value))}
@@ -789,15 +861,6 @@ function Step3Itens({
               )}
             </div>
 
-            {/* Sticky total */}
-            <div className="border-t px-4 py-3 bg-background shrink-0">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Total</span>
-                <span className="text-base font-bold text-green-700">
-                  {formatCurrency(totalValue)}
-                </span>
-              </div>
-            </div>
           </div>
         </div>
       )}
@@ -957,6 +1020,7 @@ function Step4Revisao({
       {/* ── Documentos por fornecedor ── */}
       {documents.map(([idFornecedor, entries], docIdx) => {
         const cnpj = cnpjFromFornecedorId(idFornecedor)
+        const nomeFornecedor = entries[0].fornecimento.nomeFornecedor ?? null
         const subTotal = entries.reduce(
           (s, e) => s + valUnitario(e.fornecimento) * e.quantidade,
           0,
@@ -965,8 +1029,14 @@ function Step4Revisao({
         return (
           <Card key={idFornecedor}>
             <CardHeader className="pb-2">
+              <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-0.5">
+                Documento {String(docIdx + 1).padStart(2, '0')}
+              </p>
               <CardTitle className="text-sm font-semibold">
-                Documento {String(docIdx + 1).padStart(2, '0')} — Fornecedor CNPJ {cnpj}
+                CNPJ {cnpj}
+                {nomeFornecedor && (
+                  <span className="font-normal text-muted-foreground"> — {nomeFornecedor}</span>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
