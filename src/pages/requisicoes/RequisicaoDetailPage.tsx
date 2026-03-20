@@ -881,8 +881,8 @@ export function RequisicaoDetailPage() {
     return uid === user?._id
   })()
 
-  const canEdit = isOwner && (requisicao.status === 'Rascunho' || requisicao.status === 'Enviada')
-  const canSend = isOwner && requisicao.status === 'Rascunho'
+  const canEdit = isOwner && (requisicao.status === 'Rascunho' || requisicao.status === 'Rejeitada')
+  const canSend = isOwner && (requisicao.status === 'Rascunho' || requisicao.status === 'Rejeitada')
   const canApproveReject = (isAdmin || isGestor) && requisicao.status === 'Enviada'
 
   const valorTotal = itensRequisicao.reduce((sum, item) => sum + (item.valorTotal ?? 0), 0)
@@ -1116,10 +1116,7 @@ export function RequisicaoDetailPage() {
               {valorTotal > 0 && (
                 <TableFooter>
                   <TableRow>
-                    <TableCell
-                      colSpan={canEdit ? 4 : 3}
-                      className="text-right font-semibold"
-                    >
+                    <TableCell colSpan={4} className="text-right font-semibold">
                       Total
                     </TableCell>
                     <TableCell className="text-right font-bold text-lg">

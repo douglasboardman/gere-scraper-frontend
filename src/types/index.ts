@@ -106,6 +106,7 @@ export interface IFornecimento {
   idItem: string | IItem
   idFornecedor: string
   nomeFornecedor?: string | null
+  cnpjFornecedor?: string | null
   nomeUnParticipante?: string
   uasgUnParticipante: string
   qtdAutorizada?: number

@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { Plus, Eye, Edit, Send, CheckCircle, XCircle, Trash2 } from 'lucide-react'
+import { Plus, Eye, Edit, Send, CheckCircle, XCircle, Trash2, Printer } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { requisicoesApi } from '@/api/requisicoes.api'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -156,22 +156,25 @@ export function RequisicoesPage() {
         const owner = isOwner(req)
         return (
           <div className="flex items-center gap-1 flex-wrap">
+            {/* Visualizar — sempre visível */}
             <Button
               variant="ghost"
               size="sm"
               className="h-7 px-2 text-xs"
+              title="Visualizar"
               onClick={() => navigate(`/requisicoes/${req._id}`)}
             >
               <Eye className="h-3.5 w-3.5" />
             </Button>
 
-            {/* Owner actions on Rascunho */}
-            {owner && req.status === 'Rascunho' && (
+            {/* Owner: editar/enviar/excluir em Rascunho ou Rejeitada */}
+            {owner && (req.status === 'Rascunho' || req.status === 'Rejeitada') && (
               <>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="h-7 px-2 text-xs"
+                  title="Editar"
                   onClick={() => navigate(`/requisicoes/${req._id}`)}
                 >
                   <Edit className="h-3.5 w-3.5" />
@@ -180,6 +183,7 @@ export function RequisicoesPage() {
                   variant="ghost"
                   size="sm"
                   className="h-7 px-2 text-xs text-blue-600"
+                  title="Enviar para aprovação"
                   onClick={() =>
                     setActionDialog({ type: 'enviar', id: req._id, label: req.identificador })
                   }
@@ -190,6 +194,7 @@ export function RequisicoesPage() {
                   variant="ghost"
                   size="sm"
                   className="h-7 px-2 text-xs text-destructive"
+                  title="Excluir"
                   onClick={() =>
                     setActionDialog({ type: 'deletar', id: req._id, label: req.identificador })
                   }
@@ -199,13 +204,14 @@ export function RequisicoesPage() {
               </>
             )}
 
-            {/* Gestor/Admin actions on Enviada */}
+            {/* Gestor/Admin: aprovar/rejeitar em Enviada */}
             {(isAdmin || isGestor) && req.status === 'Enviada' && (
               <>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="h-7 px-2 text-xs text-green-700"
+                  title="Aprovar"
                   onClick={() =>
                     setActionDialog({ type: 'aprovar', id: req._id, label: req.identificador })
                   }
@@ -216,6 +222,7 @@ export function RequisicoesPage() {
                   variant="ghost"
                   size="sm"
                   className="h-7 px-2 text-xs text-destructive"
+                  title="Rejeitar"
                   onClick={() =>
                     setActionDialog({ type: 'rejeitar', id: req._id, label: req.identificador })
                   }
@@ -223,6 +230,19 @@ export function RequisicoesPage() {
                   <XCircle className="h-3.5 w-3.5" />
                 </Button>
               </>
+            )}
+
+            {/* Imprimir — Aprovada ou Empenhada */}
+            {(req.status === 'Aprovada' || req.status === 'Empenhada') && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                title="Imprimir PDF"
+                onClick={() => navigate(`/requisicoes/${req._id}/imprimir`)}
+              >
+                <Printer className="h-3.5 w-3.5" />
+              </Button>
             )}
           </div>
         )
@@ -251,7 +271,7 @@ export function RequisicoesPage() {
     },
     deletar: {
       title: 'Excluir Requisição',
-      description: `Tem certeza que deseja excluir a requisição "${actionDialog?.label}"?`,
+      description: `Tem certeza que deseja excluir a requisição "${actionDialog?.label}"? Todos os seus itens também serão excluídos. Esta ação não pode ser desfeita.`,
       confirmLabel: 'Excluir',
       variant: 'destructive' as const,
     },
