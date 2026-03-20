@@ -23,6 +23,9 @@ import { FornecimentoDetailPage } from '@/pages/fornecimentos/FornecimentoDetail
 import { RequisicoesPage } from '@/pages/requisicoes/RequisicoesPage'
 import { NovaRequisicaoPage } from '@/pages/requisicoes/NovaRequisicaoPage'
 import { RequisicaoDetailPage } from '@/pages/requisicoes/RequisicaoDetailPage'
+import { RequisicoesPendentesPage } from '@/pages/requisicoes/RequisicoesPendentesPage'
+import { RequisicaoAnalisePage } from '@/pages/requisicoes/RequisicaoAnalisePage'
+import { RequisicaoImprimirPage } from '@/pages/requisicoes/RequisicaoImprimirPage'
 import { UnidadesPage } from '@/pages/unidades/UnidadesPage'
 import { UsuariosPage } from '@/pages/usuarios/UsuariosPage'
 import { UsuarioEditPage } from '@/pages/usuarios/UsuarioEditPage'
@@ -140,6 +143,26 @@ export const router = createBrowserRouter([
             element: <NovaRequisicaoPage />,
           },
           {
+            path: 'requisicoes/pendentes',
+            element: <PrivateRoute requireGestorOrAdmin />,
+            children: [
+              {
+                index: true,
+                element: <RequisicoesPendentesPage />,
+              },
+            ],
+          },
+          {
+            path: 'requisicoes/analise/:id',
+            element: <PrivateRoute requireGestorOrAdmin />,
+            children: [
+              {
+                index: true,
+                element: <RequisicaoAnalisePage />,
+              },
+            ],
+          },
+          {
             path: 'requisicoes/:id',
             element: <RequisicaoDetailPage />,
           },
@@ -178,6 +201,11 @@ export const router = createBrowserRouter([
             element: <PerfilPage />,
           },
         ],
+      },
+      // Rota de impressão fora do AppLayout — renderiza sem sidebar/header
+      {
+        path: 'requisicoes/:id/imprimir',
+        element: <RequisicaoImprimirPage />,
       },
     ],
   },

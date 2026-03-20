@@ -7,6 +7,7 @@ import {
   Truck,
   ArrowLeftRight,
   ClipboardList,
+  ClipboardCheck,
   PlusCircle,
   Building2,
   Users,
@@ -24,6 +25,7 @@ interface NavItem {
   label: string
   to: string
   icon: React.ComponentType<{ className?: string }>
+  end?: boolean
 }
 
 interface NavGroup {
@@ -69,8 +71,11 @@ export function Sidebar() {
     {
       title: 'Requisições',
       items: [
-        { label: 'Minhas Requisições', to: '/requisicoes', icon: ClipboardList },
+        { label: 'Minhas Requisições', to: '/requisicoes', icon: ClipboardList, end: true },
         { label: 'Nova Requisição', to: '/requisicoes/nova', icon: PlusCircle },
+        ...(isAdmin || isGestor
+          ? [{ label: 'Requisições para Análise', to: '/requisicoes/pendentes', icon: ClipboardCheck }]
+          : []),
       ],
     },
     {
@@ -127,6 +132,7 @@ export function Sidebar() {
                 <NavLink
                   key={item.to}
                   to={item.to}
+                  end={item.end}
                   className={({ isActive }) =>
                     cn(
                       'flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors group',

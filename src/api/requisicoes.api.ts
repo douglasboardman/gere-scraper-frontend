@@ -27,17 +27,22 @@ export const requisicoesApi = {
   },
 
   async enviar(id: string): Promise<IRequisicao> {
-    const { data } = await apiClient.post<IRequisicao>(`/requisicoes/${id}/enviar`)
+    const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${id}/enviar`)
     return data
   },
 
   async aprovar(id: string): Promise<IRequisicao> {
-    const { data } = await apiClient.post<IRequisicao>(`/requisicoes/${id}/aprovar`)
+    const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${id}/aprovar`)
     return data
   },
 
   async rejeitar(id: string, motivo?: string): Promise<IRequisicao> {
-    const { data } = await apiClient.post<IRequisicao>(`/requisicoes/${id}/rejeitar`, { motivo })
+    const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${id}/rejeitar`, { motivo })
+    return data
+  },
+
+  async imprimir(id: string): Promise<{ requisicao: IRequisicao; itens: unknown[] }> {
+    const { data } = await apiClient.get<{ requisicao: IRequisicao; itens: unknown[] }>(`/requisicoes/${id}/imprimir`)
     return data
   },
 }
