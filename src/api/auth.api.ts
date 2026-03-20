@@ -4,7 +4,7 @@ import type { IUsuario, IUnidade, LoginResponse, RegisterData } from '@/types'
 
 export const authApi = {
   async login(email: string, senha: string): Promise<LoginResponse> {
-    const { data } = await apiClient.post<LoginResponse>('/auth/login', { email, senha })
+    const { data } = await publicClient.post<LoginResponse>('/auth/login', { email, senha })
     return data
   },
 
