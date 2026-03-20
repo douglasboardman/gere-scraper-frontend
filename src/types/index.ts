@@ -32,6 +32,7 @@ export interface ICompra {
   modContratacao?: string
   numEdital?: string
   objeto?: string
+  uasgsParticipantes?: string[]
   iniVigencia?: string
   fimVigencia?: string
   status: StatusCompra
@@ -103,7 +104,8 @@ export interface IFornecimento {
   _id: string
   identificador: string
   idItem: string | IItem
-  idFornecedor: string | IFornecedor
+  idFornecedor: string
+  nomeFornecedor?: string | null
   nomeUnParticipante?: string
   uasgUnParticipante: string
   qtdAutorizada?: number
@@ -162,11 +164,14 @@ export type TipoRequisicao = 'Material' | 'Serviço'
 export interface IRequisicao {
   _id: string
   identificador: string
-  idRequisitante: string | IUsuario
+  requisitante: string | IUsuario
   idUnidade: string | IUnidade
+  uorg_key?: string
+  uorg?: IUorg
   tipo: TipoRequisicao
   status: StatusRequisicao
   observacao?: string
+  observacoes?: string
   justificativa?: string
   motivoRejeicao?: string
   dataEnvio?: string
@@ -181,7 +186,7 @@ export interface IItemRequisicao {
   _id: string
   idRequisicao: string | IRequisicao
   idFornecimento: string | IFornecimento
-  qtdSolicitada: number
+  quantidadeSolicitada: number
   valorUnitario?: number
   valorTotal?: number
   observacao?: string

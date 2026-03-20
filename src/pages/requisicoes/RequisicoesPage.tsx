@@ -90,7 +90,7 @@ export function RequisicoesPage() {
   }
 
   const isOwner = (req: IRequisicao) => {
-    const reqUser = req.idRequisitante
+    const reqUser = req.requisitante
     const userId = typeof reqUser === 'string' ? reqUser : reqUser?._id
     return userId === user?._id
   }
@@ -107,7 +107,7 @@ export function RequisicoesPage() {
       id: 'requisitante',
       header: 'Requisitante',
       cell: ({ row }) => {
-        const r = row.original.idRequisitante
+        const r = row.original.requisitante
         return (
           <span className="text-sm">
             {typeof r === 'string' ? r : (r as IUsuario)?.nome ?? '—'}

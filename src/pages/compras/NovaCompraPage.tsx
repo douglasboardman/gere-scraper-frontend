@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { comprasApi } from '@/api/compras.api'
 import { unidadesApi } from '@/api/unidades.api'
+import type { ICompra } from '@/types'
 import { useAuthStore } from '@/store/auth.store'
 import { usePermission } from '@/hooks/usePermission'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -78,7 +79,10 @@ export function NovaCompraPage() {
         ...(isAdmin && data.uasgParticipante ? { uasgParticipante: data.uasgParticipante } : {}),
       }),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['compras'] })
+      // setQueryData atualiza o cache diretamente, sem network round-trip nem respeito ao staleTime
+      if (!result.reimport) {
+        queryClient.setQueryData<ICompra[]>(['compras'], (old) => [result.compra, ...(old ?? [])])
+      }
       setActiveJobId(result.jobId)
 
       const msg = result.reimport

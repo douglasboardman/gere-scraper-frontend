@@ -1,3 +1,4 @@
+import React from 'react'
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,7 @@ interface ConfirmDialogProps {
   confirmLabel?: string
   variant?: 'destructive' | 'default'
   isLoading?: boolean
+  children?: React.ReactNode
 }
 
 export function ConfirmDialog({
@@ -28,6 +30,7 @@ export function ConfirmDialog({
   confirmLabel = 'Confirmar',
   variant = 'destructive',
   isLoading = false,
+  children,
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onCancel()}>
@@ -36,6 +39,7 @@ export function ConfirmDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
+        {children}
         <DialogFooter>
           <Button variant="outline" onClick={onCancel} disabled={isLoading}>
             Cancelar

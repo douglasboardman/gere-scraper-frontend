@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { Plus, Eye, Trash2 } from 'lucide-react'
+import { Plus, Eye, Trash2, TriangleAlert } from 'lucide-react'
 import { ManageSearchIcon } from '@/components/icons/ManageSearchIcon'
 import type { ColumnDef } from '@tanstack/react-table'
 import { comprasApi } from '@/api/compras.api'
@@ -175,13 +175,23 @@ export function ComprasPage() {
       <ConfirmDialog
         open={!!deleteId}
         title="Excluir Compra"
-        description={`Tem certeza que deseja excluir a compra "${deleteId}"? Esta ação não pode ser desfeita.`}
+        description={`Tem certeza que deseja excluir a compra "${deleteId}"?`}
         confirmLabel="Excluir"
         variant="destructive"
         isLoading={deleteMutation.isPending}
         onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
         onCancel={() => setDeleteId(null)}
-      />
+      >
+        <div className="flex items-start gap-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-800">
+          <TriangleAlert className="mt-0.5 h-10 w-10 shrink-0 text-amber-500" />
+          <p className="text-sm leading-relaxed">
+            <strong>Atenção:</strong> Esta operação excluirá todas as atas, itens e fornecimentos ligados à compra.
+            Apenas os registros de fornecedores importados na inclusão da compra permanecerão na base de dados.
+            <br /><br />
+            <strong>Esta ação não pode ser desfeita.</strong>
+          </p>
+        </div>
+      </ConfirmDialog>
     </div>
   )
 }

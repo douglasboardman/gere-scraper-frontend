@@ -2,9 +2,8 @@ import apiClient from './client'
 import type { IItemRequisicao, CriarItemRequisicaoData } from '@/types'
 
 export const itemRequisicaoApi = {
-  async listar(idRequisicao?: string): Promise<IItemRequisicao[]> {
-    const params = idRequisicao ? { idRequisicao } : {}
-    const { data } = await apiClient.get<IItemRequisicao[]>('/itens-requisicao', { params })
+  async listar(idRequisicao: string): Promise<IItemRequisicao[]> {
+    const { data } = await apiClient.get<IItemRequisicao[]>(`/itens-requisicao/requisicao/${idRequisicao}`)
     return data
   },
 
