@@ -7,7 +7,7 @@ import { requisicoesApi } from '@/api/requisicoes.api'
 import { itemRequisicaoApi } from '@/api/itemRequisicao.api'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { cn, formatCurrency, formatCNPJ } from '@/lib/utils'
+import { cn, formatCurrency, formatCNPJ, tipoRequisicaoLabel } from '@/lib/utils'
 import type { IItemRequisicao, IFornecimento, IItem, IUsuario, IUnidade, IUorg } from '@/types'
 
 
@@ -66,7 +66,7 @@ function InfoCard({ requisitante, unidade, uorg, tipo, justificativa, observacoe
       </div>
       <div>
         <p className="text-muted-foreground uppercase font-semibold mb-0.5">Tipo</p>
-        <p className="font-medium">{tipo ?? '—'}</p>
+        <p className="font-medium">{tipoRequisicaoLabel(tipo)}</p>
       </div>
       <div className="col-span-2">
         <p className="text-muted-foreground uppercase font-semibold mb-0.5">Justificativa</p>
@@ -214,7 +214,7 @@ export function RequisicaoImprimirPage() {
                     {itensForn.map((item) => {
                       const { seq, descDetalhada, tipo } = getItemData(item)
                       return (
-                        <tr key={item._id}>
+                        <tr key={item.id}>
                           <td className="px-3 py-2 font-mono text-center">{seq}</td>
                           <td className="px-3 py-2">{descDetalhada}</td>
                           <td className="px-3 py-2">{tipo}</td>

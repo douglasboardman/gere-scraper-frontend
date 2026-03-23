@@ -75,7 +75,7 @@ export function DashboardPage() {
     queryFn: requisicoesApi.listar,
   })
 
-  const comprasEmProcessamento = compras?.filter((c) => c.status === 'Em Processamento') ?? []
+  const comprasEmProcessamento = compras?.filter((c) => c.status === 'Em_Processamento') ?? []
   const atasVigentes = atas?.filter((a) => a.status === 'Processada') ?? []
   const fornecimentosHomologados = fornecimentos?.filter((f) => f.status === 'Homologado') ?? []
   const requisicoesAbertas = requisicoes?.filter(
@@ -148,7 +148,7 @@ export function DashboardPage() {
               <div className="space-y-3">
                 {recentRequisicoes.map((req: IRequisicao) => (
                   <div
-                    key={req._id}
+                    key={req.id}
                     className="flex items-center justify-between py-2 border-b last:border-0"
                   >
                     <div>
@@ -185,7 +185,7 @@ export function DashboardPage() {
               <div className="space-y-3">
                 {comprasEmProcessamento.map((compra) => (
                   <div
-                    key={compra._id}
+                    key={compra.id}
                     className="flex items-center justify-between py-2 border-b last:border-0"
                   >
                     <div>

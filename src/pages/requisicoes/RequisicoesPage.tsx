@@ -6,6 +6,7 @@ import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { Plus, Eye, Edit, Send, CheckCircle, XCircle, Trash2, Printer } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
+import { tipoRequisicaoLabel } from '@/lib/utils'
 import { requisicoesApi } from '@/api/requisicoes.api'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable } from '@/components/shared/DataTable'
@@ -23,7 +24,7 @@ export function RequisicoesPage() {
   const { isAdmin, isGestor, can } = usePermission()
   const [actionDialog, setActionDialog] = useState<{
     type: 'enviar' | 'aprovar' | 'rejeitar' | 'deletar'
-    id: string
+    id: number
     label: string
   } | null>(null)
 
@@ -33,7 +34,7 @@ export function RequisicoesPage() {
   })
 
   const enviarMutation = useMutation({
-    mutationFn: (id: string) => requisicoesApi.enviar(id),
+    mutationFn: (id: number) => requisicoesApi.enviar(id),
     onSuccess: () => {
       toast.success('Requisição enviada para aprovação.')
       queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
@@ -45,7 +46,7 @@ export function RequisicoesPage() {
   })
 
   const aprovarMutation = useMutation({
-    mutationFn: (id: string) => requisicoesApi.aprovar(id),
+    mutationFn: (id: number) => requisicoesApi.aprovar(id),
     onSuccess: () => {
       toast.success('Requisição aprovada.')
       queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
@@ -57,7 +58,7 @@ export function RequisicoesPage() {
   })
 
   const rejeitarMutation = useMutation({
-    mutationFn: (id: string) => requisicoesApi.rejeitar(id),
+    mutationFn: (id: number) => requisicoesApi.rejeitar(id),
     onSuccess: () => {
       toast.success('Requisição rejeitada.')
       queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
@@ -69,7 +70,7 @@ export function RequisicoesPage() {
   })
 
   const deletarMutation = useMutation({
-    mutationFn: (id: string) => requisicoesApi.deletar(id),
+    mutationFn: (id: number) => requisicoesApi.deletar(id),
     onSuccess: () => {
       toast.success('Requisição excluída.')
       queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
@@ -90,9 +91,7 @@ export function RequisicoesPage() {
   }
 
   const isOwner = (req: IRequisicao) => {
-    const reqUser = req.requisitante
-    const userId = typeof reqUser === 'string' ? reqUser : reqUser?._id
-    return userId === user?._id
+    return req.requisitanteId === user?.id
   }
 
   const columns: ColumnDef<IRequisicao, unknown>[] = [
@@ -131,7 +130,7 @@ export function RequisicoesPage() {
       accessorKey: 'tipo',
       header: 'Tipo',
       cell: ({ row }) => (
-        <span className="text-sm">{row.original.tipo ?? '—'}</span>
+        <span className="text-sm">{tipoRequisicaoLabel(row.original.tipo)}</span>
       ),
     },
     {
@@ -162,7 +161,7 @@ export function RequisicoesPage() {
               size="sm"
               className="h-7 px-2 text-xs"
               title="Visualizar"
-              onClick={() => navigate(`/requisicoes/${req._id}`)}
+              onClick={() => navigate(`/requisicoes/${req.id}`)}
             >
               <Eye className="h-3.5 w-3.5" />
             </Button>
@@ -175,7 +174,7 @@ export function RequisicoesPage() {
                   size="sm"
                   className="h-7 px-2 text-xs"
                   title="Editar"
-                  onClick={() => navigate(`/requisicoes/${req._id}`)}
+                  onClick={() => navigate(`/requisicoes/${req.id}`)}
                 >
                   <Edit className="h-3.5 w-3.5" />
                 </Button>
@@ -185,7 +184,7 @@ export function RequisicoesPage() {
                   className="h-7 px-2 text-xs text-blue-600"
                   title="Enviar para aprovação"
                   onClick={() =>
-                    setActionDialog({ type: 'enviar', id: req._id, label: req.identificador })
+                    setActionDialog({ type: 'enviar', id: req.id, label: req.identificador })
                   }
                 >
                   <Send className="h-3.5 w-3.5" />
@@ -196,7 +195,7 @@ export function RequisicoesPage() {
                   className="h-7 px-2 text-xs text-destructive"
                   title="Excluir"
                   onClick={() =>
-                    setActionDialog({ type: 'deletar', id: req._id, label: req.identificador })
+                    setActionDialog({ type: 'deletar', id: req.id, label: req.identificador })
                   }
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -213,7 +212,7 @@ export function RequisicoesPage() {
                   className="h-7 px-2 text-xs text-green-700"
                   title="Aprovar"
                   onClick={() =>
-                    setActionDialog({ type: 'aprovar', id: req._id, label: req.identificador })
+                    setActionDialog({ type: 'aprovar', id: req.id, label: req.identificador })
                   }
                 >
                   <CheckCircle className="h-3.5 w-3.5" />
@@ -224,7 +223,7 @@ export function RequisicoesPage() {
                   className="h-7 px-2 text-xs text-destructive"
                   title="Rejeitar"
                   onClick={() =>
-                    setActionDialog({ type: 'rejeitar', id: req._id, label: req.identificador })
+                    setActionDialog({ type: 'rejeitar', id: req.id, label: req.identificador })
                   }
                 >
                   <XCircle className="h-3.5 w-3.5" />
@@ -239,7 +238,7 @@ export function RequisicoesPage() {
                 size="sm"
                 className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
                 title="Imprimir PDF"
-                onClick={() => navigate(`/requisicoes/${req._id}/imprimir`)}
+                onClick={() => navigate(`/requisicoes/${req.id}/imprimir`)}
               >
                 <Printer className="h-3.5 w-3.5" />
               </Button>

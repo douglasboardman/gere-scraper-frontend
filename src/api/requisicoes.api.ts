@@ -7,7 +7,7 @@ export const requisicoesApi = {
     return data
   },
 
-  async obter(id: string): Promise<IRequisicao> {
+  async obter(id: number): Promise<IRequisicao> {
     const { data } = await apiClient.get<IRequisicao>(`/requisicoes/${id}`)
     return data
   },
@@ -17,31 +17,31 @@ export const requisicoesApi = {
     return data
   },
 
-  async atualizar(id: string, reqData: Partial<CriarRequisicaoData>): Promise<IRequisicao> {
+  async atualizar(id: number, reqData: Partial<CriarRequisicaoData>): Promise<IRequisicao> {
     const { data } = await apiClient.put<IRequisicao>(`/requisicoes/${id}`, reqData)
     return data
   },
 
-  async deletar(id: string): Promise<void> {
+  async deletar(id: number): Promise<void> {
     await apiClient.delete(`/requisicoes/${id}`)
   },
 
-  async enviar(id: string): Promise<IRequisicao> {
+  async enviar(id: number): Promise<IRequisicao> {
     const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${id}/enviar`)
     return data
   },
 
-  async aprovar(id: string): Promise<IRequisicao> {
+  async aprovar(id: number): Promise<IRequisicao> {
     const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${id}/aprovar`)
     return data
   },
 
-  async rejeitar(id: string, motivo?: string): Promise<IRequisicao> {
+  async rejeitar(id: number, motivo?: string): Promise<IRequisicao> {
     const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${id}/rejeitar`, { motivo })
     return data
   },
 
-  async imprimir(id: string): Promise<{ requisicao: IRequisicao; itens: unknown[] }> {
+  async imprimir(id: number): Promise<{ requisicao: IRequisicao; itens: unknown[] }> {
     const { data } = await apiClient.get<{ requisicao: IRequisicao; itens: unknown[] }>(`/requisicoes/${id}/imprimir`)
     return data
   },

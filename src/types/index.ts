@@ -2,12 +2,12 @@
 // Status types
 // ============================================================
 
-export type StatusCompra = 'Em Processamento' | 'Processada' | 'Inconsistente' | 'Aguardando'
-export type StatusAta = 'Em Processamento' | 'Processada' | 'Inconsistente' | 'Aguardando'
-export type StatusItem = 'Em Processamento' | 'Processada' | 'Inconsistente' | 'Aguardando'
-export type StatusFornecimento = 'Homologado' | 'Não Homologado' | 'Esgotado' | 'Cancelado'
+export type StatusCompra = 'Em_Processamento' | 'Processada' | 'Inconsistente' | 'Aguardando_Homologacao'
+export type StatusAta = 'Em_Processamento' | 'Processada' | 'Inconsistente'
+export type StatusItem = 'Em_Processamento' | 'Processado' | 'Inconsistente'
+export type StatusFornecimento = 'Homologado' | 'Nao_Homologado' | 'Esgotado' | 'Cancelado'
 export type StatusRequisicao = 'Rascunho' | 'Enviada' | 'Aprovada' | 'Rejeitada' | 'Empenhada'
-export type StatusJob = 'running' | 'completed' | 'failed' | 'pending'
+export type StatusJob = 'running' | 'completed' | 'failed'
 
 export type UserRole = 'admin' | 'gestor_compras' | 'requerente'
 
@@ -22,13 +22,13 @@ export type ModalidadeContratacao =
 // ============================================================
 
 export interface ICompra {
-  _id: string
+  id: number
   identificador: string
   uasgUnGestora: string
   nomeUnGestora?: string
   codUnGestora?: string
   numCompra: string
-  anoCompra: number
+  anoCompra: number | string
   modContratacao?: string
   numEdital?: string
   objeto?: string
@@ -41,10 +41,10 @@ export interface ICompra {
 }
 
 export interface IAtaRegPrecos {
-  _id: string
+  id: number
   identificador: string
   numAta: string
-  idCompra: string | ICompra
+  idCompra: string
   idFornecedor?: string
   cnpjFornecedor?: string
   nomeFornecedor?: string
@@ -56,11 +56,11 @@ export interface IAtaRegPrecos {
 }
 
 export interface IItem {
-  _id: string
+  id: number
   identificador: string
   sequencialItemPregao?: string
   numItem?: string
-  idAta: string | IAtaRegPrecos
+  idAta: string
   descBreve?: string
   descDetalhada?: string
   descricaoBreve?: string
@@ -77,7 +77,7 @@ export interface IItem {
 }
 
 export interface IFornecedor {
-  _id: string
+  id: number
   identificador: string
   cnpj: string
   nome?: string
@@ -101,7 +101,7 @@ export interface IFornecedor {
 }
 
 export interface IFornecimento {
-  _id: string
+  id: number
   identificador: string
   idItem: string | IItem
   idFornecedor: string
@@ -121,7 +121,7 @@ export interface IFornecimento {
 }
 
 export interface IUnidade {
-  _id: string
+  id: number
   identificador: string
   idContratos: string
   uasg: string
@@ -136,7 +136,7 @@ export interface IUnidade {
 }
 
 export interface IUorg {
-  _id: string
+  id: number
   uorg_key: string
   uorg_orgao_co: string
   uorg_co?: string
@@ -144,28 +144,30 @@ export interface IUorg {
   uorg_path?: string
   uorg_no: string
   uorg_sg?: string
+  status_atvd_reg_tab_in?: string
   createdAt: string
   updatedAt: string
 }
 
 export interface IUsuario {
-  _id: string
+  id: number
   nome: string
   email: string
   role: UserRole
   ativo: boolean
-  unidade?: string | IUnidade
+  unidade?: IUnidade | null
   uorg_key?: string
   createdAt: string
   updatedAt: string
 }
 
-export type TipoRequisicao = 'Material' | 'Serviço'
+export type TipoRequisicao = 'Material' | 'Servico'
 
 export interface IRequisicao {
-  _id: string
+  id: number
   identificador: string
-  requisitante: string | IUsuario
+  requisitanteId: number
+  requisitante: IUsuario | { nome: string; email: string; uorg_key?: string }
   idUnidade: string | IUnidade
   uorg_key?: string
   uorg?: IUorg
@@ -184,8 +186,8 @@ export interface IRequisicao {
 }
 
 export interface IItemRequisicao {
-  _id: string
-  idRequisicao: string | IRequisicao
+  id: number
+  idRequisicao: string
   idFornecimento: string | IFornecimento
   quantidadeSolicitada: number
   valorUnitario?: number
@@ -196,9 +198,9 @@ export interface IItemRequisicao {
 }
 
 export interface IScrapingJob {
-  _id: string
+  id: number
   jobId: string
-  idCompra?: string
+  identificadorCompra?: string
   tipo: string
   status: StatusJob
   progresso: number

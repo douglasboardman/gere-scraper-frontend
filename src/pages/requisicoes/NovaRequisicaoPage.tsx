@@ -51,7 +51,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { cn, formatCurrency } from '@/lib/utils'
+import { cn, formatCurrency, tipoRequisicaoLabel } from '@/lib/utils'
 import type { ICompra, IFornecimento, IItem, IRequisicao, IUnidade } from '@/types'
 
 // ---------------------------------------------------------------------------
@@ -169,7 +169,7 @@ function StepIndicator({ current }: { current: number }) {
 // ---------------------------------------------------------------------------
 
 const step1Schema = z.object({
-  tipo: z.enum(['Material', 'Serviço'], { required_error: 'Selecione o tipo da requisição' }),
+  tipo: z.enum(['Material', 'Servico'], { required_error: 'Selecione o tipo da requisição' }),
   justificativa: z.string().min(30, 'Justificativa deve ter pelo menos 30 caracteres'),
   observacoes: z.string().optional(),
 })
@@ -197,7 +197,7 @@ function Step1Dados({
   const mutation = useMutation({
     mutationFn: (data: Step1Data) =>
       initialRequisicao
-        ? requisicoesApi.atualizar(initialRequisicao._id, data)
+        ? requisicoesApi.atualizar(initialRequisicao.id, data)
         : requisicoesApi.criar(data),
     onSuccess: (req) => {
       toast.success(initialRequisicao ? 'Requisição atualizada.' : 'Requisição criada. Escolha a compra.')
@@ -228,7 +228,7 @@ function Step1Dados({
         <CardContent className="space-y-4">
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Tipo</p>
-            <p className="text-sm font-medium">{initialRequisicao.tipo}</p>
+            <p className="text-sm font-medium">{tipoRequisicaoLabel(initialRequisicao.tipo)}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Justificativa</p>
@@ -277,7 +277,7 @@ function Step1Dados({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="Material">Material</SelectItem>
-                      <SelectItem value="Serviço">Serviço</SelectItem>
+                      <SelectItem value="Servico">Serviço</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -364,7 +364,7 @@ function Step2Compra({
   onBack,
 }: {
   userUasg: string
-  tipoRequisicao: 'Material' | 'Serviço'
+  tipoRequisicao: 'Material' | 'Servico'
   onComplete: (compra: ICompra) => void
   onBack: () => void
 }) {
@@ -483,7 +483,7 @@ function Step2Compra({
         <div className="space-y-3">
           {filtered.map((compra) => (
             <Card
-              key={compra._id}
+              key={compra.id}
               className="hover:border-primary/50 transition-colors group cursor-default"
             >
               <CardContent className="p-4 flex items-start justify-between gap-4">
@@ -926,7 +926,7 @@ function Step4Revisao({
         })
       }
       if (enviar) {
-        await requisicoesApi.enviar(requisicao._id)
+        await requisicoesApi.enviar(requisicao.id)
       }
     },
     onSuccess: (_, enviar) => {
@@ -934,7 +934,7 @@ function Step4Revisao({
       toast.success(
         enviar ? 'Requisição enviada para análise.' : 'Requisição salva como rascunho.',
       )
-      navigate(`/requisicoes/${requisicao._id}`)
+      navigate(`/requisicoes/${requisicao.id}`)
     },
     onError: (err: unknown) => {
       const msg =
@@ -952,7 +952,7 @@ function Step4Revisao({
           <div className="flex items-start justify-between gap-2">
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-0.5">
-                Requisição de {requisicao.tipo}
+                Requisição de {tipoRequisicaoLabel(requisicao.tipo)}
               </p>
               <p className="font-mono text-xs text-muted-foreground">{requisicao.identificador}</p>
             </div>

@@ -6,9 +6,7 @@ import { toast } from 'sonner'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Loader2, User, Building2, Network } from 'lucide-react'
 import { usuariosApi } from '@/api/usuarios.api'
-import { unidadesApi } from '@/api/unidades.api'
 import { uorgsApi } from '@/api/uorgs.api'
-import type { IUnidade } from '@/types'
 import { useAuthStore } from '@/store/auth.store'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -59,23 +57,13 @@ export function PerfilPage() {
   const { user, setUser } = useAuthStore()
   const [saved, setSaved] = useState(false)
 
-  const unidadeId = user?.unidade
-    ? typeof user.unidade === 'string' ? user.unidade : (user.unidade as IUnidade)._id
-    : null
-
-  const { data: unidade } = useQuery({
-    queryKey: ['unidade', unidadeId],
-    queryFn: () => unidadesApi.obter(unidadeId!),
-    enabled: !!unidadeId && typeof user?.unidade === 'string',
-  })
-
   const { data: uorg } = useQuery({
     queryKey: ['uorg', user?.uorg_key],
     queryFn: () => uorgsApi.obter(user!.uorg_key!),
     enabled: !!user?.uorg_key,
   })
 
-  const unidadeResolvida = typeof user?.unidade === 'object' ? user.unidade as IUnidade : unidade
+  const unidadeResolvida = user?.unidade ?? null
 
   const form = useForm<PerfilFormData>({
     resolver: zodResolver(perfilSchema),
