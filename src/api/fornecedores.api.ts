@@ -2,8 +2,8 @@ import apiClient from './client'
 import type { IFornecedor, SancoesResponse } from '@/types'
 
 export const fornecedoresApi = {
-  async listar(idCompra?: string): Promise<IFornecedor[]> {
-    const params = idCompra ? { idCompra } : {}
+  async listar(idContratacao?: string): Promise<IFornecedor[]> {
+    const params = idContratacao ? { idContratacao } : {}
     const { data } = await apiClient.get<IFornecedor[]>('/fornecedores', { params })
     return data
   },

@@ -161,14 +161,14 @@ function AddItemsDialog({
     queryKey: ['analise-fornecimentos', compraIdStr, userUasg],
     queryFn: () =>
       compraIdStr
-        ? fornecimentosApi.listarPorCompraUnidade(compraIdStr, userUasg)
+        ? fornecimentosApi.listarPorContratacaoUnidade(compraIdStr, userUasg)
         : fornecimentosApi.listarPorUnidade(userUasg),
     enabled: open && !!userUasg,
   })
 
   const { data: itens = [], isLoading: loadingItens } = useQuery({
     queryKey: ['analise-itens', compraIdStr],
-    queryFn: () => compraIdStr ? itensApi.listar({ idCompra: compraIdStr }) : Promise.resolve([]),
+    queryFn: () => compraIdStr ? itensApi.listar({ idContratacao: compraIdStr }) : Promise.resolve([]),
     enabled: open && !!compraIdStr,
   })
 

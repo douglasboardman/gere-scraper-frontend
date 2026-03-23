@@ -16,11 +16,11 @@ import type { IAtaRegPrecos } from "@/types";
 export function AtasPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const idCompra = searchParams.get("idCompra") ?? undefined;
+  const idContratacao = searchParams.get("idContratacao") ?? undefined;
 
   const { data: atas = [], isLoading } = useQuery({
-    queryKey: ["atas", idCompra],
-    queryFn: () => atasApi.listar(idCompra),
+    queryKey: ["atas", idContratacao],
+    queryFn: () => atasApi.listar(idContratacao),
   });
 
   const columns: ColumnDef<IAtaRegPrecos, unknown>[] = [
@@ -34,15 +34,15 @@ export function AtasPage() {
       ),
     },
     {
-      accessorKey: "idCompra",
-      header: "ID Compra",
+      accessorKey: "idContratacao",
+      header: "ID Contratação",
       cell: ({ row }) => {
-        const idCompra = row.original.idCompra;
+        const idContratacao = row.original.idContratacao;
         return (
           <span className="text-sm">
-            {typeof idCompra === "string"
-              ? idCompra
-              : (idCompra?.identificador ?? "—")}
+            {typeof idContratacao === "string"
+              ? idContratacao
+              : (idContratacao?.identificador ?? "—")}
           </span>
         );
       },
@@ -118,8 +118,8 @@ export function AtasPage() {
       <PageHeader
         title="Atas de Registro de Preços"
         subtitle={
-          idCompra
-            ? `Filtrando por compra: ${idCompra}`
+          idContratacao
+            ? `Filtrando por contratação: ${idContratacao}`
             : "Todas as atas registradas no sistema"
         }
       />

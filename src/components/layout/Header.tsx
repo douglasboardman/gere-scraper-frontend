@@ -15,8 +15,8 @@ import { useAuthStore } from '@/store/auth.store'
 
 const routeTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
-  '/compras': 'Compras',
-  '/compras/nova': 'Nova Compra',
+  '/contratacoes': 'Contratações',
+  '/contratacoes/nova': 'Nova Contratação',
   '/atas': 'Atas de Registro de Preços',
   '/itens': 'Itens',
   '/fornecedores': 'Fornecedores',

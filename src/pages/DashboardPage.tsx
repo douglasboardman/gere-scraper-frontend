@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
-  ShoppingCart,
+  Gavel,
   FileText,
   ArrowLeftRight,
   ClipboardList,
@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { comprasApi } from '@/api/compras.api'
+import { contratacoesApi } from '@/api/contratacoes.api'
 import { atasApi } from '@/api/atas.api'
 import { fornecimentosApi } from '@/api/fornecimentos.api'
 import { requisicoesApi } from '@/api/requisicoes.api'
@@ -56,8 +56,8 @@ export function DashboardPage() {
   const user = useAuthStore((s) => s.user)
 
   const { data: compras, isLoading: loadingCompras } = useQuery({
-    queryKey: ['compras'],
-    queryFn: comprasApi.listar,
+    queryKey: ['contratacoes'],
+    queryFn: contratacoesApi.listar,
   })
 
   const { data: atas, isLoading: loadingAtas } = useQuery({
@@ -94,10 +94,10 @@ export function DashboardPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
-          title="Total de Compras"
+          title="Total de Contratações"
           value={loadingCompras ? '-' : (compras?.length ?? 0)}
-          description="Compras cadastradas"
-          icon={ShoppingCart}
+          description="Contratações cadastradas"
+          icon={Gavel}
           isLoading={loadingCompras}
           color="#2a593a"
         />
@@ -165,10 +165,10 @@ export function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Compras em processamento */}
+        {/* Contratações em processamento */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Compras em Processamento</CardTitle>
+            <CardTitle className="text-base">Contratações em Processamento</CardTitle>
             <CardDescription>Aguardando importação de dados</CardDescription>
           </CardHeader>
           <CardContent>
@@ -179,7 +179,7 @@ export function DashboardPage() {
             ) : comprasEmProcessamento.length === 0 ? (
               <div className="flex flex-col items-center py-8 text-muted-foreground">
                 <AlertCircle className="h-8 w-8 mb-2 opacity-40" />
-                <p className="text-sm">Nenhuma compra em processamento</p>
+                <p className="text-sm">Nenhuma contratação em processamento</p>
               </div>
             ) : (
               <div className="space-y-3">

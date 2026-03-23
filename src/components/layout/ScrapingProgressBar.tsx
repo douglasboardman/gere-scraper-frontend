@@ -16,7 +16,7 @@ export function ScrapingProgressBar() {
 
   useEffect(() => {
     if (status === 'completed' || status === 'failed') {
-      queryClient.invalidateQueries({ queryKey: ['compras'] })
+      queryClient.invalidateQueries({ queryKey: ['contratacoes'] })
     }
   }, [status, queryClient])
 

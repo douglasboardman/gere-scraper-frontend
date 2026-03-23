@@ -2,7 +2,7 @@
 // Status types
 // ============================================================
 
-export type StatusCompra = 'Em_Processamento' | 'Processada' | 'Inconsistente' | 'Aguardando_Homologacao'
+export type StatusContratacao = 'Em_Processamento' | 'Processada' | 'Inconsistente' | 'Aguardando_Homologacao'
 export type StatusAta = 'Em_Processamento' | 'Processada' | 'Inconsistente'
 export type StatusItem = 'Em_Processamento' | 'Processado' | 'Inconsistente'
 export type StatusFornecimento = 'Homologado' | 'Nao_Homologado' | 'Esgotado' | 'Cancelado'
@@ -21,21 +21,21 @@ export type ModalidadeContratacao =
 // Backend models
 // ============================================================
 
-export interface ICompra {
+export interface IContratacao {
   id: number
   identificador: string
   uasgUnGestora: string
   nomeUnGestora?: string
   codUnGestora?: string
-  numCompra: string
-  anoCompra: number | string
+  numContratacao: string
+  anoContratacao: number | string
   modContratacao?: string
   numEdital?: string
   objeto?: string
   uasgsParticipantes?: string[]
   iniVigencia?: string
   fimVigencia?: string
-  status: StatusCompra
+  status: StatusContratacao
   createdAt: string
   updatedAt: string
 }
@@ -44,7 +44,7 @@ export interface IAtaRegPrecos {
   id: number
   identificador: string
   numAta: string
-  idCompra: string
+  idContratacao: string
   idFornecedor?: string
   cnpjFornecedor?: string
   nomeFornecedor?: string
@@ -200,7 +200,7 @@ export interface IItemRequisicao {
 export interface IScrapingJob {
   id: number
   jobId: string
-  identificadorCompra?: string
+  identificadorContratacao?: string
   tipo: string
   status: StatusJob
   progresso: number
@@ -273,9 +273,9 @@ export interface AdminUpdateUsuarioData {
 // Form types
 // ============================================================
 
-export interface CriarCompraData {
-  numCompra: string
-  anoCompra: string
+export interface CriarContratacaoData {
+  numContratacao: string
+  anoContratacao: string
   uasgUnGestora: string
   modalidade: ModalidadeContratacao
   uasgParticipante?: string

@@ -20,8 +20,8 @@ export const fornecimentosApi = {
     return data
   },
 
-  async listarPorCompraUnidade(idCompra: string, uasg: string): Promise<IFornecimento[]> {
-    const { data } = await apiClient.get<IFornecimento[]>(`/fornecimentos/compra/${idCompra}/unidade/${uasg}`)
+  async listarPorContratacaoUnidade(idContratacao: string, uasg: string): Promise<IFornecimento[]> {
+    const { data } = await apiClient.get<IFornecimento[]>(`/fornecimentos/contratacao/${idContratacao}/unidade/${uasg}`)
     return data
   },
 

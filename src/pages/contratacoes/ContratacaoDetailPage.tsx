@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { ArrowLeft, Pencil, X, Check, ExternalLink } from "lucide-react";
-import { comprasApi } from "@/api/compras.api";
+import { contratacoesApi } from "@/api/contratacoes.api";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { usePermission } from "@/hooks/usePermission";
-import type { ICompra } from "@/types";
+import type { IContratacao } from "@/types";
 
 function Field({
   label,
@@ -32,7 +32,7 @@ function Field({
   );
 }
 
-export function CompraDetailPage() {
+export function ContratacaoDetailPage() {
   const { identificador } = useParams<{ identificador: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -41,24 +41,24 @@ export function CompraDetailPage() {
   const [editObjeto, setEditObjeto] = useState("");
 
   const { data: compra, isLoading } = useQuery({
-    queryKey: ["compra", identificador],
-    queryFn: () => comprasApi.obter(identificador!),
+    queryKey: ["contratacao", identificador],
+    queryFn: () => contratacoesApi.obter(identificador!),
     enabled: !!identificador,
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: Partial<ICompra>) =>
-      comprasApi.atualizar(identificador!, data),
+    mutationFn: (data: Partial<IContratacao>) =>
+      contratacoesApi.atualizar(identificador!, data),
     onSuccess: () => {
-      toast.success("Compra atualizada com sucesso.");
-      queryClient.invalidateQueries({ queryKey: ["compra", identificador] });
-      queryClient.invalidateQueries({ queryKey: ["compras"] });
+      toast.success("Contratação atualizada com sucesso.");
+      queryClient.invalidateQueries({ queryKey: ["contratacao", identificador] });
+      queryClient.invalidateQueries({ queryKey: ["contratacoes"] });
       setEditMode(false);
     },
     onError: (error: unknown) => {
       const msg =
         (error as { response?: { data?: { error?: string } } })?.response?.data
-          ?.error ?? "Erro ao atualizar compra.";
+          ?.error ?? "Erro ao atualizar contratação.";
       toast.error(msg);
     },
   });
@@ -85,12 +85,12 @@ export function CompraDetailPage() {
   }
 
   if (!compra)
-    return <div className="text-muted-foreground">Compra não encontrada.</div>;
+    return <div className="text-muted-foreground">Contratação não encontrada.</div>;
 
   return (
     <div>
       <PageHeader
-        title={`Compra ${compra.numCompra}/${compra.anoCompra}`}
+        title={`Contratação ${compra.numContratacao}/${compra.anoContratacao}`}
         subtitle={
           compra.objeto
             ? compra.objeto.slice(0, 80) +
@@ -129,7 +129,7 @@ export function CompraDetailPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigate("/compras")}
+                  onClick={() => navigate("/contratacoes")}
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Voltar
@@ -146,8 +146,8 @@ export function CompraDetailPage() {
             <Field label="Identificador">
               <span className="font-mono">{compra.identificador}</span>
             </Field>
-            <Field label="Nº Compra">{compra.numCompra || "—"}</Field>
-            <Field label="Ano">{compra.anoCompra || "—"}</Field>
+            <Field label="Nº Contratação">{compra.numContratacao || "—"}</Field>
+            <Field label="Ano">{compra.anoContratacao || "—"}</Field>
             <Field label="UASG Gestora">{compra.uasgUnGestora || "—"}</Field>
             <Field label="Nome UN Gestora">{compra.nomeUnGestora || "—"}</Field>
             <Field label="Cód. UN Gestora">{compra.codUnGestora || "—"}</Field>
@@ -160,7 +160,7 @@ export function CompraDetailPage() {
             </Field>
             <Field label="Vigência Fim">{formatDate(compra.fimVigencia)}</Field>
             <Field label="Status">
-              <StatusBadge status={compra.status} />
+              <StatusBadge status={contratacao.status} />
             </Field>
             <div className="col-span-2 md:col-span-3">
               <span className="text-xs text-muted-foreground uppercase tracking-wide">
@@ -188,9 +188,9 @@ export function CompraDetailPage() {
       </Card>
 
       <Button variant="outline" size="sm" asChild>
-        <Link to={`/atas?idCompra=${compra.identificador}`}>
+        <Link to={`/atas?idContratacao=${compra.identificador}`}>
           <ExternalLink className="h-4 w-4" />
-          Ver Atas desta Compra
+          Ver Atas desta Contratação
         </Link>
       </Button>
     </div>

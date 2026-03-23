@@ -27,7 +27,7 @@ import { requisicoesApi } from '@/api/requisicoes.api'
 import { itemRequisicaoApi } from '@/api/itemRequisicao.api'
 import { fornecimentosApi } from '@/api/fornecimentos.api'
 import { itensApi } from '@/api/itens.api'
-import { comprasApi } from '@/api/compras.api'
+import { contratacoesApi } from '@/api/contratacoes.api'
 import { useAuthStore } from '@/store/auth.store'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -52,7 +52,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn, formatCurrency, tipoRequisicaoLabel } from '@/lib/utils'
-import type { ICompra, IFornecimento, IItem, IRequisicao, IUnidade } from '@/types'
+import type { IContratacao, IFornecimento, IItem, IRequisicao, IUnidade } from '@/types'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -116,7 +116,7 @@ function unMedida(item: IItem): string {
 
 const STEPS = [
   { num: 1, label: 'Dados' },
-  { num: 2, label: 'Compra' },
+  { num: 2, label: 'Contratação' },
   { num: 3, label: 'Itens' },
   { num: 4, label: 'Revisão' },
 ]
@@ -365,7 +365,7 @@ function Step2Compra({
 }: {
   userUasg: string
   tipoRequisicao: 'Material' | 'Servico'
-  onComplete: (compra: ICompra) => void
+  onComplete: (compra: IContratacao) => void
   onBack: () => void
 }) {
   const [search, setSearch] = useState('')
@@ -392,10 +392,10 @@ function Step2Compra({
     queryFn: async () => {
       if (uniqueCompraIds.length === 0) return []
       const results = await Promise.allSettled(
-        uniqueCompraIds.map((id) => comprasApi.obter(id)),
+        uniqueCompraIds.map((id) => contratacoesApi.obter(id)),
       )
       return results
-        .filter((r): r is PromiseFulfilledResult<ICompra> => r.status === 'fulfilled')
+        .filter((r): r is PromiseFulfilledResult<IContratacao> => r.status === 'fulfilled')
         .map((r) => r.value)
     },
     enabled: uniqueCompraIds.length > 0,
@@ -407,7 +407,7 @@ function Step2Compra({
     queryFn: async () => {
       const results = await Promise.allSettled(
         uniqueCompraIds.map(async (id) => {
-          const itens = await itensApi.listar({ idCompra: id })
+          const itens = await itensApi.listar({ idContratacao: id })
           return { id, itens }
         }),
       )
@@ -537,7 +537,7 @@ function Step3Itens({
   onComplete,
   onBack,
 }: {
-  selectedCompra: ICompra
+  selectedCompra: IContratacao
   userUasg: string
   initialItems: Map<string, SelectedItemEntry>
   onComplete: (items: Map<string, SelectedItemEntry>) => void
@@ -551,12 +551,12 @@ function Step3Itens({
   const { data: fornecimentos = [], isLoading: loadingForn } = useQuery({
     queryKey: ['fornecimentos-wizard', selectedCompra.identificador, userUasg],
     queryFn: () =>
-      fornecimentosApi.listarPorCompraUnidade(selectedCompra.identificador, userUasg),
+      fornecimentosApi.listarPorContratacaoUnidade(selectedCompra.identificador, userUasg),
   })
 
   const { data: itens = [], isLoading: loadingItens } = useQuery({
     queryKey: ['itens-wizard', selectedCompra.identificador],
-    queryFn: () => itensApi.listar({ idCompra: selectedCompra.identificador }),
+    queryFn: () => itensApi.listar({ idContratacao: selectedCompra.identificador }),
   })
 
   const itemMap = new Map<string, IItem>(itens.map((it) => [it.identificador, it]))
@@ -891,7 +891,7 @@ function Step4Revisao({
   onBack,
 }: {
   requisicao: IRequisicao
-  selectedCompra: ICompra
+  selectedCompra: IContratacao
   selectedItems: Map<string, SelectedItemEntry>
   onBack: () => void
 }) {
@@ -1142,7 +1142,7 @@ export function NovaRequisicaoPage() {
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
   const [requisicao, setRequisicao] = useState<IRequisicao | null>(null)
-  const [selectedCompra, setSelectedCompra] = useState<ICompra | null>(null)
+  const [selectedCompra, setSelectedCompra] = useState<IContratacao | null>(null)
   // selectedItems is lifted here so step 3 preserves selection when user goes back from step 4
   const [selectedItems, setSelectedItems] = useState<Map<string, SelectedItemEntry>>(new Map())
 

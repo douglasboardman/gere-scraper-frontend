@@ -2,8 +2,8 @@ import apiClient from './client'
 import type { IAtaRegPrecos } from '@/types'
 
 export const atasApi = {
-  async listar(idCompra?: string): Promise<IAtaRegPrecos[]> {
-    const params = idCompra ? { idCompra } : {}
+  async listar(idContratacao?: string): Promise<IAtaRegPrecos[]> {
+    const params = idContratacao ? { idContratacao } : {}
     const { data } = await apiClient.get<IAtaRegPrecos[]>('/atas', { params })
     return data
   },
