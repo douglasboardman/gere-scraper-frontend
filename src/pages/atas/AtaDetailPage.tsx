@@ -42,8 +42,8 @@ export function AtaDetailPage() {
     d ? format(new Date(d), "dd/MM/yyyy", { locale: ptBR }) : "—";
 
   const anoAta = () => {
-    if (ata?.idCompra) {
-      return (ata?.idCompra as string).slice(12, 16);
+    if (ata?.idContratacao) {
+      return (ata?.idContratacao as string).slice(12, 16);
     }
   };
 
@@ -63,7 +63,7 @@ export function AtaDetailPage() {
     <div>
       <PageHeader
         title={`Ata Nº ${ata.numAta}/${anoAta()}`}
-        subtitle={`Compra: ${ata.idCompra}`}
+        subtitle={`Contratação: ${ata.idContratacao}`}
         actions={
           <Button
             variant="outline"
@@ -82,20 +82,20 @@ export function AtaDetailPage() {
             <Field label="Nº Ata">
               <span className="font-mono">{ata.numAta}</span>
             </Field>
-            <Field label="ID Compra">
-              {typeof ata.idCompra === "string" ? (
+            <Field label="ID Contratação">
+              {typeof ata.idContratacao === "string" ? (
                 <Link
-                  to={`/compras/${ata.idCompra}`}
+                  to={`/contratacoes/${ata.idContratacao}`}
                   className="font-mono text-primary hover:underline"
                 >
-                  {ata.idCompra}
+                  {ata.idContratacao}
                 </Link>
               ) : (
                 <Link
-                  to={`/compras/${ata.idCompra.identificador}`}
+                  to={`/contratacoes/${ata.idContratacao.identificador}`}
                   className="font-mono text-primary hover:underline"
                 >
-                  {ata.idCompra.identificador}
+                  {ata.idContratacao.identificador}
                 </Link>
               )}
             </Field>

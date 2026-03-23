@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
-  ShoppingCart,
+  Gavel,
   FileText,
   Package,
   Truck,
@@ -59,9 +59,9 @@ export function Sidebar() {
       ],
     },
     {
-      title: 'Gestão de Compras',
+      title: 'Gestão de Contratações',
       items: [
-        { label: 'Compras', to: '/compras', icon: ShoppingCart },
+        { label: 'Contratações', to: '/contratacoes', icon: Gavel },
         { label: 'Atas', to: '/atas', icon: FileText },
         { label: 'Itens', to: '/itens', icon: Package },
         { label: 'Fornecedores', to: '/fornecedores', icon: Truck },

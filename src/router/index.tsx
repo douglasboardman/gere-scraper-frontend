@@ -9,9 +9,9 @@ import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
 import { DashboardPage } from '@/pages/DashboardPage'
-import { ComprasPage } from '@/pages/compras/ComprasPage'
-import { NovaCompraPage } from '@/pages/compras/NovaCompraPage'
-import { CompraDetailPage } from '@/pages/compras/CompraDetailPage'
+import { ContratacoesPage } from '@/pages/contratacoes/ContratacoesPage'
+import { NovaContratacaoPage } from '@/pages/contratacoes/NovaContratacaoPage'
+import { ContratacaoDetailPage } from '@/pages/contratacoes/ContratacaoDetailPage'
 import { AtasPage } from '@/pages/atas/AtasPage'
 import { AtaDetailPage } from '@/pages/atas/AtaDetailPage'
 import { ItensPage } from '@/pages/itens/ItensPage'
@@ -85,22 +85,22 @@ export const router = createBrowserRouter([
             element: <DashboardPage />,
           },
           {
-            path: 'compras',
-            element: <ComprasPage />,
+            path: 'contratacoes',
+            element: <ContratacoesPage />,
           },
           {
-            path: 'compras/nova',
+            path: 'contratacoes/nova',
             element: <PrivateRoute requireGestorOrAdmin />,
             children: [
               {
                 index: true,
-                element: <NovaCompraPage />,
+                element: <NovaContratacaoPage />,
               },
             ],
           },
           {
-            path: 'compras/:identificador',
-            element: <CompraDetailPage />,
+            path: 'contratacoes/:identificador',
+            element: <ContratacaoDetailPage />,
           },
           {
             path: 'atas',

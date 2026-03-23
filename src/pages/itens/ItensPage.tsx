@@ -15,11 +15,11 @@ export function ItensPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const idAta = searchParams.get("idAta") ?? undefined;
-  const idCompra = searchParams.get("idCompra") ?? undefined;
+  const idContratacao = searchParams.get("idContratacao") ?? undefined;
 
   const { data: itens = [], isLoading } = useQuery({
-    queryKey: ["itens", idAta, idCompra],
-    queryFn: () => itensApi.listar({ idAta, idCompra }),
+    queryKey: ["itens", idAta, idContratacao],
+    queryFn: () => itensApi.listar({ idAta, idContratacao }),
   });
 
   const columns: ColumnDef<IItem, unknown>[] = [
@@ -123,8 +123,8 @@ export function ItensPage() {
 
   const subtitle = idAta
     ? `Filtrando por Ata: ${idAta}`
-    : idCompra
-      ? `Filtrando por Compra: ${idCompra}`
+    : idContratacao
+      ? `Filtrando por Contratação: ${idContratacao}`
       : "Todos os itens registrados no sistema";
 
   return (

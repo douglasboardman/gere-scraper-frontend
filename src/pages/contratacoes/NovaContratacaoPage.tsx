@@ -5,9 +5,9 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Loader2 } from 'lucide-react'
-import { comprasApi } from '@/api/compras.api'
+import { contratacoesApi } from '@/api/contratacoes.api'
 import { unidadesApi } from '@/api/unidades.api'
-import type { ICompra } from '@/types'
+import type { IContratacao } from '@/types'
 import { useAuthStore } from '@/store/auth.store'
 import { usePermission } from '@/hooks/usePermission'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -35,8 +35,8 @@ const currentYear = new Date().getFullYear()
 const modalidades = ['Pregão', 'Concorrência', 'Dispensa', 'Inexigibilidade'] as const
 
 const novaCompraSchema = z.object({
-  numCompra: z.string().min(1, 'Número da compra é obrigatório'),
-  anoCompra: z.string().regex(/^\d{4}$/, 'Ano deve ter 4 dígitos'),
+  numContratacao: z.string().min(1, 'Número da contratacao é obrigatório'),
+  anoContratacao: z.string().regex(/^\d{4}$/, 'Ano deve ter 4 dígitos'),
   uasgUnGestora: z.string().min(1, 'UASG da unidade gestora é obrigatória'),
   modalidade: z.enum(modalidades, {
     errorMap: () => ({ message: 'Selecione a modalidade' }),
@@ -46,7 +46,7 @@ const novaCompraSchema = z.object({
 
 type NovaCompraFormData = z.infer<typeof novaCompraSchema>
 
-export function NovaCompraPage() {
+export function NovaContratacaoPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { setActiveJobId } = useAuthStore()
@@ -61,8 +61,8 @@ export function NovaCompraPage() {
   const form = useForm<NovaCompraFormData>({
     resolver: zodResolver(novaCompraSchema),
     defaultValues: {
-      numCompra: '',
-      anoCompra: String(currentYear),
+      numContratacao: '',
+      anoContratacao: String(currentYear),
       uasgUnGestora: '',
       modalidade: undefined,
       uasgParticipante: undefined,
@@ -71,9 +71,9 @@ export function NovaCompraPage() {
 
   const mutation = useMutation({
     mutationFn: (data: NovaCompraFormData) =>
-      comprasApi.criar({
-        numCompra: data.numCompra,
-        anoCompra: data.anoCompra,
+      contratacoesApi.criar({
+        numContratacao: data.numContratacao,
+        anoContratacao: data.anoContratacao,
         uasgUnGestora: data.uasgUnGestora,
         modalidade: data.modalidade,
         ...(isAdmin && data.uasgParticipante ? { uasgParticipante: data.uasgParticipante } : {}),
@@ -81,20 +81,20 @@ export function NovaCompraPage() {
     onSuccess: (result) => {
       // setQueryData atualiza o cache diretamente, sem network round-trip nem respeito ao staleTime
       if (!result.reimport) {
-        queryClient.setQueryData<ICompra[]>(['compras'], (old) => [result.compra, ...(old ?? [])])
+        queryClient.setQueryData<IContratacao[]>(['contratacoes'], (old) => [result.contratacao, ...(old ?? [])])
       }
       setActiveJobId(result.jobId)
 
       const msg = result.reimport
-        ? 'Compra já processada. Importando fornecimentos para sua unidade...'
-        : 'Compra registrada! Acompanhe o progresso na barra inferior.'
+        ? 'Contratação já processada. Importando fornecimentos para sua unidade...'
+        : 'Contratação registrada! Acompanhe o progresso na barra inferior.'
       toast.success(msg, { duration: 6000 })
-      navigate('/compras')
+      navigate('/contratacoes')
     },
     onError: (error: unknown) => {
       const msg =
         (error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Erro ao registrar compra.'
+        'Erro ao registrar contratação.'
       toast.error(msg)
     },
   })
@@ -110,10 +110,10 @@ export function NovaCompraPage() {
   return (
     <div>
       <PageHeader
-        title="Importar Compra"
-        subtitle="Importe uma compra do portal ComprasGov para o sistema"
+        title="Importar Contratação"
+        subtitle="Importe uma contratação do portal ContrataçõesGov para o sistema"
         actions={
-          <Button variant="outline" onClick={() => navigate('/compras')}>
+          <Button variant="outline" onClick={() => navigate('/contratacoes')}>
             <ArrowLeft className="h-4 w-4" />
             Voltar
           </Button>
@@ -122,7 +122,7 @@ export function NovaCompraPage() {
 
       <Card className="max-w-2xl">
         <CardHeader>
-          <CardTitle className="text-base">Dados da Compra</CardTitle>
+          <CardTitle className="text-base">Dados da Contratação</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -130,10 +130,10 @@ export function NovaCompraPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="numCompra"
+                  name="numContratacao"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Numero da Compra *</FormLabel>
+                      <FormLabel>Número da Contratação *</FormLabel>
                       <FormControl>
                         <Input placeholder="Ex: 90010" {...field} />
                       </FormControl>
@@ -144,10 +144,10 @@ export function NovaCompraPage() {
 
                 <FormField
                   control={form.control}
-                  name="anoCompra"
+                  name="anoContratacao"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Ano da Compra *</FormLabel>
+                      <FormLabel>Ano da Contratação *</FormLabel>
                       <FormControl>
                         <Input placeholder={String(currentYear)} {...field} />
                       </FormControl>
@@ -234,13 +234,13 @@ export function NovaCompraPage() {
                       Importando...
                     </>
                   ) : (
-                    'Importar Compra'
+                    'Importar Contratação'
                   )}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate('/compras')}
+                  onClick={() => navigate('/contratacoes')}
                 >
                   Cancelar
                 </Button>

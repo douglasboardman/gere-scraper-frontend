@@ -7,14 +7,14 @@ import { toast } from 'sonner'
 import { Plus, Eye, Trash2, TriangleAlert } from 'lucide-react'
 import { ManageSearchIcon } from '@/components/icons/ManageSearchIcon'
 import type { ColumnDef } from '@tanstack/react-table'
-import { comprasApi } from '@/api/compras.api'
+import { contratacoesApi } from '@/api/contratacoes.api'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { usePermission } from '@/hooks/usePermission'
-import type { ICompra } from '@/types'
+import type { IContratacao } from '@/types'
 import { truncate } from '@/lib/utils'
 import {
   Select,
@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-export function ComprasPage() {
+export function ContratacoesPage() {
   const navigate = useNavigate()
   const { can, isAdmin } = usePermission()
   const queryClient = useQueryClient()
@@ -32,21 +32,21 @@ export function ComprasPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
   const { data: compras = [], isLoading } = useQuery({
-    queryKey: ['compras'],
-    queryFn: comprasApi.listar,
+    queryKey: ['contratacoes'],
+    queryFn: contratacoesApi.listar,
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (identificador: string) => comprasApi.deletar(identificador),
+    mutationFn: (identificador: string) => contratacoesApi.deletar(identificador),
     onSuccess: () => {
-      toast.success('Compra excluída com sucesso.')
-      queryClient.invalidateQueries({ queryKey: ['compras'] })
+      toast.success('Contratação excluída com sucesso.')
+      queryClient.invalidateQueries({ queryKey: ['contratacoes'] })
       setDeleteId(null)
     },
     onError: (error: unknown) => {
       const msg =
         (error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Erro ao excluir compra.'
+        'Erro ao excluir contratação.'
       toast.error(msg)
     },
   })
@@ -55,7 +55,7 @@ export function ComprasPage() {
     ? compras
     : compras.filter((c) => c.status === statusFilter)
 
-  const columns: ColumnDef<ICompra, unknown>[] = [
+  const columns: ColumnDef<IContratacao, unknown>[] = [
     {
       accessorKey: 'identificador',
       header: 'Identificador',
@@ -107,7 +107,7 @@ export function ComprasPage() {
             size="sm"
             className="h-8 w-8 p-0"
             title="Ver detalhes"
-            onClick={() => navigate(`/compras/${row.original.identificador}`)}
+            onClick={() => navigate(`/contratacoes/${row.original.identificador}`)}
           >
             <Eye className="h-3.5 w-3.5" />
           </Button>
@@ -116,7 +116,7 @@ export function ComprasPage() {
             size="sm"
             className="h-8 w-8 p-0"
             title="Ver Atas"
-            onClick={() => navigate(`/atas?idCompra=${row.original.identificador}`)}
+            onClick={() => navigate(`/atas?idContratacao=${row.original.identificador}`)}
           >
             <ManageSearchIcon className="h-3.5 w-3.5" />
           </Button>
@@ -138,13 +138,13 @@ export function ComprasPage() {
   return (
     <div>
       <PageHeader
-        title="Compras"
-        subtitle="Gerencie as compras e pregões eletrônicos"
+        title="Contratações"
+        subtitle="Gerencie as contratações e pregões eletrônicos"
         actions={
           can('manage:compras') ? (
-            <Button onClick={() => navigate('/compras/nova')}>
+            <Button onClick={() => navigate('/contratacoes/nova')}>
               <Plus className="h-4 w-4" />
-              Nova Compra
+              Nova Contratação
             </Button>
           ) : undefined
         }
@@ -169,13 +169,13 @@ export function ComprasPage() {
         columns={columns}
         data={filtered}
         isLoading={isLoading}
-        emptyMessage="Nenhuma compra encontrada."
+        emptyMessage="Nenhuma contratacao encontrada."
       />
 
       <ConfirmDialog
         open={!!deleteId}
-        title="Excluir Compra"
-        description={`Tem certeza que deseja excluir a compra "${deleteId}"?`}
+        title="Excluir Contratação"
+        description={`Tem certeza que deseja excluir a contratacao "${deleteId}"?`}
         confirmLabel="Excluir"
         variant="destructive"
         isLoading={deleteMutation.isPending}
@@ -185,8 +185,8 @@ export function ComprasPage() {
         <div className="flex items-start gap-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-800">
           <TriangleAlert className="mt-0.5 h-10 w-10 shrink-0 text-amber-500" />
           <p className="text-sm leading-relaxed">
-            <strong>Atenção:</strong> Esta operação excluirá todas as atas, itens e fornecimentos ligados à compra.
-            Apenas os registros de fornecedores importados na inclusão da compra permanecerão na base de dados.
+            <strong>Atenção:</strong> Esta operação excluirá todas as atas, itens e fornecimentos ligados à contratação.
+            Apenas os registros de fornecedores importados na inclusão da contratacao permanecerão na base de dados.
             <br /><br />
             <strong>Esta ação não pode ser desfeita.</strong>
           </p>

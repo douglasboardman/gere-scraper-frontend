@@ -249,7 +249,7 @@ function AddItemsDialog({
     queryKey: ['add-items-fornecimentos', compraIdStr, userUasg],
     queryFn: () =>
       compraIdStr
-        ? fornecimentosApi.listarPorCompraUnidade(compraIdStr, userUasg)
+        ? fornecimentosApi.listarPorContratacaoUnidade(compraIdStr, userUasg)
         : fornecimentosApi.listarPorUnidade(userUasg),
     enabled: open && !!userUasg,
   })
@@ -257,7 +257,7 @@ function AddItemsDialog({
   const { data: itens = [], isLoading: loadingItens } = useQuery({
     queryKey: ['add-items-itens', compraIdStr],
     queryFn: () =>
-      compraIdStr ? itensApi.listar({ idCompra: compraIdStr }) : Promise.resolve([]),
+      compraIdStr ? itensApi.listar({ idContratacao: compraIdStr }) : Promise.resolve([]),
     enabled: open && !!compraIdStr,
   })
 
