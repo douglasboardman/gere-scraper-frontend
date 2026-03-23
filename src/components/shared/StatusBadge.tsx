@@ -20,15 +20,16 @@ interface StatusConfig {
 }
 
 const statusMap: Record<string, StatusConfig> = {
-  // Compra / Ata / Item
-  'Em Processamento': { label: 'Em Processamento', variant: 'warning' },
+  // Compra / Ata / Item — valores Prisma
+  'Em_Processamento': { label: 'Em Processamento', variant: 'warning' },
   'Processada': { label: 'Processada', variant: 'success' },
+  'Processado': { label: 'Processado', variant: 'success' },
   'Inconsistente': { label: 'Inconsistente', variant: 'destructive' },
-  'Aguardando': { label: 'Aguardando', variant: 'secondary' },
+  'Aguardando_Homologacao': { label: 'Ag. Homologação', variant: 'secondary' },
 
   // Fornecimento
   'Homologado': { label: 'Homologado', variant: 'success' },
-  'Não Homologado': { label: 'Não Homologado', variant: 'secondary' },
+  'Nao_Homologado': { label: 'Não Homologado', variant: 'secondary' },
   'Esgotado': { label: 'Esgotado', variant: 'orange' },
   'Cancelado': { label: 'Cancelado', variant: 'destructive' },
 
@@ -43,7 +44,6 @@ const statusMap: Record<string, StatusConfig> = {
   'running': { label: 'Executando', variant: 'info' },
   'completed': { label: 'Concluído', variant: 'success' },
   'failed': { label: 'Falhou', variant: 'destructive' },
-  'pending': { label: 'Pendente', variant: 'secondary' },
 }
 
 interface StatusBadgeProps {

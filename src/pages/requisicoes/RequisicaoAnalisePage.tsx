@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/dialog'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { StatusBadge } from '@/components/shared/StatusBadge'
-import { cn, formatCurrency } from '@/lib/utils'
+import { cn, formatCurrency, tipoRequisicaoLabel } from '@/lib/utils'
 import type { IItemRequisicao, IFornecimento, IItem, IUsuario, IUnidade, IUorg } from '@/types'
 
 // ---------------------------------------------------------------------------
@@ -79,7 +79,7 @@ function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogPro
   const newTotal = vUnit * (Number(qty) || 0)
 
   const mutation = useMutation({
-    mutationFn: () => itemRequisicaoApi.atualizar(item._id, { quantidadeSolicitada: Number(qty) }),
+    mutationFn: () => itemRequisicaoApi.atualizar(item.id, { quantidadeSolicitada: Number(qty) }),
     onSuccess: () => { toast.success('Quantidade atualizada.'); onSaved(); onOpenChange(false) },
     onError: (e: unknown) => {
       toast.error((e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Erro inesperado')
@@ -568,7 +568,7 @@ export function RequisicaoAnalisePage() {
             </div>
             <div>
               <span className="text-muted-foreground">Tipo</span>
-              <p className="font-medium">{requisicao.tipo ?? '—'}</p>
+              <p className="font-medium">{tipoRequisicaoLabel(requisicao.tipo)}</p>
             </div>
             {requisicao.justificativa && (
               <div className="col-span-2">
@@ -644,7 +644,7 @@ export function RequisicaoAnalisePage() {
                     </thead>
                     <tbody className="divide-y">
                       {itensForn.map((item) => (
-                        <tr key={item._id} className="hover:bg-muted/10">
+                        <tr key={item.id} className="hover:bg-muted/10">
                           <td className="px-5 py-2.5 font-medium">{getItemName(item)}</td>
                           <td className="px-4 py-2.5 text-right">{item.quantidadeSolicitada}</td>
                           <td className="px-4 py-2.5 text-right">
@@ -666,7 +666,7 @@ export function RequisicaoAnalisePage() {
                                 variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10"
                                 title="Remover item"
                                 disabled={removeItemMutation.isPending}
-                                onClick={() => removeItemMutation.mutate(item._id)}
+                                onClick={() => removeItemMutation.mutate(item.id)}
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </Button>

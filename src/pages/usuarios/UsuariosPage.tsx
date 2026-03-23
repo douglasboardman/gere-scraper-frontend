@@ -160,7 +160,7 @@ export function UsuariosPage() {
       cell: ({ row }) => (
         <Switch
           checked={row.original.ativo}
-          onCheckedChange={() => toggleAtivoMutation.mutate(row.original._id)}
+          onCheckedChange={() => toggleAtivoMutation.mutate(row.original.id)}
           disabled={toggleAtivoMutation.isPending}
         />
       ),
@@ -172,7 +172,7 @@ export function UsuariosPage() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate(`/usuarios/${row.original._id}`)}
+          onClick={() => navigate(`/usuarios/${row.original.id}`)}
         >
           <Pencil className="h-4 w-4" />
         </Button>
@@ -298,7 +298,7 @@ export function UsuariosPage() {
                           </FormControl>
                           <SelectContent>
                             {unidades.map((u) => (
-                              <SelectItem key={u._id} value={u._id}>
+                              <SelectItem key={u.id} value={String(u.id)}>
                                 {u.nomeAbrev ?? u.nome} ({u.uasg})
                               </SelectItem>
                             ))}

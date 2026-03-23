@@ -157,10 +157,10 @@ export function ComprasPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os status</SelectItem>
-            <SelectItem value="Em Processamento">Em Processamento</SelectItem>
+            <SelectItem value="Em_Processamento">Em Processamento</SelectItem>
             <SelectItem value="Processada">Processada</SelectItem>
             <SelectItem value="Inconsistente">Inconsistente</SelectItem>
-            <SelectItem value="Aguardando">Aguardando</SelectItem>
+            <SelectItem value="Aguardando_Homologacao">Ag. Homologação</SelectItem>
           </SelectContent>
         </Select>
       </div>

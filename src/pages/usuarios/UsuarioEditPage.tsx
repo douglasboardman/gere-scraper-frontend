@@ -60,10 +60,12 @@ export function UsuarioEditPage() {
   const queryClient = useQueryClient()
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
 
+  const numericId = id ? parseInt(id) : undefined
+
   const { data: usuario, isLoading } = useQuery({
     queryKey: ['usuario', id],
-    queryFn: () => usuariosApi.obter(id!),
-    enabled: !!id,
+    queryFn: () => usuariosApi.obter(numericId!),
+    enabled: !!numericId,
   })
 
   const { data: unidades = [] } = useQuery({
@@ -78,9 +80,7 @@ export function UsuarioEditPage() {
           nome: usuario.nome,
           email: usuario.email,
           role: usuario.role,
-          unidade: typeof usuario.unidade === 'string'
-            ? usuario.unidade
-            : usuario.unidade?._id ?? '',
+          unidade: String(usuario.unidade?.id ?? ''),
           uorg_key: usuario.uorg_key ?? '',
         }
       : undefined,
@@ -96,7 +96,7 @@ export function UsuarioEditPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: (data: EditUsuarioFormData) => usuariosApi.atualizar(id!, data),
+    mutationFn: (data: EditUsuarioFormData) => usuariosApi.atualizar(numericId!, data),
     onSuccess: () => {
       toast.success('Usuário atualizado com sucesso.')
       queryClient.invalidateQueries({ queryKey: ['usuarios'] })
@@ -115,7 +115,7 @@ export function UsuarioEditPage() {
   })
 
   const resetSenhaMutation = useMutation({
-    mutationFn: () => usuariosApi.resetSenha(id!),
+    mutationFn: () => usuariosApi.resetSenha(numericId!),
     onSuccess: (data) => {
       toast.success(data.message)
       setResetDialogOpen(false)
@@ -250,7 +250,7 @@ export function UsuarioEditPage() {
                           </FormControl>
                           <SelectContent>
                             {unidades.map((u) => (
-                              <SelectItem key={u._id} value={u._id}>
+                              <SelectItem key={u.id} value={String(u.id)}>
                                 {u.nomeAbrev ?? u.nome} ({u.uasg})
                               </SelectItem>
                             ))}
@@ -268,6 +268,7 @@ export function UsuarioEditPage() {
                       <FormItem>
                         <FormLabel>UORG</FormLabel>
                         <Select
+                          key={uorgsLoading ? 'loading' : `loaded-${selectedUnidade}`}
                           onValueChange={field.onChange}
                           value={field.value}
                           disabled={!selectedUnidade || uorgsLoading}

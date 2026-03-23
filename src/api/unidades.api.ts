@@ -7,7 +7,7 @@ export const unidadesApi = {
     return data
   },
 
-  async obter(id: string): Promise<IUnidade> {
+  async obter(id: number): Promise<IUnidade> {
     const { data } = await apiClient.get<IUnidade>(`/unidades/${id}`)
     return data
   },
@@ -17,7 +17,7 @@ export const unidadesApi = {
     return data
   },
 
-  async atualizar(id: string, unidadeData: Partial<CriarUnidadeData>): Promise<IUnidade> {
+  async atualizar(id: number, unidadeData: Partial<CriarUnidadeData>): Promise<IUnidade> {
     const { data } = await apiClient.put<IUnidade>(`/unidades/${id}`, unidadeData)
     return data
   },

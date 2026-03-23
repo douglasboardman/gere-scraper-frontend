@@ -43,7 +43,7 @@ export function FornecimentoDetailPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: (data: Partial<IFornecimento>) => fornecimentosApi.atualizar(fornecimento!._id, data),
+    mutationFn: (data: Partial<IFornecimento>) => fornecimentosApi.atualizar(fornecimento!.id, data),
     onSuccess: () => {
       toast.success('Fornecimento atualizado com sucesso.')
       queryClient.invalidateQueries({ queryKey: ['fornecimento', id] })

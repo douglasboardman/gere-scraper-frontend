@@ -247,7 +247,7 @@ export function RegisterPage() {
                       </FormControl>
                       <SelectContent>
                         {unidades.map((u) => (
-                          <SelectItem key={u._id} value={u._id}>
+                          <SelectItem key={u.id} value={String(u.id)}>
                             {u.nomeAbrev ?? u.nome} ({u.uasg})
                           </SelectItem>
                         ))}

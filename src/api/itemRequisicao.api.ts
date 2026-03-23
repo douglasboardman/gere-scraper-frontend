@@ -7,7 +7,7 @@ export const itemRequisicaoApi = {
     return data
   },
 
-  async obter(id: string): Promise<IItemRequisicao> {
+  async obter(id: number): Promise<IItemRequisicao> {
     const { data } = await apiClient.get<IItemRequisicao>(`/itens-requisicao/${id}`)
     return data
   },
@@ -17,12 +17,12 @@ export const itemRequisicaoApi = {
     return data
   },
 
-  async atualizar(id: string, itemData: Partial<CriarItemRequisicaoData>): Promise<IItemRequisicao> {
+  async atualizar(id: number, itemData: Partial<CriarItemRequisicaoData>): Promise<IItemRequisicao> {
     const { data } = await apiClient.put<IItemRequisicao>(`/itens-requisicao/${id}`, itemData)
     return data
   },
 
-  async deletar(id: string): Promise<void> {
+  async deletar(id: number): Promise<void> {
     await apiClient.delete(`/itens-requisicao/${id}`)
   },
 }

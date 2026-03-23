@@ -12,7 +12,7 @@ export const itensApi = {
     return data
   },
 
-  async atualizar(id: string, data: Partial<IItem>): Promise<IItem> {
+  async atualizar(id: number, data: Partial<IItem>): Promise<IItem> {
     const { data: result } = await apiClient.put<IItem>(`/itens/${id}`, data)
     return result
   },

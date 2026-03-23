@@ -50,7 +50,7 @@ import {
 } from '@/components/ui/form'
 import { useAuthStore } from '@/store/auth.store'
 import { usePermission } from '@/hooks/usePermission'
-import { cn, formatCurrency } from '@/lib/utils'
+import { cn, formatCurrency, tipoRequisicaoLabel } from '@/lib/utils'
 import type { IItemRequisicao, IFornecimento, IItem, IUsuario, IUnidade, IUorg, IRequisicao } from '@/types'
 
 // ---------------------------------------------------------------------------
@@ -119,7 +119,7 @@ function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogPro
 
   const mutation = useMutation({
     mutationFn: () =>
-      itemRequisicaoApi.atualizar(item._id, { quantidadeSolicitada: Number(qty) }),
+      itemRequisicaoApi.atualizar(item.id, { quantidadeSolicitada: Number(qty) }),
     onSuccess: () => {
       toast.success('Quantidade atualizada.')
       onSaved()
@@ -565,7 +565,7 @@ function AddItemsDialog({
                     </div>
                     {existingItems.map((ei) => (
                       <div
-                        key={ei._id}
+                        key={ei.id}
                         className="px-3 py-2.5 opacity-60 bg-muted/10"
                       >
                         <p className="text-xs font-medium leading-snug line-clamp-2 mb-1">
@@ -694,7 +694,7 @@ function EditRequisicaoDialog({
   })
 
   const mutation = useMutation({
-    mutationFn: (data: EditReqData) => requisicoesApi.atualizar(requisicao._id, data),
+    mutationFn: (data: EditReqData) => requisicoesApi.atualizar(requisicao.id, data),
     onSuccess: () => {
       toast.success('Requisição atualizada.')
       onSaved()
@@ -721,7 +721,7 @@ function EditRequisicaoDialog({
             <div className="space-y-2">
               <Label className="text-sm font-medium">Tipo</Label>
               <div className="flex h-9 items-center rounded-md border bg-muted px-3 text-sm text-muted-foreground">
-                {requisicao.tipo}
+                {tipoRequisicaoLabel(requisicao.tipo)}
               </div>
               <p className="text-xs text-muted-foreground">
                 O tipo da requisição não pode ser alterado.
@@ -875,11 +875,7 @@ export function RequisicaoDetailPage() {
 
   if (!requisicao) return <div>Requisição não encontrada.</div>
 
-  const isOwner = (() => {
-    const r = requisicao.requisitante
-    const uid = typeof r === 'string' ? r : (r as IUsuario)?._id
-    return uid === user?._id
-  })()
+  const isOwner = requisicao.requisitanteId === user?.id
 
   const canEdit = isOwner && (requisicao.status === 'Rascunho' || requisicao.status === 'Rejeitada')
   const canSend = isOwner && (requisicao.status === 'Rascunho' || requisicao.status === 'Rejeitada')
@@ -967,7 +963,7 @@ export function RequisicaoDetailPage() {
             </div>
             <div>
               <span className="text-muted-foreground">Tipo</span>
-              <p className="font-medium">{requisicao.tipo ?? '—'}</p>
+              <p className="font-medium">{tipoRequisicaoLabel(requisicao.tipo)}</p>
             </div>
             {requisicao.justificativa && (
               <div className="col-span-2">
@@ -1071,7 +1067,7 @@ export function RequisicaoDetailPage() {
                   </TableRow>
                 ) : (
                   itensRequisicao.map((item: IItemRequisicao) => (
-                    <TableRow key={item._id}>
+                    <TableRow key={item.id}>
                       <TableCell className="text-sm font-medium">{getItemName(item)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {getFornecedorName(item)}
@@ -1102,7 +1098,7 @@ export function RequisicaoDetailPage() {
                               size="icon"
                               className="h-7 w-7 text-destructive hover:bg-destructive/10"
                               title="Remover item"
-                              onClick={() => removeItemMutation.mutate(item._id)}
+                              onClick={() => removeItemMutation.mutate(item.id)}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>

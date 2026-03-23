@@ -210,7 +210,7 @@ export function NovaCompraPage() {
                           </FormControl>
                           <SelectContent>
                             {unidades.map((u) => (
-                              <SelectItem key={u._id} value={u.uasg}>
+                              <SelectItem key={u.id} value={u.uasg}>
                                 {u.uasg} - {u.nomeAbrev || u.nome}
                               </SelectItem>
                             ))}
