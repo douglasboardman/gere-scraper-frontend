@@ -397,6 +397,7 @@ export function RequisicaoAnalisePage() {
     },
     onSuccess: () => {
       toast.success('Requisição aprovada.')
+      queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
       navigate('/requisicoes/pendentes')
     },
     onError: (e: unknown) => {
@@ -411,6 +412,7 @@ export function RequisicaoAnalisePage() {
     },
     onSuccess: () => {
       toast.success('Requisição rejeitada.')
+      queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
       navigate('/requisicoes/pendentes')
     },
     onError: (e: unknown) => {
