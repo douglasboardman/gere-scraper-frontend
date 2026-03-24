@@ -40,7 +40,7 @@ export function ContratacaoDetailPage() {
   const [editMode, setEditMode] = useState(false);
   const [editObjeto, setEditObjeto] = useState("");
 
-  const { data: compra, isLoading } = useQuery({
+  const { data: contratacao, isLoading } = useQuery({
     queryKey: ["contratacao", identificador],
     queryFn: () => contratacoesApi.obter(identificador!),
     enabled: !!identificador,
@@ -64,7 +64,7 @@ export function ContratacaoDetailPage() {
   });
 
   const handleEdit = () => {
-    setEditObjeto(compra?.objeto ?? "");
+    setEditObjeto(contratacao?.objeto ?? "");
     setEditMode(true);
   };
 
@@ -84,17 +84,17 @@ export function ContratacaoDetailPage() {
     );
   }
 
-  if (!compra)
+  if (!contratacao)
     return <div className="text-muted-foreground">Contratação não encontrada.</div>;
 
   return (
     <div>
       <PageHeader
-        title={`Contratação ${compra.numContratacao}/${compra.anoContratacao}`}
+        title={`Contratação ${contratacao.numContratacao}/${contratacao.anoContratacao}`}
         subtitle={
-          compra.objeto
-            ? compra.objeto.slice(0, 80) +
-              (compra.objeto.length > 80 ? "…" : "")
+          contratacao.objeto
+            ? contratacao.objeto.slice(0, 80) +
+              (contratacao.objeto.length > 80 ? "…" : "")
             : "Sem objeto definido"
         }
         actions={
@@ -144,21 +144,21 @@ export function ContratacaoDetailPage() {
         <CardContent className="pt-6">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-5">
             <Field label="Identificador">
-              <span className="font-mono">{compra.identificador}</span>
+              <span className="font-mono">{contratacao.identificador}</span>
             </Field>
-            <Field label="Nº Contratação">{compra.numContratacao || "—"}</Field>
-            <Field label="Ano">{compra.anoContratacao || "—"}</Field>
-            <Field label="UASG Gestora">{compra.uasgUnGestora || "—"}</Field>
-            <Field label="Nome UN Gestora">{compra.nomeUnGestora || "—"}</Field>
-            <Field label="Cód. UN Gestora">{compra.codUnGestora || "—"}</Field>
+            <Field label="Nº Contratação">{contratacao.numContratacao || "—"}</Field>
+            <Field label="Ano">{contratacao.anoContratacao || "—"}</Field>
+            <Field label="UASG Gestora">{contratacao.uasgUnGestora || "—"}</Field>
+            <Field label="Nome UN Gestora">{contratacao.nomeUnGestora || "—"}</Field>
+            <Field label="Cód. UN Gestora">{contratacao.codUnGestora || "—"}</Field>
             <Field label="Modalidade">
-              {compra.modContratacao || "—"}
+              {contratacao.modContratacao || "—"}
             </Field>
-            <Field label="Nº Edital">{compra.numEdital || "—"}</Field>
+            <Field label="Nº Edital">{contratacao.numEdital || "—"}</Field>
             <Field label="Vigência Início">
-              {formatDate(compra.iniVigencia)}
+              {formatDate(contratacao.iniVigencia)}
             </Field>
-            <Field label="Vigência Fim">{formatDate(compra.fimVigencia)}</Field>
+            <Field label="Vigência Fim">{formatDate(contratacao.fimVigencia)}</Field>
             <Field label="Status">
               <StatusBadge status={contratacao.status} />
             </Field>
@@ -174,13 +174,13 @@ export function ContratacaoDetailPage() {
                   onChange={(e) => setEditObjeto(e.target.value)}
                 />
               ) : (
-                <p className="mt-1 text-sm leading-relaxed">{compra.objeto || "—"}</p>
+                <p className="mt-1 text-sm leading-relaxed">{contratacao.objeto || "—"}</p>
               )}
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-6">
             Atualizado em{" "}
-            {format(new Date(compra.updatedAt), "dd/MM/yyyy HH:mm", {
+            {format(new Date(contratacao.updatedAt), "dd/MM/yyyy HH:mm", {
               locale: ptBR,
             })}
           </p>
@@ -188,7 +188,7 @@ export function ContratacaoDetailPage() {
       </Card>
 
       <Button variant="outline" size="sm" asChild>
-        <Link to={`/atas?idContratacao=${compra.identificador}`}>
+        <Link to={`/atas?idContratacao=${contratacao.identificador}`}>
           <ExternalLink className="h-4 w-4" />
           Ver Atas desta Contratação
         </Link>
