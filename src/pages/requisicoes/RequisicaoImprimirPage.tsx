@@ -12,8 +12,8 @@ import type { IItemRequisicao, IFornecimento, IItem, IUsuario, IUnidade, IUorg }
 
 
 function getItemData(item: IItemRequisicao): { seq: string; descDetalhada: string; tipo: string } {
-  const f = item.idFornecimento as IFornecimento
-  const i = (typeof f !== 'string' ? f?.idItem : null) as IItem | null
+  const f = item.identFornecimento as IFornecimento
+  const i = (typeof f !== 'string' ? f?.identItem : null) as IItem | null
   return {
     seq: i?.sequencialItemPregao ?? '—',
     descDetalhada: i?.descDetalhada ?? i?.descBreve ?? (typeof f === 'string' ? f : f?.identificador) ?? '—',
@@ -22,13 +22,13 @@ function getItemData(item: IItemRequisicao): { seq: string; descDetalhada: strin
 }
 
 function getFornecedorName(item: IItemRequisicao): string {
-  const f = item.idFornecimento as IFornecimento
+  const f = item.identFornecimento as IFornecimento
   if (typeof f === 'string') return '—'
   return f?.nomeFornecedor ?? '—'
 }
 
 function getFornecedorCnpj(items: IItemRequisicao[]): string | null {
-  const f = items[0]?.idFornecimento as IFornecimento
+  const f = items[0]?.identFornecimento as IFornecimento
   if (!f || typeof f === 'string') return null
   return f.cnpjFornecedor ?? null
 }
@@ -41,11 +41,11 @@ interface InfoCardProps {
   justificativa: string | undefined
   observacoes: string | undefined
   status: string
-  idUnidade: unknown
+  identUnidade: unknown
   uorg_key: string | undefined
 }
 
-function InfoCard({ requisitante, unidade, uorg, tipo, justificativa, observacoes, status, idUnidade, uorg_key }: InfoCardProps) {
+function InfoCard({ requisitante, unidade, uorg, tipo, justificativa, observacoes, status, identUnidade, uorg_key }: InfoCardProps) {
   return (
     <div className="grid grid-cols-2 gap-x-8 gap-y-2 border rounded-md p-3 text-xs">
       <div>
@@ -55,7 +55,7 @@ function InfoCard({ requisitante, unidade, uorg, tipo, justificativa, observacoe
       <div>
         <p className="text-muted-foreground uppercase font-semibold mb-0.5">Unidade (UASG)</p>
         <p className="font-medium">
-          {unidade ? `${unidade.uasg} — ${unidade.nomeAbrev ?? unidade.nome}` : (idUnidade as string)}
+          {unidade ? `${unidade.uasg} — ${unidade.nomeAbrev ?? unidade.nome}` : (identUnidade as string)}
         </p>
       </div>
       <div>
@@ -104,8 +104,8 @@ export function RequisicaoImprimirPage() {
 
   const valorTotal = itens.reduce((sum, i) => sum + (i.valorTotal ?? 0), 0)
 
-  const unidade = requisicao && typeof requisicao.idUnidade !== 'string'
-    ? (requisicao.idUnidade as IUnidade)
+  const unidade = requisicao && typeof requisicao.identUnidade !== 'string'
+    ? (requisicao.identUnidade as IUnidade)
     : null
   const uorg = requisicao?.uorg as IUorg | undefined
   const requisitante = requisicao && typeof requisicao.requisitante !== 'string'
@@ -143,7 +143,7 @@ export function RequisicaoImprimirPage() {
     justificativa: requisicao.justificativa,
     observacoes,
     status: requisicao.status,
-    idUnidade: requisicao.idUnidade,
+    identUnidade: requisicao.identUnidade,
     uorg_key: requisicao.uorg_key,
   }
 

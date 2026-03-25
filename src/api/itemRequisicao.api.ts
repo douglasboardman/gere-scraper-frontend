@@ -2,8 +2,8 @@ import apiClient from './client'
 import type { IItemRequisicao, CriarItemRequisicaoData } from '@/types'
 
 export const itemRequisicaoApi = {
-  async listar(idRequisicao: string): Promise<IItemRequisicao[]> {
-    const { data } = await apiClient.get<IItemRequisicao[]>(`/itens-requisicao/requisicao/${idRequisicao}`)
+  async listar(identRequisicao: string): Promise<IItemRequisicao[]> {
+    const { data } = await apiClient.get<IItemRequisicao[]>(`/itens-requisicao/requisicao/${identRequisicao}`)
     return data
   },
 
@@ -12,7 +12,7 @@ export const itemRequisicaoApi = {
     return data
   },
 
-  async criar(itemData: CriarItemRequisicaoData & { idRequisicao: string }): Promise<IItemRequisicao> {
+  async criar(itemData: CriarItemRequisicaoData & { identRequisicao: string }): Promise<IItemRequisicao> {
     const { data } = await apiClient.post<IItemRequisicao>('/itens-requisicao', itemData)
     return data
   },

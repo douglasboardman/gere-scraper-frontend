@@ -60,12 +60,10 @@ export function UsuarioEditPage() {
   const queryClient = useQueryClient()
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
 
-  const numericId = id ? parseInt(id) : undefined
-
   const { data: usuario, isLoading } = useQuery({
     queryKey: ['usuario', id],
-    queryFn: () => usuariosApi.obter(numericId!),
-    enabled: !!numericId,
+    queryFn: () => usuariosApi.obter(id!),
+    enabled: !!id,
   })
 
   const { data: unidades = [] } = useQuery({
@@ -80,7 +78,7 @@ export function UsuarioEditPage() {
           nome: usuario.nome,
           email: usuario.email,
           role: usuario.role,
-          unidade: String(usuario.unidade?.id ?? ''),
+          unidade: usuario.unidade?.identificador ?? '',
           uorg_key: usuario.uorg_key ?? '',
         }
       : undefined,
@@ -96,7 +94,7 @@ export function UsuarioEditPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: (data: EditUsuarioFormData) => usuariosApi.atualizar(numericId!, data),
+    mutationFn: (data: EditUsuarioFormData) => usuariosApi.atualizar(id!, data),
     onSuccess: () => {
       toast.success('Usuário atualizado com sucesso.')
       queryClient.invalidateQueries({ queryKey: ['usuarios'] })
@@ -115,7 +113,7 @@ export function UsuarioEditPage() {
   })
 
   const resetSenhaMutation = useMutation({
-    mutationFn: () => usuariosApi.resetSenha(numericId!),
+    mutationFn: () => usuariosApi.resetSenha(id!),
     onSuccess: (data) => {
       toast.success(data.message)
       setResetDialogOpen(false)
@@ -250,7 +248,7 @@ export function UsuarioEditPage() {
                           </FormControl>
                           <SelectContent>
                             {unidades.map((u) => (
-                              <SelectItem key={u.id} value={String(u.id)}>
+                              <SelectItem key={u.identificador} value={u.identificador}>
                                 {u.nomeAbrev ?? u.nome} ({u.uasg})
                               </SelectItem>
                             ))}

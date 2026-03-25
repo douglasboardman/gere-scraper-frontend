@@ -7,8 +7,8 @@ export const requisicoesApi = {
     return data
   },
 
-  async obter(id: number): Promise<IRequisicao> {
-    const { data } = await apiClient.get<IRequisicao>(`/requisicoes/${id}`)
+  async obter(identificador: string): Promise<IRequisicao> {
+    const { data } = await apiClient.get<IRequisicao>(`/requisicoes/${identificador}`)
     return data
   },
 
@@ -17,32 +17,32 @@ export const requisicoesApi = {
     return data
   },
 
-  async atualizar(id: number, reqData: Partial<CriarRequisicaoData>): Promise<IRequisicao> {
-    const { data } = await apiClient.put<IRequisicao>(`/requisicoes/${id}`, reqData)
+  async atualizar(identificador: string, reqData: Partial<CriarRequisicaoData>): Promise<IRequisicao> {
+    const { data } = await apiClient.put<IRequisicao>(`/requisicoes/${identificador}`, reqData)
     return data
   },
 
-  async deletar(id: number): Promise<void> {
-    await apiClient.delete(`/requisicoes/${id}`)
+  async deletar(identificador: string): Promise<void> {
+    await apiClient.delete(`/requisicoes/${identificador}`)
   },
 
-  async enviar(id: number): Promise<IRequisicao> {
-    const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${id}/enviar`)
+  async enviar(identificador: string): Promise<IRequisicao> {
+    const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${identificador}/enviar`)
     return data
   },
 
-  async aprovar(id: number): Promise<IRequisicao> {
-    const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${id}/aprovar`)
+  async aprovar(identificador: string): Promise<IRequisicao> {
+    const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${identificador}/aprovar`)
     return data
   },
 
-  async rejeitar(id: number, motivo?: string): Promise<IRequisicao> {
-    const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${id}/rejeitar`, { motivo })
+  async rejeitar(identificador: string, motivo?: string): Promise<IRequisicao> {
+    const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${identificador}/rejeitar`, { motivo })
     return data
   },
 
-  async imprimir(id: number): Promise<{ requisicao: IRequisicao; itens: unknown[] }> {
-    const { data } = await apiClient.get<{ requisicao: IRequisicao; itens: unknown[] }>(`/requisicoes/${id}/imprimir`)
+  async imprimir(identificador: string): Promise<{ requisicao: IRequisicao; itens: unknown[] }> {
+    const { data } = await apiClient.get<{ requisicao: IRequisicao; itens: unknown[] }>(`/requisicoes/${identificador}/imprimir`)
     return data
   },
 }

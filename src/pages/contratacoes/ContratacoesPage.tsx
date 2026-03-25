@@ -116,7 +116,7 @@ export function ContratacoesPage() {
             size="sm"
             className="h-8 w-8 p-0"
             title="Ver Atas"
-            onClick={() => navigate(`/atas?idContratacao=${row.original.identificador}`)}
+            onClick={() => navigate(`/atas?identContratacao=${row.original.identificador}`)}
           >
             <ManageSearchIcon className="h-3.5 w-3.5" />
           </Button>

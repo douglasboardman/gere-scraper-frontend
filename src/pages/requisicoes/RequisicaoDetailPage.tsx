@@ -72,9 +72,9 @@ function valUnitario(f: IFornecimento): number {
 function saldoDisp(f: IFornecimento): number {
   return f.saldoDisponivel ?? f.saldo ?? 0
 }
-function extrairIdCompra(idFornecimento: string): string | null {
-  const idx = idFornecimento.lastIndexOf('C')
-  return idx !== -1 ? idFornecimento.slice(idx) : null
+function extrairIdCompra(identFornecimento: string): string | null {
+  const idx = identFornecimento.lastIndexOf('C')
+  return idx !== -1 ? identFornecimento.slice(idx) : null
 }
 
 // ---------------------------------------------------------------------------
@@ -82,15 +82,15 @@ function extrairIdCompra(idFornecimento: string): string | null {
 // ---------------------------------------------------------------------------
 
 function getItemName(item: IItemRequisicao): string {
-  const f = item.idFornecimento as IFornecimento
+  const f = item.identFornecimento as IFornecimento
   if (typeof f === 'string') return f
-  const i = f?.idItem as IItem
+  const i = f?.identItem as IItem
   if (typeof i === 'string') return i
   return i?.descricaoBreve ?? i?.descBreve ?? i?.numItem ?? f?.identificador ?? '—'
 }
 
 function getFornecedorName(item: IItemRequisicao): string {
-  const f = item.idFornecimento as IFornecimento
+  const f = item.identFornecimento as IFornecimento
   if (typeof f === 'string') return '—'
   return f?.nomeFornecedor ?? '—'
 }
@@ -109,8 +109,8 @@ interface EditItemDialogProps {
 function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogProps) {
   const [qty, setQty] = useState(String(item.quantidadeSolicitada))
 
-  const f = typeof item.idFornecimento === 'string' ? null : item.idFornecimento as IFornecimento
-  const i = f ? (typeof f.idItem === 'string' ? null : f.idItem as IItem) : null
+  const f = typeof item.identFornecimento === 'string' ? null : item.identFornecimento as IFornecimento
+  const i = f ? (typeof f.identItem === 'string' ? null : f.identItem as IItem) : null
   const itemName = i ? (i.descricaoBreve ?? i.descBreve ?? '—') : f?.identificador ?? '—'
   const fornecedorName = f?.nomeFornecedor ?? '—'
   const saldoMax = f ? saldoDisp(f) : null
@@ -257,7 +257,7 @@ function AddItemsDialog({
   const { data: itens = [], isLoading: loadingItens } = useQuery({
     queryKey: ['add-items-itens', compraIdStr],
     queryFn: () =>
-      compraIdStr ? itensApi.listar({ idContratacao: compraIdStr }) : Promise.resolve([]),
+      compraIdStr ? itensApi.listar({ identContratacao: compraIdStr }) : Promise.resolve([]),
     enabled: open && !!compraIdStr,
   })
 
@@ -266,7 +266,7 @@ function AddItemsDialog({
   // Identifiers already in requisição (lock them in the catalog)
   const existingFornIds = new Set(
     existingItems.map((ei) => {
-      const f = ei.idFornecimento
+      const f = ei.identFornecimento
       return typeof f === 'string' ? f : (f as IFornecimento).identificador
     }),
   )
@@ -274,7 +274,7 @@ function AddItemsDialog({
   const CATALOG_PAGE_SIZE = 10
   const filteredFornecimentos = catalogSearch.trim()
     ? fornecimentos.filter((f) => {
-        const item = itemMap.get(f.idItem as string)
+        const item = itemMap.get(f.identItem as string)
         if (!item) return false
         const q = catalogSearch.toLowerCase()
         return (
@@ -290,7 +290,7 @@ function AddItemsDialog({
   )
 
   function handleAdd(f: IFornecimento) {
-    const item = itemMap.get(f.idItem as string)
+    const item = itemMap.get(f.identItem as string)
     if (!item) return
     setNewItems((prev) => {
       if (prev.has(f.identificador)) return prev
@@ -329,8 +329,8 @@ function AddItemsDialog({
     mutationFn: async () => {
       for (const [idForn, entry] of newItems.entries()) {
         await itemRequisicaoApi.criar({
-          idRequisicao: requisicaoIdentificador,
-          idFornecimento: idForn,
+          identRequisicao: requisicaoIdentificador,
+          identFornecimento: idForn,
           quantidadeSolicitada: entry.quantidade,
         })
       }
@@ -410,7 +410,7 @@ function AddItemsDialog({
                   </div>
                 ) : (
                   paginatedFornecimentos.map((f) => {
-                    const item = itemMap.get(f.idItem as string)
+                    const item = itemMap.get(f.identItem as string)
                     const isExpanded = expandedId === f.identificador
                     const isAlreadyInReq = existingFornIds.has(f.identificador)
                     const isNewlyAdded = newItems.has(f.identificador)
@@ -429,7 +429,7 @@ function AddItemsDialog({
                         <div className="flex items-center gap-2 px-3 py-2.5">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium leading-snug line-clamp-1">
-                              {item ? descBreve(item) : (f.idItem as string)}
+                              {item ? descBreve(item) : (f.identItem as string)}
                             </p>
                             <div className="flex flex-wrap gap-x-3 mt-0.5 text-xs text-muted-foreground">
                               <span>Saldo: {saldo} {item ? unMedida(item) : ''}</span>
@@ -694,7 +694,7 @@ function EditRequisicaoDialog({
   })
 
   const mutation = useMutation({
-    mutationFn: (data: EditReqData) => requisicoesApi.atualizar(requisicao.id, data),
+    mutationFn: (data: EditReqData) => requisicoesApi.atualizar(requisicao.identificador, data),
     onSuccess: () => {
       toast.success('Requisição atualizada.')
       onSaved()
@@ -883,14 +883,14 @@ export function RequisicaoDetailPage() {
 
   const valorTotal = itensRequisicao.reduce((sum, item) => sum + (item.valorTotal ?? 0), 0)
 
-  const unidade = typeof requisicao.idUnidade === 'string' ? null : (requisicao.idUnidade as IUnidade)
+  const unidade = typeof requisicao.identUnidade === 'string' ? null : (requisicao.identUnidade as IUnidade)
   const uorg = requisicao.uorg as IUorg | undefined
   const userUasg = unidade?.uasg ?? ''
 
   // Derive the compra identifier from the first existing item
   const compraIdStr = (() => {
     if (itensRequisicao.length === 0) return null
-    const f = itensRequisicao[0].idFornecimento
+    const f = itensRequisicao[0].identFornecimento
     const fIdent = typeof f === 'string' ? f : (f as IFornecimento).identificador
     return extrairIdCompra(fIdent)
   })()
@@ -903,7 +903,7 @@ export function RequisicaoDetailPage() {
 
   const unidadeLabel = unidade
     ? `${unidade.uasg} — ${unidade.nomeAbrev ?? unidade.nome}`
-    : (typeof requisicao.idUnidade === 'string' ? requisicao.idUnidade : '—')
+    : (typeof requisicao.identUnidade === 'string' ? requisicao.identUnidade : '—')
 
   const uorgLabel = uorg
     ? `${uorg.uorg_sg ? uorg.uorg_sg + ' — ' : ''}${uorg.uorg_no}`

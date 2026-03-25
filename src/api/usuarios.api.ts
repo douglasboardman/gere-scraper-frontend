@@ -14,7 +14,7 @@ export const usuariosApi = {
     return data
   },
 
-  async obter(id: number): Promise<IUsuario> {
+  async obter(id: string): Promise<IUsuario> {
     const { data } = await apiClient.get<IUsuario>(`/usuarios/${id}`)
     return data
   },
@@ -31,19 +31,19 @@ export const usuariosApi = {
   },
 
   /** Admin edita qualquer usuário (exceto senha) */
-  async atualizar(id: number, userData: AdminUpdateUsuarioData): Promise<IUsuario> {
+  async atualizar(id: string, userData: AdminUpdateUsuarioData): Promise<IUsuario> {
     const { data } = await apiClient.put<IUsuario>(`/usuarios/${id}`, userData)
     return data
   },
 
   /** Admin toggle ativo/inativo */
-  async toggleAtivo(id: number): Promise<IUsuario> {
+  async toggleAtivo(id: string): Promise<IUsuario> {
     const { data } = await apiClient.patch<IUsuario>(`/usuarios/${id}/toggle-ativo`)
     return data
   },
 
   /** Admin solicita reset de senha (envia e-mail) */
-  async resetSenha(id: number): Promise<{ message: string }> {
+  async resetSenha(id: string): Promise<{ message: string }> {
     const { data } = await apiClient.post<{ message: string }>(`/usuarios/${id}/reset-senha`)
     return data
   },

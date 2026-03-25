@@ -42,8 +42,8 @@ export function AtaDetailPage() {
     d ? format(new Date(d), "dd/MM/yyyy", { locale: ptBR }) : "—";
 
   const anoAta = () => {
-    if (ata?.idContratacao) {
-      return (ata?.idContratacao as string).slice(12, 16);
+    if (ata?.identContratacao) {
+      return (ata?.identContratacao as string).slice(12, 16);
     }
   };
 
@@ -63,7 +63,7 @@ export function AtaDetailPage() {
     <div>
       <PageHeader
         title={`Ata Nº ${ata.numAta}/${anoAta()}`}
-        subtitle={`Contratação: ${ata.idContratacao}`}
+        subtitle={`Contratação: ${ata.identContratacao}`}
         actions={
           <Button
             variant="outline"
@@ -83,19 +83,19 @@ export function AtaDetailPage() {
               <span className="font-mono">{ata.numAta}</span>
             </Field>
             <Field label="ID Contratação">
-              {typeof ata.idContratacao === "string" ? (
+              {typeof ata.identContratacao === "string" ? (
                 <Link
-                  to={`/contratacoes/${ata.idContratacao}`}
+                  to={`/contratacoes/${ata.identContratacao}`}
                   className="font-mono text-primary hover:underline"
                 >
-                  {ata.idContratacao}
+                  {ata.identContratacao}
                 </Link>
               ) : (
                 <Link
-                  to={`/contratacoes/${ata.idContratacao.identificador}`}
+                  to={`/contratacoes/${ata.identContratacao.identificador}`}
                   className="font-mono text-primary hover:underline"
                 >
-                  {ata.idContratacao.identificador}
+                  {ata.identContratacao.identificador}
                 </Link>
               )}
             </Field>
@@ -125,7 +125,7 @@ export function AtaDetailPage() {
       </Card>
 
       <Button variant="outline" size="sm" asChild>
-        <Link to={`/itens?idAta=${ata.identificador}`}>
+        <Link to={`/itens?identAta=${ata.identificador}`}>
           <ExternalLink className="h-4 w-4" />
           Ver Itens desta Ata
         </Link>

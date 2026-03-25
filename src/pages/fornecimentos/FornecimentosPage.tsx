@@ -15,7 +15,7 @@ import type { IFornecimento, IItem, IFornecedor } from "@/types";
 export function FornecimentosPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const idItemParam = searchParams.get("idItem") ?? undefined;
+  const idItemParam = searchParams.get("identItem") ?? undefined;
   const [uasgFilter, setUasgFilter] = useState("");
   const [appliedUasg, setAppliedUasg] = useState<string | undefined>(undefined);
 
@@ -23,19 +23,19 @@ export function FornecimentosPage() {
     queryKey: ["fornecimentos", appliedUasg, idItemParam],
     queryFn: () =>
       fornecimentosApi.listar({
-        ...(idItemParam ? { idItem: idItemParam } : {}),
+        ...(idItemParam ? { identItem: idItemParam } : {}),
         ...(appliedUasg ? { uasgUnParticipante: appliedUasg } : {}),
       }),
   });
 
-  const getItemDesc = (idItem: string | IItem): string => {
-    if (typeof idItem === "string") return idItem;
-    return idItem.descricaoBreve ?? idItem.numItem ?? "—";
+  const getItemDesc = (identItem: string | IItem): string => {
+    if (typeof identItem === "string") return identItem;
+    return identItem.descricaoBreve ?? identItem.numItem ?? "—";
   };
 
-  const getFornecedorName = (idFornecedor: string | IFornecedor): string => {
-    if (typeof idFornecedor === "string") return idFornecedor;
-    return idFornecedor.nome ?? idFornecedor.razaoSocial ?? "—";
+  const getFornecedorName = (identFornecedor: string | IFornecedor): string => {
+    if (typeof identFornecedor === "string") return identFornecedor;
+    return identFornecedor.nome ?? identFornecedor.razaoSocial ?? "—";
   };
 
   const columns: ColumnDef<IFornecimento, unknown>[] = [
@@ -52,7 +52,7 @@ export function FornecimentosPage() {
       id: "item",
       header: "Item",
       cell: ({ row }) => (
-        <span className="text-sm">{getItemDesc(row.original.idItem)}</span>
+        <span className="text-sm">{getItemDesc(row.original.identItem)}</span>
       ),
     },
     {
@@ -60,7 +60,7 @@ export function FornecimentosPage() {
       header: "Fornecedor",
       cell: ({ row }) => (
         <span className="text-sm">
-          {getFornecedorName(row.original.idFornecedor)}
+          {getFornecedorName(row.original.identFornecedor)}
         </span>
       ),
     },

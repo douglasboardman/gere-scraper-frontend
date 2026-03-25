@@ -188,7 +188,7 @@ export function ContratacaoDetailPage() {
       </Card>
 
       <Button variant="outline" size="sm" asChild>
-        <Link to={`/atas?idContratacao=${contratacao.identificador}`}>
+        <Link to={`/atas?identContratacao=${contratacao.identificador}`}>
           <ExternalLink className="h-4 w-4" />
           Ver Atas desta Contratação
         </Link>

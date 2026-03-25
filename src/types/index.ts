@@ -22,7 +22,6 @@ export type ModalidadeContratacao =
 // ============================================================
 
 export interface IContratacao {
-  id: number
   identificador: string
   uasgUnGestora: string
   nomeUnGestora?: string
@@ -41,11 +40,10 @@ export interface IContratacao {
 }
 
 export interface IAtaRegPrecos {
-  id: number
   identificador: string
   numAta: string
-  idContratacao: string
-  idFornecedor?: string
+  identContratacao: string
+  identFornecedor?: string
   cnpjFornecedor?: string
   nomeFornecedor?: string
   iniVigencia?: string
@@ -56,11 +54,10 @@ export interface IAtaRegPrecos {
 }
 
 export interface IItem {
-  id: number
   identificador: string
   sequencialItemPregao?: string
   numItem?: string
-  idAta: string
+  identAta: string
   descBreve?: string
   descDetalhada?: string
   descricaoBreve?: string
@@ -77,7 +74,6 @@ export interface IItem {
 }
 
 export interface IFornecedor {
-  id: number
   identificador: string
   cnpj: string
   nome?: string
@@ -101,10 +97,9 @@ export interface IFornecedor {
 }
 
 export interface IFornecimento {
-  id: number
   identificador: string
-  idItem: string | IItem
-  idFornecedor: string
+  identItem: string | IItem
+  identFornecedor: string
   nomeFornecedor?: string | null
   cnpjFornecedor?: string | null
   nomeUnParticipante?: string
@@ -121,7 +116,6 @@ export interface IFornecimento {
 }
 
 export interface IUnidade {
-  id: number
   identificador: string
   idContratos: string
   uasg: string
@@ -136,7 +130,6 @@ export interface IUnidade {
 }
 
 export interface IUorg {
-  id: number
   uorg_key: string
   uorg_orgao_co: string
   uorg_co?: string
@@ -150,7 +143,7 @@ export interface IUorg {
 }
 
 export interface IUsuario {
-  id: number
+  id: string
   nome: string
   email: string
   role: UserRole
@@ -164,11 +157,10 @@ export interface IUsuario {
 export type TipoRequisicao = 'Material' | 'Servico'
 
 export interface IRequisicao {
-  id: number
   identificador: string
-  requisitanteId: number
+  requisitanteId: string
   requisitante: IUsuario | { nome: string; email: string; uorg_key?: string }
-  idUnidade: string | IUnidade
+  identUnidade: string | IUnidade
   uorg_key?: string
   uorg?: IUorg
   tipo: TipoRequisicao
@@ -187,8 +179,8 @@ export interface IRequisicao {
 
 export interface IItemRequisicao {
   id: number
-  idRequisicao: string
-  idFornecimento: string | IFornecimento
+  identRequisicao: string
+  identFornecimento: string | IFornecimento
   quantidadeSolicitada: number
   valorUnitario?: number
   valorTotal?: number
@@ -200,7 +192,7 @@ export interface IItemRequisicao {
 export interface IScrapingJob {
   id: number
   jobId: string
-  identificadorContratacao?: string
+  identContratacao?: string
   tipo: string
   status: StatusJob
   progresso: number
@@ -282,14 +274,14 @@ export interface CriarContratacaoData {
 }
 
 export interface CriarRequisicaoData {
-  idUnidade?: string
+  identUnidade?: string
   tipo: TipoRequisicao
   justificativa: string
   observacoes?: string
 }
 
 export interface CriarItemRequisicaoData {
-  idFornecimento: string
+  identFornecimento: string
   quantidadeSolicitada: number
   observacao?: string
 }

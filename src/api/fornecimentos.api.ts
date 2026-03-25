@@ -3,7 +3,7 @@ import type { IFornecimento } from '@/types'
 
 export const fornecimentosApi = {
   async listar(params?: {
-    idItem?: string
+    identItem?: string
     uasgUnParticipante?: string
   }): Promise<IFornecimento[]> {
     const { data } = await apiClient.get<IFornecimento[]>('/fornecimentos', { params })
@@ -20,8 +20,8 @@ export const fornecimentosApi = {
     return data
   },
 
-  async listarPorContratacaoUnidade(idContratacao: string, uasg: string): Promise<IFornecimento[]> {
-    const { data } = await apiClient.get<IFornecimento[]>(`/fornecimentos/contratacao/${idContratacao}/unidade/${uasg}`)
+  async listarPorContratacaoUnidade(identContratacao: string, uasg: string): Promise<IFornecimento[]> {
+    const { data } = await apiClient.get<IFornecimento[]>(`/fornecimentos/contratacao/${identContratacao}/unidade/${uasg}`)
     return data
   },
 
