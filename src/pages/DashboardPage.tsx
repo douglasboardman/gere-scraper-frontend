@@ -148,7 +148,7 @@ export function DashboardPage() {
               <div className="space-y-3">
                 {recentRequisicoes.map((req: IRequisicao) => (
                   <div
-                    key={req.id}
+                    key={req.identificador}
                     className="flex items-center justify-between py-2 border-b last:border-0"
                   >
                     <div>
@@ -185,7 +185,7 @@ export function DashboardPage() {
               <div className="space-y-3">
                 {comprasEmProcessamento.map((compra) => (
                   <div
-                    key={compra.id}
+                    key={compra.identificador}
                     className="flex items-center justify-between py-2 border-b last:border-0"
                   >
                     <div>

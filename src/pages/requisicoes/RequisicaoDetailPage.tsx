@@ -856,7 +856,7 @@ export function RequisicaoDetailPage() {
   })
 
   const removeItemMutation = useMutation({
-    mutationFn: (itemId: string) => itemRequisicaoApi.deletar(itemId),
+    mutationFn: (itemId: number) => itemRequisicaoApi.deletar(itemId),
     onSuccess: () => {
       toast.success('Item removido.')
       queryClient.invalidateQueries({ queryKey: ['itens-requisicao', requisicao?.identificador] })

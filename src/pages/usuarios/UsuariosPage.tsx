@@ -298,7 +298,7 @@ export function UsuariosPage() {
                           </FormControl>
                           <SelectContent>
                             {unidades.map((u) => (
-                              <SelectItem key={u.id} value={String(u.id)}>
+                              <SelectItem key={u.identificador} value={u.identificador}>
                                 {u.nomeAbrev ?? u.nome} ({u.uasg})
                               </SelectItem>
                             ))}

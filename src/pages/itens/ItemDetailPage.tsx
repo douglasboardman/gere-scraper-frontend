@@ -41,7 +41,7 @@ export function ItemDetailPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: (data: Partial<IItem>) => itensApi.atualizar(item!.id, data),
+    mutationFn: (data: Partial<IItem>) => itensApi.atualizar(item!.identificador, data),
     onSuccess: () => {
       toast.success('Item atualizado com sucesso.')
       queryClient.invalidateQueries({ queryKey: ['item', id] })

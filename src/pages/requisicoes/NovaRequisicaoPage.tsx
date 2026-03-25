@@ -197,7 +197,7 @@ function Step1Dados({
   const mutation = useMutation({
     mutationFn: (data: Step1Data) =>
       initialRequisicao
-        ? requisicoesApi.atualizar(initialRequisicao.id, data)
+        ? requisicoesApi.atualizar(initialRequisicao.identificador, data)
         : requisicoesApi.criar(data),
     onSuccess: (req) => {
       toast.success(initialRequisicao ? 'Requisição atualizada.' : 'Requisição criada. Escolha a compra.')
@@ -483,7 +483,7 @@ function Step2Compra({
         <div className="space-y-3">
           {filtered.map((compra) => (
             <Card
-              key={compra.id}
+              key={compra.identificador}
               className="hover:border-primary/50 transition-colors group cursor-default"
             >
               <CardContent className="p-4 flex items-start justify-between gap-4">
