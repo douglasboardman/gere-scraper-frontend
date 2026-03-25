@@ -14,12 +14,12 @@ import type { IItem } from "@/types";
 export function ItensPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const idAta = searchParams.get("idAta") ?? undefined;
-  const idContratacao = searchParams.get("idContratacao") ?? undefined;
+  const identAta = searchParams.get("identAta") ?? undefined;
+  const identContratacao = searchParams.get("identContratacao") ?? undefined;
 
   const { data: itens = [], isLoading } = useQuery({
-    queryKey: ["itens", idAta, idContratacao],
-    queryFn: () => itensApi.listar({ idAta, idContratacao }),
+    queryKey: ["itens", identAta, identContratacao],
+    queryFn: () => itensApi.listar({ identAta, identContratacao }),
   });
 
   const columns: ColumnDef<IItem, unknown>[] = [
@@ -111,7 +111,7 @@ export function ItensPage() {
             className="h-8 w-8 p-0"
             title="Ver Fornecimentos"
             onClick={() =>
-              navigate(`/fornecimentos?idItem=${row.original.identificador}`)
+              navigate(`/fornecimentos?identItem=${row.original.identificador}`)
             }
           >
             <ManageSearchIcon className="h-3.5 w-3.5" />
@@ -121,10 +121,10 @@ export function ItensPage() {
     },
   ];
 
-  const subtitle = idAta
-    ? `Filtrando por Ata: ${idAta}`
-    : idContratacao
-      ? `Filtrando por Contratação: ${idContratacao}`
+  const subtitle = identAta
+    ? `Filtrando por Ata: ${identAta}`
+    : identContratacao
+      ? `Filtrando por Contratação: ${identContratacao}`
       : "Todos os itens registrados no sistema";
 
   return (

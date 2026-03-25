@@ -133,13 +133,13 @@ export function ItemDetailPage() {
               <span className="font-mono">{numItem}</span>
             </Field>
             <Field label="Ata">
-              {typeof item.idAta === 'string' ? (
-                <Link to={`/atas/${item.idAta}`} className="font-mono text-primary hover:underline">
-                  {item.idAta}
+              {typeof item.identAta === 'string' ? (
+                <Link to={`/atas/${item.identAta}`} className="font-mono text-primary hover:underline">
+                  {item.identAta}
                 </Link>
               ) : (
-                <Link to={`/atas/${item.idAta?.identificador}`} className="font-mono text-primary hover:underline">
-                  {item.idAta?.identificador ?? '—'}
+                <Link to={`/atas/${item.identAta?.identificador}`} className="font-mono text-primary hover:underline">
+                  {item.identAta?.identificador ?? '—'}
                 </Link>
               )}
             </Field>
@@ -194,7 +194,7 @@ export function ItemDetailPage() {
       </Card>
 
       <Button variant="outline" size="sm" asChild>
-        <Link to={`/fornecimentos?idItem=${item.identificador}`}>
+        <Link to={`/fornecimentos?identItem=${item.identificador}`}>
           <ExternalLink className="h-4 w-4" />
           Ver Fornecimentos deste Item
         </Link>

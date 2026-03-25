@@ -75,17 +75,17 @@ export function FornecimentoDetailPage() {
     })
   }
 
-  const getItemInfo = (idItem: string | IItem): { label: string; id: string } => {
-    if (typeof idItem === 'string') return { label: idItem, id: idItem }
+  const getItemInfo = (identItem: string | IItem): { label: string; id: string } => {
+    if (typeof identItem === 'string') return { label: identItem, id: identItem }
     return {
-      label: (idItem.descBreve ?? idItem.descricaoBreve) ?? idItem.sequencialItemPregao ?? idItem.numItem ?? '—',
-      id: idItem.identificador,
+      label: (identItem.descBreve ?? identItem.descricaoBreve) ?? identItem.sequencialItemPregao ?? identItem.numItem ?? '—',
+      id: identItem.identificador,
     }
   }
 
-  const getFornecedorInfo = (idFornecedor: string | IFornecedor): { label: string; id: string } => {
-    if (typeof idFornecedor === 'string') return { label: idFornecedor, id: idFornecedor }
-    return { label: idFornecedor.nome ?? '—', id: idFornecedor.identificador }
+  const getFornecedorInfo = (identFornecedor: string | IFornecedor): { label: string; id: string } => {
+    if (typeof identFornecedor === 'string') return { label: identFornecedor, id: identFornecedor }
+    return { label: identFornecedor.nome ?? '—', id: identFornecedor.identificador }
   }
 
   if (isLoading) {
@@ -100,10 +100,10 @@ export function FornecimentoDetailPage() {
   if (!fornecimento) return <div className="text-muted-foreground">Fornecimento não encontrado.</div>
 
   const saldo = fornecimento.saldoDisponivel ?? fornecimento.saldo
-  const itemInfo = getItemInfo(fornecimento.idItem)
-  const fornecedorInfo = getFornecedorInfo(fornecimento.idFornecedor)
-  const isItemObj = typeof fornecimento.idItem !== 'string'
-  const isFornecedorObj = typeof fornecimento.idFornecedor !== 'string'
+  const itemInfo = getItemInfo(fornecimento.identItem)
+  const fornecedorInfo = getFornecedorInfo(fornecimento.identFornecedor)
+  const isItemObj = typeof fornecimento.identItem !== 'string'
+  const isFornecedorObj = typeof fornecimento.identFornecedor !== 'string'
 
   return (
     <div>

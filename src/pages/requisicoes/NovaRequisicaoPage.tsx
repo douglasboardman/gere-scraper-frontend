@@ -74,9 +74,9 @@ function formatCNPJ(digits: string): string {
   return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`
 }
 
-function cnpjFromFornecedorId(idFornecedor: string): string {
-  // idFornecedor format: "F44971159000129" → cnpj "44971159000129"
-  const raw = idFornecedor.startsWith('F') ? idFornecedor.slice(1) : idFornecedor
+function cnpjFromFornecedorId(identFornecedor: string): string {
+  // identFornecedor format: "F44971159000129" → cnpj "44971159000129"
+  const raw = identFornecedor.startsWith('F') ? identFornecedor.slice(1) : identFornecedor
   return formatCNPJ(raw)
 }
 
@@ -352,9 +352,9 @@ function Step1Dados({
  *  Formato: U{uasg}I{itemSeq}C{compraId}  ex. U157363I00095C158127900102025
  *  O compra ID é tudo a partir do último 'C'.
  */
-function extrairIdCompra(idFornecimento: string): string | null {
-  const idx = idFornecimento.indexOf('C')
-  return idx !== -1 ? idFornecimento.slice(idx) : null
+function extrairIdCompra(identFornecimento: string): string | null {
+  const idx = identFornecimento.indexOf('C')
+  return idx !== -1 ? identFornecimento.slice(idx) : null
 }
 
 function Step2Compra({
@@ -407,7 +407,7 @@ function Step2Compra({
     queryFn: async () => {
       const results = await Promise.allSettled(
         uniqueCompraIds.map(async (id) => {
-          const itens = await itensApi.listar({ idContratacao: id })
+          const itens = await itensApi.listar({ identContratacao: id })
           return { id, itens }
         }),
       )
@@ -556,7 +556,7 @@ function Step3Itens({
 
   const { data: itens = [], isLoading: loadingItens } = useQuery({
     queryKey: ['itens-wizard', selectedCompra.identificador],
-    queryFn: () => itensApi.listar({ idContratacao: selectedCompra.identificador }),
+    queryFn: () => itensApi.listar({ identContratacao: selectedCompra.identificador }),
   })
 
   const itemMap = new Map<string, IItem>(itens.map((it) => [it.identificador, it]))
@@ -565,7 +565,7 @@ function Step3Itens({
   const CATALOG_PAGE_SIZE = 10
   const filteredFornecimentos = catalogSearch.trim()
     ? fornecimentos.filter((f) => {
-        const item = itemMap.get(f.idItem as string)
+        const item = itemMap.get(f.identItem as string)
         if (!item) return false
         const q = catalogSearch.toLowerCase()
         return (
@@ -585,7 +585,7 @@ function Step3Itens({
   }
 
   function handleAdd(f: IFornecimento) {
-    const item = itemMap.get(f.idItem as string)
+    const item = itemMap.get(f.identItem as string)
     if (!item) return
     setSelectedItems((prev) => {
       if (prev.has(f.identificador)) return prev
@@ -674,7 +674,7 @@ function Step3Itens({
                 </div>
               ) : (
                 paginatedFornecimentos.map((f) => {
-                  const item = itemMap.get(f.idItem as string)
+                  const item = itemMap.get(f.identItem as string)
                   const isExpanded = expandedId === f.identificador
                   const isAdded = selectedItems.has(f.identificador)
                   const vUnit = valUnitario(f)
@@ -694,7 +694,7 @@ function Step3Itens({
                       <div className="flex items-center gap-2 px-3 py-2.5">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium leading-snug line-clamp-1">
-                            {item ? descBreve(item) : (f.idItem as string)}
+                            {item ? descBreve(item) : (f.identItem as string)}
                           </p>
                           <div className="flex flex-wrap gap-x-3 mt-0.5 text-xs text-muted-foreground">
                             <span>Saldo: {saldo} {item ? unMedida(item) : ''}</span>
@@ -902,7 +902,7 @@ function Step4Revisao({
   // Group items by fornecedor identifier
   const byFornecedor = new Map<string, SelectedItemEntry[]>()
   for (const entry of selectedItems.values()) {
-    const key = entry.fornecimento.idFornecedor as string
+    const key = entry.fornecimento.identFornecedor as string
     if (!byFornecedor.has(key)) byFornecedor.set(key, [])
     byFornecedor.get(key)!.push(entry)
   }
@@ -920,13 +920,13 @@ function Step4Revisao({
     mutationFn: async (enviar: boolean) => {
       for (const [idForn, entry] of selectedItems.entries()) {
         await itemRequisicaoApi.criar({
-          idRequisicao: requisicao.identificador,
-          idFornecimento: idForn,
+          identRequisicao: requisicao.identificador,
+          identFornecimento: idForn,
           quantidadeSolicitada: entry.quantidade,
         })
       }
       if (enviar) {
-        await requisicoesApi.enviar(requisicao.id)
+        await requisicoesApi.enviar(requisicao.identificador)
       }
     },
     onSuccess: (_, enviar) => {
@@ -934,7 +934,7 @@ function Step4Revisao({
       toast.success(
         enviar ? 'Requisição enviada para análise.' : 'Requisição salva como rascunho.',
       )
-      navigate(`/requisicoes/${requisicao.id}`)
+      navigate(`/requisicoes/${requisicao.identificador}`)
     },
     onError: (err: unknown) => {
       const msg =
@@ -1018,8 +1018,8 @@ function Step4Revisao({
       </Card>
 
       {/* ── Documentos por fornecedor ── */}
-      {documents.map(([idFornecedor, entries], docIdx) => {
-        const cnpj = cnpjFromFornecedorId(idFornecedor)
+      {documents.map(([identFornecedor, entries], docIdx) => {
+        const cnpj = cnpjFromFornecedorId(identFornecedor)
         const nomeFornecedor = entries[0].fornecimento.nomeFornecedor ?? null
         const subTotal = entries.reduce(
           (s, e) => s + valUnitario(e.fornecimento) * e.quantidade,
@@ -1027,7 +1027,7 @@ function Step4Revisao({
         )
 
         return (
-          <Card key={idFornecedor}>
+          <Card key={identFornecedor}>
             <CardHeader className="pb-2">
               <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-0.5">
                 Documento {String(docIdx + 1).padStart(2, '0')}

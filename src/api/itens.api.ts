@@ -2,7 +2,7 @@ import apiClient from './client'
 import type { IItem } from '@/types'
 
 export const itensApi = {
-  async listar(params?: { idAta?: string; idContratacao?: string }): Promise<IItem[]> {
+  async listar(params?: { identAta?: string; identContratacao?: string }): Promise<IItem[]> {
     const { data } = await apiClient.get<IItem[]>('/itens', { params })
     return data
   },

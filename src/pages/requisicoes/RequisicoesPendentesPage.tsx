@@ -73,9 +73,9 @@ export function RequisicoesPendentesPage() {
         <div className="space-y-4">
           {filtered.map((req) => (
             <RequisicaoPendenteCard
-              key={req.id}
+              key={req.identificador}
               req={req}
-              onAnalisar={() => navigate(`/requisicoes/analise/${req.id}`)}
+              onAnalisar={() => navigate(`/requisicoes/analise/${req.identificador}`)}
             />
           ))}
         </div>

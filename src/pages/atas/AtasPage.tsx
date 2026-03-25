@@ -16,11 +16,11 @@ import type { IAtaRegPrecos } from "@/types";
 export function AtasPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const idContratacao = searchParams.get("idContratacao") ?? undefined;
+  const identContratacao = searchParams.get("identContratacao") ?? undefined;
 
   const { data: atas = [], isLoading } = useQuery({
-    queryKey: ["atas", idContratacao],
-    queryFn: () => atasApi.listar(idContratacao),
+    queryKey: ["atas", identContratacao],
+    queryFn: () => atasApi.listar(identContratacao),
   });
 
   const columns: ColumnDef<IAtaRegPrecos, unknown>[] = [
@@ -34,15 +34,15 @@ export function AtasPage() {
       ),
     },
     {
-      accessorKey: "idContratacao",
+      accessorKey: "identContratacao",
       header: "ID Contratação",
       cell: ({ row }) => {
-        const idContratacao = row.original.idContratacao;
+        const identContratacao = row.original.identContratacao;
         return (
           <span className="text-sm">
-            {typeof idContratacao === "string"
-              ? idContratacao
-              : (idContratacao?.identificador ?? "—")}
+            {typeof identContratacao === "string"
+              ? identContratacao
+              : (identContratacao?.identificador ?? "—")}
           </span>
         );
       },
@@ -103,7 +103,7 @@ export function AtasPage() {
             className="h-8 w-8 p-0"
             title="Ver Itens"
             onClick={() =>
-              navigate(`/itens?idAta=${row.original.identificador}`)
+              navigate(`/itens?identAta=${row.original.identificador}`)
             }
           >
             <ManageSearchIcon className="h-3.5 w-3.5" />
@@ -118,8 +118,8 @@ export function AtasPage() {
       <PageHeader
         title="Atas de Registro de Preços"
         subtitle={
-          idContratacao
-            ? `Filtrando por contratação: ${idContratacao}`
+          identContratacao
+            ? `Filtrando por contratação: ${identContratacao}`
             : "Todas as atas registradas no sistema"
         }
       />

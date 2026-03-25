@@ -24,7 +24,7 @@ export function RequisicoesPage() {
   const { isAdmin, isGestor, can } = usePermission()
   const [actionDialog, setActionDialog] = useState<{
     type: 'enviar' | 'aprovar' | 'rejeitar' | 'deletar'
-    id: number
+    id: string
     label: string
   } | null>(null)
 
@@ -34,7 +34,7 @@ export function RequisicoesPage() {
   })
 
   const enviarMutation = useMutation({
-    mutationFn: (id: number) => requisicoesApi.enviar(id),
+    mutationFn: (id: string) => requisicoesApi.enviar(id),
     onSuccess: () => {
       toast.success('Requisição enviada para aprovação.')
       queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
@@ -46,7 +46,7 @@ export function RequisicoesPage() {
   })
 
   const aprovarMutation = useMutation({
-    mutationFn: (id: number) => requisicoesApi.aprovar(id),
+    mutationFn: (id: string) => requisicoesApi.aprovar(id),
     onSuccess: () => {
       toast.success('Requisição aprovada.')
       queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
@@ -58,7 +58,7 @@ export function RequisicoesPage() {
   })
 
   const rejeitarMutation = useMutation({
-    mutationFn: (id: number) => requisicoesApi.rejeitar(id),
+    mutationFn: (id: string) => requisicoesApi.rejeitar(id),
     onSuccess: () => {
       toast.success('Requisição rejeitada.')
       queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
@@ -70,7 +70,7 @@ export function RequisicoesPage() {
   })
 
   const deletarMutation = useMutation({
-    mutationFn: (id: number) => requisicoesApi.deletar(id),
+    mutationFn: (id: string) => requisicoesApi.deletar(id),
     onSuccess: () => {
       toast.success('Requisição excluída.')
       queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
@@ -118,7 +118,7 @@ export function RequisicoesPage() {
       id: 'unidade',
       header: 'Unidade',
       cell: ({ row }) => {
-        const u = row.original.idUnidade
+        const u = row.original.identUnidade
         return (
           <span className="text-sm">
             {typeof u === 'string' ? u : (u as IUnidade)?.nomeAbrev ?? (u as IUnidade)?.nome ?? '—'}
@@ -161,7 +161,7 @@ export function RequisicoesPage() {
               size="sm"
               className="h-7 px-2 text-xs"
               title="Visualizar"
-              onClick={() => navigate(`/requisicoes/${req.id}`)}
+              onClick={() => navigate(`/requisicoes/${req.identificador}`)}
             >
               <Eye className="h-3.5 w-3.5" />
             </Button>
@@ -174,7 +174,7 @@ export function RequisicoesPage() {
                   size="sm"
                   className="h-7 px-2 text-xs"
                   title="Editar"
-                  onClick={() => navigate(`/requisicoes/${req.id}`)}
+                  onClick={() => navigate(`/requisicoes/${req.identificador}`)}
                 >
                   <Edit className="h-3.5 w-3.5" />
                 </Button>
@@ -184,7 +184,7 @@ export function RequisicoesPage() {
                   className="h-7 px-2 text-xs text-blue-600"
                   title="Enviar para aprovação"
                   onClick={() =>
-                    setActionDialog({ type: 'enviar', id: req.id, label: req.identificador })
+                    setActionDialog({ type: 'enviar', id: req.identificador, label: req.identificador })
                   }
                 >
                   <Send className="h-3.5 w-3.5" />
@@ -195,7 +195,7 @@ export function RequisicoesPage() {
                   className="h-7 px-2 text-xs text-destructive"
                   title="Excluir"
                   onClick={() =>
-                    setActionDialog({ type: 'deletar', id: req.id, label: req.identificador })
+                    setActionDialog({ type: 'deletar', id: req.identificador, label: req.identificador })
                   }
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -212,7 +212,7 @@ export function RequisicoesPage() {
                   className="h-7 px-2 text-xs text-green-700"
                   title="Aprovar"
                   onClick={() =>
-                    setActionDialog({ type: 'aprovar', id: req.id, label: req.identificador })
+                    setActionDialog({ type: 'aprovar', id: req.identificador, label: req.identificador })
                   }
                 >
                   <CheckCircle className="h-3.5 w-3.5" />
@@ -223,7 +223,7 @@ export function RequisicoesPage() {
                   className="h-7 px-2 text-xs text-destructive"
                   title="Rejeitar"
                   onClick={() =>
-                    setActionDialog({ type: 'rejeitar', id: req.id, label: req.identificador })
+                    setActionDialog({ type: 'rejeitar', id: req.identificador, label: req.identificador })
                   }
                 >
                   <XCircle className="h-3.5 w-3.5" />
@@ -238,7 +238,7 @@ export function RequisicoesPage() {
                 size="sm"
                 className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
                 title="Imprimir PDF"
-                onClick={() => navigate(`/requisicoes/${req.id}/imprimir`)}
+                onClick={() => navigate(`/requisicoes/${req.identificador}/imprimir`)}
               >
                 <Printer className="h-3.5 w-3.5" />
               </Button>

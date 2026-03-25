@@ -44,19 +44,19 @@ function valUnitario(f: IFornecimento): number {
 function saldoDisp(f: IFornecimento): number {
   return f.saldoDisponivel ?? f.saldo ?? 0
 }
-function extrairIdCompra(idFornecimento: string): string | null {
-  const idx = idFornecimento.lastIndexOf('C')
-  return idx !== -1 ? idFornecimento.slice(idx) : null
+function extrairIdCompra(identFornecimento: string): string | null {
+  const idx = identFornecimento.lastIndexOf('C')
+  return idx !== -1 ? identFornecimento.slice(idx) : null
 }
 function getItemName(item: IItemRequisicao): string {
-  const f = item.idFornecimento as IFornecimento
+  const f = item.identFornecimento as IFornecimento
   if (typeof f === 'string') return f
-  const i = f?.idItem as IItem
+  const i = f?.identItem as IItem
   if (typeof i === 'string') return i
   return i?.descricaoBreve ?? i?.descBreve ?? f?.identificador ?? '—'
 }
 function getFornecedorName(item: IItemRequisicao): string {
-  const f = item.idFornecimento as IFornecimento
+  const f = item.identFornecimento as IFornecimento
   if (typeof f === 'string') return '—'
   return f?.nomeFornecedor ?? '—'
 }
@@ -73,7 +73,7 @@ interface EditItemDialogProps {
 
 function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogProps) {
   const [qty, setQty] = useState(String(item.quantidadeSolicitada))
-  const f = typeof item.idFornecimento === 'string' ? null : item.idFornecimento as IFornecimento
+  const f = typeof item.identFornecimento === 'string' ? null : item.identFornecimento as IFornecimento
   const saldoMax = f ? saldoDisp(f) : null
   const vUnit = item.valorUnitario ?? (f ? valUnitario(f) : 0)
   const newTotal = vUnit * (Number(qty) || 0)
@@ -168,14 +168,14 @@ function AddItemsDialog({
 
   const { data: itens = [], isLoading: loadingItens } = useQuery({
     queryKey: ['analise-itens', compraIdStr],
-    queryFn: () => compraIdStr ? itensApi.listar({ idContratacao: compraIdStr }) : Promise.resolve([]),
+    queryFn: () => compraIdStr ? itensApi.listar({ identContratacao: compraIdStr }) : Promise.resolve([]),
     enabled: open && !!compraIdStr,
   })
 
   const itemMap = new Map<string, IItem>(itens.map((it) => [it.identificador, it]))
   const existingFornIds = new Set(
     existingItems.map((ei) => {
-      const f = ei.idFornecimento
+      const f = ei.identFornecimento
       return typeof f === 'string' ? f : (f as IFornecimento).identificador
     }),
   )
@@ -183,7 +183,7 @@ function AddItemsDialog({
   const CATALOG_PAGE_SIZE = 10
   const filteredForn = catalogSearch.trim()
     ? fornecimentos.filter((f) => {
-        const item = itemMap.get(f.idItem as string)
+        const item = itemMap.get(f.identItem as string)
         if (!item) return false
         const q = catalogSearch.toLowerCase()
         return descBreve(item).toLowerCase().includes(q) || descDetalhada(item).toLowerCase().includes(q)
@@ -198,8 +198,8 @@ function AddItemsDialog({
     mutationFn: async () => {
       for (const [idForn, entry] of newItems.entries()) {
         await itemRequisicaoApi.criar({
-          idRequisicao: requisicaoIdentificador,
-          idFornecimento: idForn,
+          identRequisicao: requisicaoIdentificador,
+          identFornecimento: idForn,
           quantidadeSolicitada: entry.quantidade,
         })
       }
@@ -239,7 +239,7 @@ function AddItemsDialog({
               </div>
               <div className="flex-1 overflow-y-auto divide-y">
                 {paginated.map((f) => {
-                  const item = itemMap.get(f.idItem as string)
+                  const item = itemMap.get(f.identItem as string)
                   const isExpanded = expandedId === f.identificador
                   const isAlready = existingFornIds.has(f.identificador)
                   const isNew = newItems.has(f.identificador)
@@ -249,7 +249,7 @@ function AddItemsDialog({
                     <div key={f.identificador} className={cn('transition-colors', (isAlready || isNew) && 'bg-primary/5', noSaldo && 'bg-muted/40 opacity-60')}>
                       <div className="flex items-center gap-2 px-3 py-2.5">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium leading-snug line-clamp-1">{item ? descBreve(item) : f.idItem as string}</p>
+                          <p className="text-sm font-medium leading-snug line-clamp-1">{item ? descBreve(item) : f.identItem as string}</p>
                           <div className="flex gap-3 mt-0.5 text-xs text-muted-foreground">
                             <span>Saldo: {saldo}</span>
                             <span className="font-medium text-foreground">{formatCurrency(valUnitario(f))}</span>
@@ -263,7 +263,7 @@ function AddItemsDialog({
                           {!noSaldo && !isAlready && (
                             <Button size="icon" variant={isNew ? 'secondary' : 'default'} className="h-7 w-7" disabled={isNew}
                               onClick={() => {
-                                const it = itemMap.get(f.idItem as string)
+                                const it = itemMap.get(f.identItem as string)
                                 if (!it) return
                                 setNewItems((p) => { if (p.has(f.identificador)) return p; const n = new Map(p); n.set(f.identificador, { fornecimento: f, item: it, quantidade: 1 }); return n })
                               }}>
@@ -449,7 +449,7 @@ export function RequisicaoAnalisePage() {
   if (!requisicao) return <div>Requisição não encontrada.</div>
 
   const valorTotal = itensRequisicao.reduce((sum, i) => sum + (i.valorTotal ?? 0), 0)
-  const unidade = typeof requisicao.idUnidade === 'string' ? null : (requisicao.idUnidade as IUnidade)
+  const unidade = typeof requisicao.identUnidade === 'string' ? null : (requisicao.identUnidade as IUnidade)
   const uorg = requisicao.uorg as IUorg | undefined
   const userUasg = unidade?.uasg ?? ''
   const requisitante = typeof requisicao.requisitante === 'string'
@@ -458,7 +458,7 @@ export function RequisicaoAnalisePage() {
 
   const compraIdStr = (() => {
     if (itensRequisicao.length === 0) return null
-    const f = itensRequisicao[0].idFornecimento
+    const f = itensRequisicao[0].identFornecimento
     const fIdent = typeof f === 'string' ? f : (f as IFornecimento).identificador
     return extrairIdCompra(fIdent)
   })()
@@ -559,7 +559,7 @@ export function RequisicaoAnalisePage() {
             <div>
               <span className="text-muted-foreground">Unidade (UASG)</span>
               <p className="font-medium">
-                {unidade ? `${unidade.uasg} — ${unidade.nomeAbrev ?? unidade.nome}` : (requisicao.idUnidade as string ?? '—')}
+                {unidade ? `${unidade.uasg} — ${unidade.nomeAbrev ?? unidade.nome}` : (requisicao.identUnidade as string ?? '—')}
               </p>
             </div>
             <div>
