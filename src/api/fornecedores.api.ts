@@ -13,7 +13,7 @@ export const fornecedoresApi = {
     return data
   },
 
-  async atualizar(id: number, data: Partial<IFornecedor>): Promise<IFornecedor> {
+  async atualizar(id: string, data: Partial<IFornecedor>): Promise<IFornecedor> {
     const { data: result } = await apiClient.put<IFornecedor>(`/fornecedores/${id}`, data)
     return result
   },
