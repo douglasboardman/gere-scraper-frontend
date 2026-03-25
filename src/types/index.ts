@@ -42,7 +42,7 @@ export interface IContratacao {
 export interface IAtaRegPrecos {
   identificador: string
   numAta: string
-  identContratacao: string
+  identContratacao: string | IContratacao
   identFornecedor?: string
   cnpjFornecedor?: string
   nomeFornecedor?: string
@@ -57,7 +57,7 @@ export interface IItem {
   identificador: string
   sequencialItemPregao?: string
   numItem?: string
-  identAta: string
+  identAta: string | IAtaRegPrecos
   descBreve?: string
   descDetalhada?: string
   descricaoBreve?: string

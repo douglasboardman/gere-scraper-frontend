@@ -421,7 +421,7 @@ export function RequisicaoAnalisePage() {
   })
 
   const removeItemMutation = useMutation({
-    mutationFn: (itemId: string) => itemRequisicaoApi.deletar(itemId),
+    mutationFn: (itemId: number) => itemRequisicaoApi.deletar(itemId),
     onSuccess: () => { toast.success('Item removido.'); invalidateItems() },
     onError: (e: unknown) => {
       toast.error((e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Erro ao remover item.')
