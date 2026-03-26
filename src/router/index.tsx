@@ -30,6 +30,7 @@ import { UnidadesPage } from '@/pages/unidades/UnidadesPage'
 import { UsuariosPage } from '@/pages/usuarios/UsuariosPage'
 import { UsuarioEditPage } from '@/pages/usuarios/UsuarioEditPage'
 import { PerfilPage } from '@/pages/PerfilPage'
+import { SobrePage } from '@/pages/SobrePage'
 
 // Protected route component
 function PrivateRoute({ requireAdmin = false, requireGestorOrAdmin = false }) {
@@ -67,6 +68,10 @@ export const router = createBrowserRouter([
   {
     path: '/redefinir-senha',
     element: <ResetPasswordPage />,
+  },
+  {
+    path: '/sobre',
+    element: <SobrePage />,
   },
   {
     path: '/',
