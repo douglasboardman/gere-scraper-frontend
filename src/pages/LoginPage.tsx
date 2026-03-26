@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { Loader2, LogIn } from 'lucide-react'
 import { authApi } from '@/api/auth.api'
+import { fetchVersion } from '@/api/version.api'
 import { useAuthStore } from '@/store/auth.store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -31,6 +32,13 @@ export function LoginPage() {
   const login = useAuthStore((s) => s.login)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [version, setVersion] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchVersion()
+      .then(setVersion)
+      .catch(() => setVersion(null))
+  }, [])
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -87,14 +95,18 @@ export function LoginPage() {
           </p>
         </div>
 
-        {/* Footer credit */}
-        <div className="mt-auto text-center">
-          <p className="text-xs text-gray-500">
-            Desenvolvido por Douglas Ricardo Boardman dos Reis
+        {/* Footer */}
+        <div className="mt-auto text-center space-y-1">
+          <p className="text-xs text-gray-400 font-medium">
+            GERE{version ? ` | Versão ${version}` : ''}
           </p>
-          <p className="text-xs text-gray-600 mt-0.5">
-            douglas.boardman@gmail.com
-          </p>
+          <Link
+            to="/sobre"
+            className="text-xs hover:underline transition-colors"
+            style={{ color: '#82ab90' }}
+          >
+            Sobre esta Aplicação
+          </Link>
         </div>
       </div>
 
