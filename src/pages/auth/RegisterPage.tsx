@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { Loader2, UserPlus } from 'lucide-react'
 import { authApi } from '@/api/auth.api'
 import { uorgsApi } from '@/api/uorgs.api'
+import { fetchVersion } from '@/api/version.api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -46,6 +47,13 @@ export function RegisterPage() {
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [version, setVersion] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchVersion()
+      .then(setVersion)
+      .catch(() => setVersion(null))
+  }, [])
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -121,13 +129,17 @@ export function RegisterPage() {
           </p>
         </div>
 
-        <div className="mt-auto text-center">
-          <p className="text-xs text-gray-500">
-            Desenvolvido por Douglas Ricardo Boardman dos Reis
+        <div className="mt-auto text-center space-y-1">
+          <p className="text-xs text-gray-400 font-medium">
+            GERE{version ? ` | Versão ${version}` : ''}
           </p>
-          <p className="text-xs text-gray-600 mt-0.5">
-            douglas.boardman@gmail.com
-          </p>
+          <Link
+            to="/sobre"
+            className="text-xs hover:underline transition-colors"
+            style={{ color: '#82ab90' }}
+          >
+            Sobre esta Aplicação
+          </Link>
         </div>
       </div>
 

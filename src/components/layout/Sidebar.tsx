@@ -13,6 +13,7 @@ import {
   Users,
   LogOut,
   ChevronRight,
+  Layers,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
@@ -71,9 +72,10 @@ export function Sidebar() {
     {
       title: 'Requisições',
       items: [
-        { label: 'Minhas Requisições', to: '/requisicoes', icon: ClipboardList, end: true },
-        { label: 'Nova Requisição', to: '/requisicoes/nova', icon: PlusCircle },
-        ...(isAdmin || isGestor
+        ...(!isAdmin ? [{ label: 'Minhas Requisições', to: '/requisicoes/minhas_requisicoes', icon: ClipboardList }] : []),
+        ...(!isAdmin ? [{ label: 'Nova Requisição', to: '/requisicoes/nova', icon: PlusCircle }] : []),
+        { label: isAdmin ? 'Todas as Requisições' : 'Requisições da Unidade', to: '/requisicoes', icon: Layers, end: true },
+        ...(isGestor
           ? [{ label: 'Requisições para Análise', to: '/requisicoes/pendentes', icon: ClipboardCheck }]
           : []),
       ],

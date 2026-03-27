@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Mail } from 'lucide-react'
+import { ArrowLeft, Mail, ExternalLink } from 'lucide-react'
 import { fetchVersion } from '@/api/version.api'
 
 export function SobrePage() {
@@ -101,11 +101,13 @@ export function SobrePage() {
                   douglas.boardman@gmail.com
                 </a>
                 <a
-                  href="mailto:douglas.reis@iffarroupilha.edu.br"
+                  href="https://github.com/douglasboardman"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <Mail className="h-3.5 w-3.5 flex-shrink-0" />
-                  douglas.reis@iffarroupilha.edu.br
+                  <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
+                  github.com/douglasboardman
                 </a>
               </div>
             </div>
@@ -117,7 +119,7 @@ export function SobrePage() {
       {/* Footer */}
       <footer className="border-t px-6 py-4 text-center">
         <p className="text-xs text-muted-foreground">
-          {version ? `GERE v${version}` : 'GERE'} · Instituto Federal Farroupilha
+          {version ? `GERE v${version}` : 'GERE'} · Instituto Federal Farroupilha - Campus Uruguaiana
         </p>
       </footer>
     </div>

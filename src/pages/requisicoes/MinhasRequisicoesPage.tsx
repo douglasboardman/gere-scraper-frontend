@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/dialog'
 import { useAuthStore } from '@/store/auth.store'
 import { usePermission } from '@/hooks/usePermission'
-import type { IRequisicao, IUsuario, IUnidade } from '@/types'
+import type { IRequisicao } from '@/types'
 
 type ConflitoPendente = {
   identificador: string
@@ -67,11 +67,11 @@ function aplicarAnotacao(observacoesAtuais: string, bloco: string): string {
   return observacoesAtuais.trim() ? `${observacoesAtuais.trim()}\n${bloco}` : bloco
 }
 
-export function RequisicoesPage() {
+export function MinhasRequisicoesPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const user = useAuthStore((s) => s.user)
-  const { isGestor } = usePermission()
+  const { isAdmin, isGestor } = usePermission()
   const [actionDialog, setActionDialog] = useState<{
     type: 'enviar' | 'aprovar' | 'rejeitar' | 'deletar'
     id: string
@@ -80,10 +80,15 @@ export function RequisicoesPage() {
   } | null>(null)
   const [conflitoPendente, setConflitoPendente] = useState<ConflitoPendente | null>(null)
 
-  const { data: requisicoes = [], isLoading } = useQuery({
+  const { data: todasRequisicoes = [], isLoading } = useQuery({
     queryKey: ['requisicoes'],
     queryFn: () => requisicoesApi.listar(),
   })
+
+  const requisicoes = useMemo(
+    () => todasRequisicoes.filter((r) => r.requisitanteId === user?.id),
+    [todasRequisicoes, user?.id]
+  )
 
   const enviarMutation = useMutation({
     mutationFn: (id: string) => requisicoesApi.enviar(id),
@@ -165,10 +170,6 @@ export function RequisicoesPage() {
     else if (type === 'deletar') deletarMutation.mutate(id)
   }
 
-  const isOwner = (req: IRequisicao) => {
-    return req.requisitanteId === user?.id
-  }
-
   const columns: ColumnDef<IRequisicao, unknown>[] = [
     {
       accessorKey: 'identificador',
@@ -176,30 +177,6 @@ export function RequisicoesPage() {
       cell: ({ row }) => (
         <span className="font-mono text-sm font-medium">{row.original.identificador}</span>
       ),
-    },
-    {
-      id: 'requisitante',
-      header: 'Requisitante',
-      cell: ({ row }) => {
-        const r = row.original.requisitante
-        return (
-          <span className="text-sm">
-            {typeof r === 'string' ? r : (r as IUsuario)?.nome ?? '—'}
-          </span>
-        )
-      },
-    },
-    {
-      id: 'unidade',
-      header: 'Unidade',
-      cell: ({ row }) => {
-        const u = row.original.identUnidade
-        return (
-          <span className="text-sm">
-            {typeof u === 'string' ? u : (u as IUnidade)?.nomeAbrev ?? (u as IUnidade)?.nome ?? '—'}
-          </span>
-        )
-      },
     },
     {
       accessorKey: 'tipo',
@@ -227,10 +204,10 @@ export function RequisicoesPage() {
       header: 'Ações',
       cell: ({ row }) => {
         const req = row.original
-        const owner = isOwner(req)
+        const isDraftOrRejected = req.status === 'Rascunho' || req.status === 'Rejeitada'
+        const hasItems = (req._count?.itens ?? 0) > 0
         return (
           <div className="flex items-center gap-1 flex-wrap">
-            {/* Visualizar — sempre visível */}
             <Button
               variant="ghost"
               size="sm"
@@ -241,8 +218,7 @@ export function RequisicoesPage() {
               <Eye className="h-3.5 w-3.5" />
             </Button>
 
-            {/* Owner: editar/enviar/excluir em Rascunho ou Rejeitada */}
-            {owner && (req.status === 'Rascunho' || req.status === 'Rejeitada') && (
+            {isDraftOrRejected && (
               <>
                 <Button
                   variant="ghost"
@@ -253,17 +229,19 @@ export function RequisicoesPage() {
                 >
                   <Edit className="h-3.5 w-3.5" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs text-blue-600"
-                  title="Enviar para aprovação"
-                  onClick={() =>
-                    setActionDialog({ type: 'enviar', id: req.identificador, label: req.identificador, observacoes: req.observacoes ?? '' })
-                  }
-                >
-                  <Send className="h-3.5 w-3.5" />
-                </Button>
+                {hasItems && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs text-blue-600"
+                    title="Enviar para aprovação"
+                    onClick={() =>
+                      setActionDialog({ type: 'enviar', id: req.identificador, label: req.identificador, observacoes: req.observacoes ?? '' })
+                    }
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -278,7 +256,6 @@ export function RequisicoesPage() {
               </>
             )}
 
-            {/* Gestor: aprovar/rejeitar em Enviada */}
             {isGestor && req.status === 'Enviada' && (
               <>
                 <Button
@@ -306,7 +283,6 @@ export function RequisicoesPage() {
               </>
             )}
 
-            {/* Imprimir — Aprovada ou Empenhada */}
             {(req.status === 'Aprovada' || req.status === 'Empenhada') && (
               <Button
                 variant="ghost"
@@ -361,13 +337,15 @@ export function RequisicoesPage() {
   return (
     <div>
       <PageHeader
-        title="Requisições"
-        subtitle="Gerencie as requisições de materiais e serviços"
+        title="Minhas Requisições"
+        subtitle="Requisições criadas por você"
         actions={
-          <Button onClick={() => navigate('/requisicoes/nova')}>
-            <Plus className="h-4 w-4" />
-            Nova Requisição
-          </Button>
+          !isAdmin && (
+            <Button onClick={() => navigate('/requisicoes/nova')}>
+              <Plus className="h-4 w-4" />
+              Nova Requisição
+            </Button>
+          )
         }
       />
 
@@ -375,7 +353,7 @@ export function RequisicoesPage() {
         columns={columns}
         data={requisicoes}
         isLoading={isLoading}
-        emptyMessage="Nenhuma requisição encontrada."
+        emptyMessage="Você não possui requisições."
       />
 
       {actionDialog && currentDialog && (

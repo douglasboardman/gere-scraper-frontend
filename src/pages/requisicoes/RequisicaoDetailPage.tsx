@@ -9,12 +9,11 @@ import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 import {
   ArrowLeft, Plus, Send, CheckCircle, XCircle, Trash2,
-  Pencil, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Loader2,
+  Pencil, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Loader2, Printer,
 } from 'lucide-react'
 import { requisicoesApi } from '@/api/requisicoes.api'
 import { itemRequisicaoApi } from '@/api/itemRequisicao.api'
 import { fornecimentosApi } from '@/api/fornecimentos.api'
-import { itensApi } from '@/api/itens.api'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
@@ -24,6 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -72,7 +72,7 @@ function valUnitario(f: IFornecimento): number {
 function saldoDisp(f: IFornecimento): number {
   return f.saldoDisponivel ?? f.saldo ?? 0
 }
-function extrairIdCompra(identFornecimento: string): string | null {
+function extrairIdContratacao(identFornecimento: string): string | null {
   const idx = identFornecimento.lastIndexOf('C')
   return idx !== -1 ? identFornecimento.slice(idx) : null
 }
@@ -225,7 +225,7 @@ interface AddItemsDialogProps {
   open: boolean
   onOpenChange: (v: boolean) => void
   existingItems: IItemRequisicao[]
-  compraIdStr: string | null
+  contratacaoIdStr: string | null
   userUasg: string
   requisicaoIdentificador: string
   onSaved: () => void
@@ -235,7 +235,7 @@ function AddItemsDialog({
   open,
   onOpenChange,
   existingItems,
-  compraIdStr,
+  contratacaoIdStr,
   userUasg,
   requisicaoIdentificador,
   onSaved,
@@ -246,22 +246,13 @@ function AddItemsDialog({
   const [catalogSearch, setCatalogSearch] = useState('')
 
   const { data: fornecimentos = [], isLoading: loadingForn } = useQuery({
-    queryKey: ['add-items-fornecimentos', compraIdStr, userUasg],
+    queryKey: ['add-items-fornecimentos', contratacaoIdStr, userUasg],
     queryFn: () =>
-      compraIdStr
-        ? fornecimentosApi.listarPorContratacaoUnidade(compraIdStr, userUasg)
+      contratacaoIdStr
+        ? fornecimentosApi.listarPorContratacaoUnidade(contratacaoIdStr, userUasg)
         : fornecimentosApi.listarPorUnidade(userUasg),
     enabled: open && !!userUasg,
   })
-
-  const { data: itens = [], isLoading: loadingItens } = useQuery({
-    queryKey: ['add-items-itens', compraIdStr],
-    queryFn: () =>
-      compraIdStr ? itensApi.listar({ identContratacao: compraIdStr }) : Promise.resolve([]),
-    enabled: open && !!compraIdStr,
-  })
-
-  const itemMap = new Map<string, IItem>(itens.map((it) => [it.identificador, it]))
 
   // Identifiers already in requisição (lock them in the catalog)
   const existingFornIds = new Set(
@@ -272,9 +263,13 @@ function AddItemsDialog({
   )
 
   const CATALOG_PAGE_SIZE = 10
+  function resolveItem(f: IFornecimento): IItem | undefined {
+    return typeof f.identItem === 'string' ? undefined : (f.identItem as IItem)
+  }
+
   const filteredFornecimentos = catalogSearch.trim()
     ? fornecimentos.filter((f) => {
-        const item = itemMap.get(f.identItem as string)
+        const item = resolveItem(f)
         if (!item) return false
         const q = catalogSearch.toLowerCase()
         return (
@@ -290,7 +285,7 @@ function AddItemsDialog({
   )
 
   function handleAdd(f: IFornecimento) {
-    const item = itemMap.get(f.identItem as string)
+    const item = resolveItem(f)
     if (!item) return
     setNewItems((prev) => {
       if (prev.has(f.identificador)) return prev
@@ -349,7 +344,7 @@ function AddItemsDialog({
     },
   })
 
-  const isLoading = loadingForn || loadingItens
+  const isLoading = loadingForn
 
   return (
     <Dialog
@@ -410,7 +405,7 @@ function AddItemsDialog({
                   </div>
                 ) : (
                   paginatedFornecimentos.map((f) => {
-                    const item = itemMap.get(f.identItem as string)
+                    const item = resolveItem(f)
                     const isExpanded = expandedId === f.identificador
                     const isAlreadyInReq = existingFornIds.has(f.identificador)
                     const isNewlyAdded = newItems.has(f.identificador)
@@ -791,9 +786,19 @@ export function RequisicaoDetailPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const user = useAuthStore((s) => s.user)
-  const { isAdmin, isGestor } = usePermission()
+  const { isGestor } = usePermission()
 
   const [actionDialog, setActionDialog] = useState<'enviar' | 'aprovar' | 'rejeitar' | null>(null)
+  const [conflitoPendente, setConflitoPendente] = useState<{
+    conflitos: Array<{
+      identFornecimento: string
+      descricaoItem: string
+      qtdSolicitadaAtual: number
+      qtdComprometida: number
+      saldoDisponivel: number
+      requisicoesConcorrentes: string[]
+    }>
+  } | null>(null)
   const [editItemTarget, setEditItemTarget] = useState<IItemRequisicao | null>(null)
   const [addItemsOpen, setAddItemsOpen] = useState(false)
   const [editReqOpen, setEditReqOpen] = useState(false)
@@ -815,13 +820,33 @@ export function RequisicaoDetailPage() {
     onSuccess: () => {
       toast.success('Requisição enviada para aprovação.')
       queryClient.invalidateQueries({ queryKey: ['requisicao', id] })
+      queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
       setActionDialog(null)
+      navigate('/requisicoes/minhas_requisicoes')
     },
     onError: (error: unknown) => {
-      toast.error(
-        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-          'Erro inesperado',
-      )
+      type ConflitosItem = { identFornecimento: string; descricaoItem: string; qtdSolicitadaAtual: number; qtdComprometida: number; saldoDisponivel: number; requisicoesConcorrentes: string[] }
+      const axiosErr = error as { response?: { status?: number; data?: { error?: string; conflitos?: ConflitosItem[] } } }
+      if (axiosErr.response?.status === 409 && axiosErr.response.data?.conflitos?.length) {
+        setConflitoPendente({ conflitos: axiosErr.response.data.conflitos })
+        setActionDialog(null)
+      } else {
+        toast.error(axiosErr.response?.data?.error ?? 'Erro inesperado')
+      }
+    },
+  })
+
+  const confirmarCienciaMutation = useMutation({
+    mutationFn: (novasObservacoes: string) =>
+      requisicoesApi.atualizar(id!, { observacoes: novasObservacoes }),
+    onSuccess: () => {
+      toast.info('Requisição mantida como rascunho. O conflito foi registrado nas observações.')
+      queryClient.invalidateQueries({ queryKey: ['requisicao', id] })
+      queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
+      setConflitoPendente(null)
+    },
+    onError: () => {
+      toast.error('Erro ao salvar a anotação de conflito.')
     },
   })
 
@@ -878,8 +903,8 @@ export function RequisicaoDetailPage() {
   const isOwner = requisicao.requisitanteId === user?.id
 
   const canEdit = isOwner && (requisicao.status === 'Rascunho' || requisicao.status === 'Rejeitada')
-  const canSend = isOwner && (requisicao.status === 'Rascunho' || requisicao.status === 'Rejeitada')
-  const canApproveReject = (isAdmin || isGestor) && requisicao.status === 'Enviada'
+  const canSend = isOwner && (requisicao.status === 'Rascunho' || requisicao.status === 'Rejeitada') && itensRequisicao.length > 0
+  const canApproveReject = isGestor && requisicao.status === 'Enviada'
 
   const valorTotal = itensRequisicao.reduce((sum, item) => sum + (item.valorTotal ?? 0), 0)
 
@@ -888,11 +913,12 @@ export function RequisicaoDetailPage() {
   const userUasg = unidade?.uasg ?? ''
 
   // Derive the compra identifier from the first existing item
-  const compraIdStr = (() => {
+  const contratacaoIdStr = (() => {
+    if (requisicao.identContratacao) return requisicao.identContratacao
     if (itensRequisicao.length === 0) return null
     const f = itensRequisicao[0].identFornecimento
     const fIdent = typeof f === 'string' ? f : (f as IFornecimento).identificador
-    return extrairIdCompra(fIdent)
+    return extrairIdContratacao(fIdent)
   })()
 
   const requisitanteLabel = (() => {
@@ -916,10 +942,21 @@ export function RequisicaoDetailPage() {
         subtitle={`Criada em ${format(new Date(requisicao.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`}
         actions={
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/requisicoes')}>
+            <Button variant="outline" size="sm" onClick={() => navigate('/requisicoes/minhas_requisicoes')}>
               <ArrowLeft className="h-4 w-4" />
               Voltar
             </Button>
+            {requisicao.status === 'Aprovada' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/requisicoes/${requisicao.identificador}/imprimir`)}
+                title="Imprimir PDF"
+              >
+                <Printer className="h-4 w-4" />
+                Imprimir
+              </Button>
+            )}
             {canSend && (
               <Button
                 size="sm"
@@ -1165,6 +1202,68 @@ export function RequisicaoDetailPage() {
         />
       )}
 
+      {conflitoPendente && (
+        <Dialog open onOpenChange={() => setConflitoPendente(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Conflito de Saldo Detectado</DialogTitle>
+              <DialogDescription>
+                Os itens abaixo possuem saldo bloqueado por requisições da sua unidade já enviadas e pendentes de aprovação.
+                A requisição será salva como rascunho para que você possa resolver o conflito antes de tentar o envio novamente.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 text-sm max-h-60 overflow-y-auto">
+              {conflitoPendente.conflitos.map((c) => (
+                <div key={c.identFornecimento} className="rounded-md border p-3 space-y-1">
+                  <p className="font-medium">{c.descricaoItem}</p>
+                  <p className="text-muted-foreground text-xs">Fornecimento: {c.identFornecimento}</p>
+                  <div className="grid grid-cols-3 gap-1 text-xs mt-1">
+                    <div><span className="text-muted-foreground">Saldo disponível</span><br />{c.saldoDisponivel}</div>
+                    <div><span className="text-muted-foreground">Comprometido</span><br />{c.qtdComprometida}</div>
+                    <div><span className="text-muted-foreground">Solicitado aqui</span><br />{c.qtdSolicitadaAtual}</div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Requisições concorrentes: {c.requisicoesConcorrentes.join(', ')}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConflitoPendente(null)} disabled={confirmarCienciaMutation.isPending}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => {
+                  const INICIO = '[ANOTAÇÃO AUTOMÁTICA DO SISTEMA - INÍCIO]'
+                  const FIM = '[ANOTAÇÃO AUTOMÁTICA DO SISTEMA - FIM]'
+                  const dataHora = new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                  const detalhes = conflitoPendente.conflitos.map((c) =>
+                    `"${c.descricaoItem}" (fornecimento: ${c.identFornecimento}) — saldo disponível: ${c.saldoDisponivel}, comprometido por outras requisições enviadas: ${c.qtdComprometida}, solicitado nesta requisição: ${c.qtdSolicitadaAtual} (requisições concorrentes: ${c.requisicoesConcorrentes.join(', ')})`
+                  ).join('; ')
+                  const conteudo = `Em ${dataHora}, o sistema detectou conflito de saldo ao tentar enviar esta requisição. Os seguintes fornecimentos possuem saldo insuficiente em razão de outras requisições enviadas pendentes de aprovação: ${detalhes}. A requisição foi mantida como rascunho para que o conflito seja resolvido antes de nova tentativa de envio.`
+                  const bloco = `${INICIO}\n${conteudo}\n${FIM}`
+                  const atual = (requisicao.observacoes ?? (requisicao as any).observacao ?? '').trim()
+                  const idxI = atual.indexOf(INICIO)
+                  const idxF = atual.indexOf(FIM)
+                  let novas: string
+                  if (idxI !== -1 && idxF !== -1) {
+                    const antes = atual.slice(0, idxI).trimEnd()
+                    const depois = atual.slice(idxF + FIM.length).trimStart()
+                    novas = [antes, bloco, depois].filter(Boolean).join('\n')
+                  } else {
+                    novas = atual ? `${atual}\n${bloco}` : bloco
+                  }
+                  confirmarCienciaMutation.mutate(novas)
+                }}
+                disabled={confirmarCienciaMutation.isPending}
+              >
+                Entendi, salvar como rascunho
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
       {/* ── Edit item quantity dialog ── */}
       {editItemTarget && (
         <EditItemDialog
@@ -1183,7 +1282,7 @@ export function RequisicaoDetailPage() {
           open={addItemsOpen}
           onOpenChange={setAddItemsOpen}
           existingItems={itensRequisicao}
-          compraIdStr={compraIdStr}
+          contratacaoIdStr={contratacaoIdStr}
           userUasg={userUasg}
           requisicaoIdentificador={requisicao.identificador}
           onSaved={() => {

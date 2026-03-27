@@ -55,7 +55,7 @@ function StatCard({ title, value, description, icon: Icon, isLoading, color = '#
 export function DashboardPage() {
   const user = useAuthStore((s) => s.user)
 
-  const { data: compras, isLoading: loadingCompras } = useQuery({
+  const { data: contratacoes, isLoading: loadingContratacoes } = useQuery({
     queryKey: ['contratacoes'],
     queryFn: contratacoesApi.listar,
   })
@@ -72,10 +72,10 @@ export function DashboardPage() {
 
   const { data: requisicoes, isLoading: loadingRequisicoes } = useQuery({
     queryKey: ['requisicoes'],
-    queryFn: requisicoesApi.listar,
+    queryFn: () => requisicoesApi.listar(),
   })
 
-  const comprasEmProcessamento = compras?.filter((c) => c.status === 'Em_Processamento') ?? []
+  const contratacoesEmProcessamento = contratacoes?.filter((c) => c.status === 'Em_Processamento') ?? []
   const atasVigentes = atas?.filter((a) => a.status === 'Processada') ?? []
   const fornecimentosHomologados = fornecimentos?.filter((f) => f.status === 'Homologado') ?? []
   const requisicoesAbertas = requisicoes?.filter(
@@ -95,10 +95,10 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
           title="Total de Contratações"
-          value={loadingCompras ? '-' : (compras?.length ?? 0)}
+          value={loadingContratacoes ? '-' : (contratacoes?.length ?? 0)}
           description="Contratações cadastradas"
           icon={Gavel}
-          isLoading={loadingCompras}
+          isLoading={loadingContratacoes}
           color="#2a593a"
         />
         <StatCard
@@ -172,29 +172,29 @@ export function DashboardPage() {
             <CardDescription>Aguardando importação de dados</CardDescription>
           </CardHeader>
           <CardContent>
-            {loadingCompras ? (
+            {loadingContratacoes ? (
               <div className="space-y-2">
                 {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
               </div>
-            ) : comprasEmProcessamento.length === 0 ? (
+            ) : contratacoesEmProcessamento.length === 0 ? (
               <div className="flex flex-col items-center py-8 text-muted-foreground">
                 <AlertCircle className="h-8 w-8 mb-2 opacity-40" />
                 <p className="text-sm">Nenhuma contratação em processamento</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {comprasEmProcessamento.map((compra) => (
+                {contratacoesEmProcessamento.map((contratacao) => (
                   <div
-                    key={compra.identificador}
+                    key={contratacao.identificador}
                     className="flex items-center justify-between py-2 border-b last:border-0"
                   >
                     <div>
-                      <p className="text-sm font-medium">{compra.identificador}</p>
+                      <p className="text-sm font-medium">{contratacao.identificador}</p>
                       <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                        {compra.objeto ?? compra.nomeUnGestora ?? 'Sem descrição'}
+                        {contratacao.objeto ?? contratacao.nomeUnGestora ?? 'Sem descrição'}
                       </p>
                     </div>
-                    <StatusBadge status={compra.status} />
+                    <StatusBadge status={contratacao.status} />
                   </div>
                 ))}
               </div>

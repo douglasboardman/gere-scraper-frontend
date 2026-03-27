@@ -24,7 +24,7 @@ export function RequisicoesPendentesPage() {
 
   const { data: todasRequisicoes = [], isLoading } = useQuery({
     queryKey: ['requisicoes'],
-    queryFn: requisicoesApi.listar,
+    queryFn: () => requisicoesApi.listar(),
   })
 
   // Apenas as Enviadas aguardando análise

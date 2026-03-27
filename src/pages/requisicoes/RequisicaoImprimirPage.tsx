@@ -72,12 +72,6 @@ function InfoCard({ requisitante, unidade, uorg, tipo, justificativa, observacoe
         <p className="text-muted-foreground uppercase font-semibold mb-0.5">Justificativa</p>
         <p className="whitespace-pre-wrap">{justificativa ?? '—'}</p>
       </div>
-      {observacoes && (
-        <div className="col-span-2">
-          <p className="text-muted-foreground uppercase font-semibold mb-0.5">Observações</p>
-          <p>{observacoes}</p>
-        </div>
-      )}
       <div className="col-span-2 flex items-center justify-between pt-1.5 border-t">
         <p className="text-muted-foreground uppercase font-semibold">Status</p>
         <p className="font-bold text-green-700">{status}</p>

@@ -21,8 +21,11 @@ import { FornecedorDetailPage } from '@/pages/fornecedores/FornecedorDetailPage'
 import { FornecimentosPage } from '@/pages/fornecimentos/FornecimentosPage'
 import { FornecimentoDetailPage } from '@/pages/fornecimentos/FornecimentoDetailPage'
 import { RequisicoesPage } from '@/pages/requisicoes/RequisicoesPage'
+import { RequisicoesUnidadePage } from '@/pages/requisicoes/RequisicoesUnidadePage'
+import { MinhasRequisicoesPage } from '@/pages/requisicoes/MinhasRequisicoesPage'
 import { NovaRequisicaoPage } from '@/pages/requisicoes/NovaRequisicaoPage'
 import { RequisicaoDetailPage } from '@/pages/requisicoes/RequisicaoDetailPage'
+import { RequisicaoViewPage } from '@/pages/requisicoes/RequisicaoViewPage'
 import { RequisicoesPendentesPage } from '@/pages/requisicoes/RequisicoesPendentesPage'
 import { RequisicaoAnalisePage } from '@/pages/requisicoes/RequisicaoAnalisePage'
 import { RequisicaoImprimirPage } from '@/pages/requisicoes/RequisicaoImprimirPage'
@@ -33,7 +36,7 @@ import { PerfilPage } from '@/pages/PerfilPage'
 import { SobrePage } from '@/pages/SobrePage'
 
 // Protected route component
-function PrivateRoute({ requireAdmin = false, requireGestorOrAdmin = false }) {
+function PrivateRoute({ requireAdmin = false, requireGestorOrAdmin = false, requireNonAdmin = false, requireGestorOnly = false }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const { isAdmin, isGestor } = usePermission()
 
@@ -46,6 +49,14 @@ function PrivateRoute({ requireAdmin = false, requireGestorOrAdmin = false }) {
   }
 
   if (requireGestorOrAdmin && !isAdmin && !isGestor) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  if (requireNonAdmin && isAdmin) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  if (requireGestorOnly && !isGestor) {
     return <Navigate to="/dashboard" replace />
   }
 
@@ -141,15 +152,21 @@ export const router = createBrowserRouter([
           },
           {
             path: 'requisicoes',
-            element: <RequisicoesPage />,
+            element: <RequisicoesUnidadePage />,
+          },
+          {
+            path: 'requisicoes/minhas_requisicoes',
+            element: <PrivateRoute requireNonAdmin />,
+            children: [{ index: true, element: <MinhasRequisicoesPage /> }],
           },
           {
             path: 'requisicoes/nova',
-            element: <NovaRequisicaoPage />,
+            element: <PrivateRoute requireNonAdmin />,
+            children: [{ index: true, element: <NovaRequisicaoPage /> }],
           },
           {
             path: 'requisicoes/pendentes',
-            element: <PrivateRoute requireGestorOrAdmin />,
+            element: <PrivateRoute requireGestorOnly />,
             children: [
               {
                 index: true,
@@ -159,7 +176,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'requisicoes/analise/:id',
-            element: <PrivateRoute requireGestorOrAdmin />,
+            element: <PrivateRoute requireGestorOnly />,
             children: [
               {
                 index: true,
@@ -168,8 +185,17 @@ export const router = createBrowserRouter([
             ],
           },
           {
+            path: 'requisicoes/:id/visualizar',
+            element: <RequisicaoViewPage />,
+          },
+          {
             path: 'requisicoes/:id',
             element: <RequisicaoDetailPage />,
+          },
+          // Mantido para compatibilidade com links existentes
+          {
+            path: 'requisicoes-lista',
+            element: <RequisicoesPage />,
           },
           {
             path: 'unidades',
