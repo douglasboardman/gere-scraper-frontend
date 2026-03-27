@@ -44,7 +44,7 @@ function valUnitario(f: IFornecimento): number {
 function saldoDisp(f: IFornecimento): number {
   return f.saldoDisponivel ?? f.saldo ?? 0
 }
-function extrairIdCompra(identFornecimento: string): string | null {
+function extrairIdContratacao(identFornecimento: string): string | null {
   const idx = identFornecimento.lastIndexOf('C')
   return idx !== -1 ? identFornecimento.slice(idx) : null
 }
@@ -143,14 +143,14 @@ interface AddItemsDialogProps {
   open: boolean
   onOpenChange: (v: boolean) => void
   existingItems: IItemRequisicao[]
-  compraIdStr: string | null
+  contratacaoIdStr: string | null
   userUasg: string
   requisicaoIdentificador: string
   onSaved: () => void
 }
 
 function AddItemsDialog({
-  open, onOpenChange, existingItems, compraIdStr, userUasg, requisicaoIdentificador, onSaved,
+  open, onOpenChange, existingItems, contratacaoIdStr, userUasg, requisicaoIdentificador, onSaved,
 }: AddItemsDialogProps) {
   const [newItems, setNewItems] = useState<Map<string, NewItemEntry>>(new Map())
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -158,18 +158,18 @@ function AddItemsDialog({
   const [catalogSearch, setCatalogSearch] = useState('')
 
   const { data: fornecimentos = [], isLoading: loadingForn } = useQuery({
-    queryKey: ['analise-fornecimentos', compraIdStr, userUasg],
+    queryKey: ['analise-fornecimentos', contratacaoIdStr, userUasg],
     queryFn: () =>
-      compraIdStr
-        ? fornecimentosApi.listarPorContratacaoUnidade(compraIdStr, userUasg)
+      contratacaoIdStr
+        ? fornecimentosApi.listarPorContratacaoUnidade(contratacaoIdStr, userUasg)
         : fornecimentosApi.listarPorUnidade(userUasg),
     enabled: open && !!userUasg,
   })
 
   const { data: itens = [], isLoading: loadingItens } = useQuery({
-    queryKey: ['analise-itens', compraIdStr],
-    queryFn: () => compraIdStr ? itensApi.listar({ identContratacao: compraIdStr }) : Promise.resolve([]),
-    enabled: open && !!compraIdStr,
+    queryKey: ['analise-itens', contratacaoIdStr],
+    queryFn: () => contratacaoIdStr ? itensApi.listar({ identContratacao: contratacaoIdStr }) : Promise.resolve([]),
+    enabled: open && !!contratacaoIdStr,
   })
 
   const itemMap = new Map<string, IItem>(itens.map((it) => [it.identificador, it]))
@@ -181,9 +181,14 @@ function AddItemsDialog({
   )
 
   const CATALOG_PAGE_SIZE = 10
+  const resolveItem = (f: IFornecimento) =>
+    typeof f.identItem === 'object' && f.identItem !== null
+      ? (f.identItem as IItem)
+      : itemMap.get(f.identItem as string)
+
   const filteredForn = catalogSearch.trim()
     ? fornecimentos.filter((f) => {
-        const item = itemMap.get(f.identItem as string)
+        const item = resolveItem(f)
         if (!item) return false
         const q = catalogSearch.toLowerCase()
         return descBreve(item).toLowerCase().includes(q) || descDetalhada(item).toLowerCase().includes(q)
@@ -239,7 +244,7 @@ function AddItemsDialog({
               </div>
               <div className="flex-1 overflow-y-auto divide-y">
                 {paginated.map((f) => {
-                  const item = itemMap.get(f.identItem as string)
+                  const item = resolveItem(f)
                   const isExpanded = expandedId === f.identificador
                   const isAlready = existingFornIds.has(f.identificador)
                   const isNew = newItems.has(f.identificador)
@@ -249,7 +254,7 @@ function AddItemsDialog({
                     <div key={f.identificador} className={cn('transition-colors', (isAlready || isNew) && 'bg-primary/5', noSaldo && 'bg-muted/40 opacity-60')}>
                       <div className="flex items-center gap-2 px-3 py-2.5">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium leading-snug line-clamp-1">{item ? descBreve(item) : f.identItem as string}</p>
+                          <p className="text-sm font-medium leading-snug line-clamp-1">{item ? descBreve(item) : typeof f.identItem === 'string' ? f.identItem : '—'}</p>
                           <div className="flex gap-3 mt-0.5 text-xs text-muted-foreground">
                             <span>Saldo: {saldo}</span>
                             <span className="font-medium text-foreground">{formatCurrency(valUnitario(f))}</span>
@@ -263,7 +268,7 @@ function AddItemsDialog({
                           {!noSaldo && !isAlready && (
                             <Button size="icon" variant={isNew ? 'secondary' : 'default'} className="h-7 w-7" disabled={isNew}
                               onClick={() => {
-                                const it = itemMap.get(f.identItem as string)
+                                const it = resolveItem(f)
                                 if (!it) return
                                 setNewItems((p) => { if (p.has(f.identificador)) return p; const n = new Map(p); n.set(f.identificador, { fornecimento: f, item: it, quantidade: 1 }); return n })
                               }}>
@@ -456,11 +461,11 @@ export function RequisicaoAnalisePage() {
     ? null
     : (requisicao.requisitante as IUsuario)
 
-  const compraIdStr = (() => {
+  const contratacaoIdStr = (() => {
     if (itensRequisicao.length === 0) return null
     const f = itensRequisicao[0].identFornecimento
     const fIdent = typeof f === 'string' ? f : (f as IFornecimento).identificador
-    return extrairIdCompra(fIdent)
+    return extrairIdContratacao(fIdent)
   })()
 
   // Agrupar itens por fornecedor
@@ -753,7 +758,7 @@ export function RequisicaoAnalisePage() {
           open={addItemsOpen}
           onOpenChange={setAddItemsOpen}
           existingItems={itensRequisicao}
-          compraIdStr={compraIdStr}
+          contratacaoIdStr={contratacaoIdStr}
           userUasg={userUasg}
           requisicaoIdentificador={requisicao.identificador}
           onSaved={invalidateItems}

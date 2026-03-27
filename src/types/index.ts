@@ -161,6 +161,7 @@ export interface IRequisicao {
   requisitanteId: string
   requisitante: IUsuario | { nome: string; email: string; uorg_key?: string }
   identUnidade: string | IUnidade
+  identContratacao?: string
   uorg_key?: string
   uorg?: IUorg
   tipo: TipoRequisicao
@@ -173,6 +174,7 @@ export interface IRequisicao {
   dataAprovacao?: string
   dataRejeicao?: string
   valorTotal?: number
+  _count?: { itens: number }
   createdAt: string
   updatedAt: string
 }
@@ -278,6 +280,7 @@ export interface CriarRequisicaoData {
   tipo: TipoRequisicao
   justificativa: string
   observacoes?: string
+  identContratacao?: string
 }
 
 export interface CriarItemRequisicaoData {

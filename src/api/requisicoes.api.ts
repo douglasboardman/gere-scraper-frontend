@@ -2,8 +2,10 @@ import apiClient from './client'
 import type { IRequisicao, CriarRequisicaoData } from '@/types'
 
 export const requisicoesApi = {
-  async listar(): Promise<IRequisicao[]> {
-    const { data } = await apiClient.get<IRequisicao[]>('/requisicoes')
+  async listar(contratacaoId?: string): Promise<IRequisicao[]> {
+    const { data } = await apiClient.get<IRequisicao[]>('/requisicoes', {
+      params: contratacaoId ? { contratacaoId } : undefined,
+    })
     return data
   },
 

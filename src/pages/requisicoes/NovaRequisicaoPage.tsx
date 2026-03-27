@@ -51,6 +51,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { cn, formatCurrency, tipoRequisicaoLabel } from '@/lib/utils'
 import type { IContratacao, IFornecimento, IItem, IRequisicao, IUnidade } from '@/types'
 
@@ -177,43 +185,25 @@ const step1Schema = z.object({
 type Step1Data = z.infer<typeof step1Schema>
 
 function Step1Dados({
-  initialRequisicao,
+  initialData,
   onComplete,
 }: {
-  initialRequisicao?: IRequisicao
-  onComplete: (req: IRequisicao) => void
+  initialData?: Step1Data
+  onComplete: (data: Step1Data) => void
 }) {
-  const [editing, setEditing] = useState(!initialRequisicao)
+  const [editing, setEditing] = useState(!initialData)
 
   const form = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
     defaultValues: {
-      tipo: (initialRequisicao?.tipo as Step1Data['tipo']) ?? undefined,
-      justificativa: initialRequisicao?.justificativa ?? '',
-      observacoes: initialRequisicao?.observacao ?? '',
-    },
-  })
-
-  const mutation = useMutation({
-    mutationFn: (data: Step1Data) =>
-      initialRequisicao
-        ? requisicoesApi.atualizar(initialRequisicao.identificador, data)
-        : requisicoesApi.criar(data),
-    onSuccess: (req) => {
-      toast.success(initialRequisicao ? 'Requisição atualizada.' : 'Requisição criada. Escolha a compra.')
-      setEditing(false)
-      onComplete(req)
-    },
-    onError: (err: unknown) => {
-      const msg =
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Erro ao salvar a requisição.'
-      toast.error(msg)
+      tipo: initialData?.tipo ?? undefined,
+      justificativa: initialData?.justificativa ?? '',
+      observacoes: initialData?.observacoes ?? '',
     },
   })
 
   // ── Modo leitura (campos bloqueados) ─────────────────────────────────────
-  if (!editing && initialRequisicao) {
+  if (!editing && initialData) {
     return (
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
@@ -228,20 +218,20 @@ function Step1Dados({
         <CardContent className="space-y-4">
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Tipo</p>
-            <p className="text-sm font-medium">{tipoRequisicaoLabel(initialRequisicao.tipo)}</p>
+            <p className="text-sm font-medium">{tipoRequisicaoLabel(initialData.tipo)}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Justificativa</p>
-            <p className="text-sm whitespace-pre-wrap">{initialRequisicao.justificativa}</p>
+            <p className="text-sm whitespace-pre-wrap">{initialData.justificativa}</p>
           </div>
-          {initialRequisicao.observacao && (
+          {initialData.observacoes && (
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Observações</p>
-              <p className="text-sm whitespace-pre-wrap">{initialRequisicao.observacao}</p>
+              <p className="text-sm whitespace-pre-wrap">{initialData.observacoes}</p>
             </div>
           )}
           <div className="flex justify-end pt-1">
-            <Button onClick={() => onComplete(initialRequisicao)}>
+            <Button onClick={() => onComplete(initialData)}>
               Avançar
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
@@ -260,7 +250,7 @@ function Step1Dados({
       <CardContent>
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit((d) => mutation.mutate(d))}
+            onSubmit={form.handleSubmit((d) => { setEditing(false); onComplete(d) })}
             className="space-y-5"
           >
             <FormField
@@ -326,14 +316,13 @@ function Step1Dados({
             />
 
             <div className="flex justify-between pt-1">
-              {initialRequisicao && (
+              {initialData && (
                 <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
                   Cancelar edição
                 </Button>
               )}
-              <Button type="submit" disabled={mutation.isPending} className="ml-auto">
-                {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {initialRequisicao ? 'Salvar alterações' : 'Gravar Requisição'}
+              <Button type="submit" className="ml-auto">
+                Avançar
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
@@ -345,30 +334,56 @@ function Step1Dados({
 }
 
 // ---------------------------------------------------------------------------
-// Step 2 — Escolha da Compra
+// Step 2 — Escolha da Contratação
 // ---------------------------------------------------------------------------
 
 /** Extrai o identificador da compra do identificador do fornecimento.
  *  Formato: U{uasg}I{itemSeq}C{compraId}  ex. U157363I00095C158127900102025
  *  O compra ID é tudo a partir do último 'C'.
  */
-function extrairIdCompra(identFornecimento: string): string | null {
+function extrairIdContratacao(identFornecimento: string): string | null {
   const idx = identFornecimento.indexOf('C')
   return idx !== -1 ? identFornecimento.slice(idx) : null
 }
 
-function Step2Compra({
+function Step2Contratacao({
   userUasg,
   tipoRequisicao,
+  step1Data,
+  existingRequisicao,
   onComplete,
   onBack,
 }: {
   userUasg: string
   tipoRequisicao: 'Material' | 'Servico'
-  onComplete: (compra: IContratacao) => void
+  step1Data: Step1Data
+  existingRequisicao: IRequisicao | null
+  onComplete: (req: IRequisicao, contratacao: IContratacao) => void
   onBack: () => void
 }) {
   const [search, setSearch] = useState('')
+  const [selectingId, setSelectingId] = useState<string | null>(null)
+
+  const selecionarMutation = useMutation({
+    mutationFn: async (contratacao: IContratacao) => {
+      if (existingRequisicao) {
+        return requisicoesApi.atualizar(existingRequisicao.identificador, {
+          identContratacao: contratacao.identificador,
+        })
+      }
+      return requisicoesApi.criar({ ...step1Data, identContratacao: contratacao.identificador })
+    },
+    onSuccess: (req, contratacao) => {
+      onComplete(req, contratacao)
+    },
+    onError: (err: unknown) => {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+        'Erro ao salvar a requisição.'
+      toast.error(msg)
+      setSelectingId(null)
+    },
+  })
 
   // 1) Busca os fornecimentos da unidade do usuário
   const { data: fornecimentos = [], isLoading: loadingForn } = useQuery({
@@ -378,35 +393,35 @@ function Step2Compra({
   })
 
   // 2) Extrai compra IDs únicos dos identificadores dos fornecimentos
-  const uniqueCompraIds = Array.from(
+  const uniqueContratacaoIds = Array.from(
     new Set(
       fornecimentos
-        .map((f) => extrairIdCompra(f.identificador))
+        .map((f) => extrairIdContratacao(f.identificador))
         .filter((id): id is string => id !== null),
     ),
   )
 
   // 3) Busca os detalhes de cada compra
-  const { data: compras = [], isLoading: loadingCompras } = useQuery({
-    queryKey: ['compras-wizard', uniqueCompraIds],
+  const { data: contratacoes = [], isLoading: loadingContratacoes } = useQuery({
+    queryKey: ['contratacoes-wizard', uniqueContratacaoIds],
     queryFn: async () => {
-      if (uniqueCompraIds.length === 0) return []
+      if (uniqueContratacaoIds.length === 0) return []
       const results = await Promise.allSettled(
-        uniqueCompraIds.map((id) => contratacoesApi.obter(id)),
+        uniqueContratacaoIds.map((id) => contratacoesApi.obter(id)),
       )
       return results
         .filter((r): r is PromiseFulfilledResult<IContratacao> => r.status === 'fulfilled')
         .map((r) => r.value)
     },
-    enabled: uniqueCompraIds.length > 0,
+    enabled: uniqueContratacaoIds.length > 0,
   })
 
   // 4) Busca itens de cada compra para filtrar pelo tipo da requisição
-  const { data: itensPorCompra = {}, isLoading: loadingItens } = useQuery({
-    queryKey: ['itens-tipo-wizard', uniqueCompraIds, tipoRequisicao],
+  const { data: itensPorContratacao = {}, isLoading: loadingItens } = useQuery({
+    queryKey: ['itens-tipo-wizard', uniqueContratacaoIds, tipoRequisicao],
     queryFn: async () => {
       const results = await Promise.allSettled(
-        uniqueCompraIds.map(async (id) => {
+        uniqueContratacaoIds.map(async (id) => {
           const itens = await itensApi.listar({ identContratacao: id })
           return { id, itens }
         }),
@@ -417,19 +432,19 @@ function Step2Compra({
       }
       return map
     },
-    enabled: uniqueCompraIds.length > 0,
+    enabled: uniqueContratacaoIds.length > 0,
   })
 
-  const isLoading = loadingForn || loadingCompras || loadingItens
+  const isLoading = loadingForn || loadingContratacoes || loadingItens
 
   // Filtra compras que possuem pelo menos um item do tipo da requisição
-  const comprasFiltradas = compras.filter((c) => {
-    const itens = itensPorCompra[c.identificador]
+  const contratacoesFiltradas = contratacoes.filter((c) => {
+    const itens = itensPorContratacao[c.identificador]
     if (!itens) return true // enquanto carrega, não oculta
     return itens.some((it) => (it.tipo ?? 'Material') === tipoRequisicao)
   })
 
-  const filtered = comprasFiltradas.filter((c) => {
+  const filtered = contratacoesFiltradas.filter((c) => {
     if (!search) return true
     const q = search.toLowerCase()
     return (
@@ -461,54 +476,61 @@ function Step2Compra({
             Sua unidade (UASG {userUasg}) não possui fornecimentos registrados como participante.
           </CardContent>
         </Card>
-      ) : compras.length === 0 ? (
+      ) : contratacoes.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center text-muted-foreground text-sm">
-            {uniqueCompraIds.length} fornecimento(s) encontrado(s), mas não foi possível carregar as compras associadas.
+            {uniqueContratacaoIds.length} fornecimento(s) encontrado(s), mas não foi possível carregar as contratações associadas.
           </CardContent>
         </Card>
-      ) : comprasFiltradas.length === 0 ? (
+      ) : contratacoesFiltradas.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center text-muted-foreground text-sm">
-            Nenhuma compra com itens do tipo <strong>{tipoRequisicao}</strong> encontrada para sua unidade.
+            Nenhuma contratação com itens do tipo <strong>{tipoRequisicao}</strong> encontrada para sua unidade.
           </CardContent>
         </Card>
       ) : filtered.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center text-muted-foreground text-sm">
-            Nenhuma compra corresponde à pesquisa.
+            Nenhuma contratação corresponde à pesquisa.
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
-          {filtered.map((compra) => (
+          {filtered.map((contratacao) => (
             <Card
-              key={compra.identificador}
+              key={contratacao.identificador}
               className="hover:border-primary/50 transition-colors group cursor-default"
             >
               <CardContent className="p-4 flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-sm text-primary">{compra.numEdital}</span>
+                    <span className="font-semibold text-sm text-primary">{contratacao.numEdital}</span>
                     <Badge variant="outline" className="text-xs">
-                      {compra.modContratacao}
+                      {contratacao.modContratacao}
                     </Badge>
                   </div>
-                  <p className="text-sm leading-snug line-clamp-2">{compra.objeto}</p>
+                  <p className="text-sm leading-snug line-clamp-2">{contratacao.objeto}</p>
                   <div className="flex flex-wrap gap-x-4 mt-1.5 text-xs text-muted-foreground">
                     <span>
-                      Vigência: {fmtDate(compra.iniVigencia)} até {fmtDate(compra.fimVigencia)}
+                      Vigência: {fmtDate(contratacao.iniVigencia)} até {fmtDate(contratacao.fimVigencia)}
                     </span>
-                    <span>UASG: {compra.uasgUnGestora}</span>
+                    <span>UASG: {contratacao.uasgUnGestora}</span>
                   </div>
                 </div>
                 <Button
                   size="sm"
                   className="shrink-0 opacity-75 group-hover:opacity-100 transition-opacity"
-                  onClick={() => onComplete(compra)}
+                  disabled={selecionarMutation.isPending}
+                  onClick={() => {
+                    setSelectingId(contratacao.identificador)
+                    selecionarMutation.mutate(contratacao)
+                  }}
                 >
-                  Selecionar
-                  <ArrowRight className="ml-1 h-3 w-3" />
+                  {selecionarMutation.isPending && selectingId === contratacao.identificador ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <>Selecionar <ArrowRight className="ml-1 h-3 w-3" /></>
+                  )}
                 </Button>
               </CardContent>
             </Card>
@@ -562,10 +584,15 @@ function Step3Itens({
   const itemMap = new Map<string, IItem>(itens.map((it) => [it.identificador, it]))
   const isLoading = loadingForn || loadingItens
 
+  function resolveItem(f: IFornecimento): IItem | undefined {
+    if (typeof f.identItem !== 'string') return f.identItem as IItem
+    return itemMap.get(f.identItem)
+  }
+
   const CATALOG_PAGE_SIZE = 10
   const filteredFornecimentos = catalogSearch.trim()
     ? fornecimentos.filter((f) => {
-        const item = itemMap.get(f.identItem as string)
+        const item = resolveItem(f)
         if (!item) return false
         const q = catalogSearch.toLowerCase()
         return (
@@ -585,7 +612,7 @@ function Step3Itens({
   }
 
   function handleAdd(f: IFornecimento) {
-    const item = itemMap.get(f.identItem as string)
+    const item = resolveItem(f)
     if (!item) return
     setSelectedItems((prev) => {
       if (prev.has(f.identificador)) return prev
@@ -670,11 +697,11 @@ function Step3Itens({
             <div className="flex-1 overflow-y-auto divide-y">
               {fornecimentos.length === 0 ? (
                 <div className="flex items-center justify-center h-40 text-muted-foreground text-sm text-center px-6">
-                  Nenhum fornecimento encontrado para sua unidade nesta compra.
+                  Nenhum fornecimento encontrado para sua unidade nesta contratação.
                 </div>
               ) : (
                 paginatedFornecimentos.map((f) => {
-                  const item = itemMap.get(f.identItem as string)
+                  const item = resolveItem(f)
                   const isExpanded = expandedId === f.identificador
                   const isAdded = selectedItems.has(f.identificador)
                   const vUnit = valUnitario(f)
@@ -694,7 +721,7 @@ function Step3Itens({
                       <div className="flex items-center gap-2 px-3 py-2.5">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium leading-snug line-clamp-1">
-                            {item ? descBreve(item) : (f.identItem as string)}
+                            {item ? descBreve(item) : f.identificador}
                           </p>
                           <div className="flex flex-wrap gap-x-3 mt-0.5 text-xs text-muted-foreground">
                             <span>Saldo: {saldo} {item ? unMedida(item) : ''}</span>
@@ -916,6 +943,30 @@ function Step4Revisao({
   const userUnidade = typeof user?.unidade === 'object' ? (user.unidade as IUnidade) : null
   const unidadeNome = userUnidade?.nomeAbrev ?? userUnidade?.nome ?? '—'
 
+  type ConflitosItem = {
+    identFornecimento: string
+    descricaoItem: string
+    qtdSolicitadaAtual: number
+    qtdComprometida: number
+    saldoDisponivel: number
+    requisicoesConcorrentes: string[]
+  }
+  const [conflitoPendente, setConflitoPendente] = useState<{ conflitos: ConflitosItem[] } | null>(null)
+
+  const confirmarCienciaMutation = useMutation({
+    mutationFn: (novasObservacoes: string) =>
+      requisicoesApi.atualizar(requisicao.identificador, { observacoes: novasObservacoes }),
+    onSuccess: () => {
+      toast.info('Requisição mantida como rascunho. O conflito foi registrado nas observações.')
+      queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
+      setConflitoPendente(null)
+      navigate('/requisicoes/minhas_requisicoes')
+    },
+    onError: () => {
+      toast.error('Erro ao salvar a anotação de conflito.')
+    },
+  })
+
   const salvarMutation = useMutation({
     mutationFn: async (enviar: boolean) => {
       for (const [idForn, entry] of selectedItems.entries()) {
@@ -937,10 +988,14 @@ function Step4Revisao({
       navigate(`/requisicoes/${requisicao.identificador}`)
     },
     onError: (err: unknown) => {
-      const msg =
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Erro ao salvar a requisição. Verifique os itens e tente novamente.'
-      toast.error(msg)
+      const axiosErr = err as { response?: { status?: number; data?: { error?: string; conflitos?: ConflitosItem[] } } }
+      if (axiosErr.response?.status === 409 && axiosErr.response.data?.conflitos?.length) {
+        setConflitoPendente({ conflitos: axiosErr.response.data.conflitos })
+      } else {
+        toast.error(
+          axiosErr.response?.data?.error ?? 'Erro ao salvar a requisição. Verifique os itens e tente novamente.',
+        )
+      }
     },
   })
 
@@ -1128,6 +1183,68 @@ function Step4Revisao({
           Voltar
         </Button>
       </div>
+
+      {conflitoPendente && (
+        <Dialog open onOpenChange={() => setConflitoPendente(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Conflito de Saldo Detectado</DialogTitle>
+              <DialogDescription>
+                Os itens abaixo possuem saldo bloqueado por requisições da sua unidade já enviadas e pendentes de aprovação.
+                A requisição será salva como rascunho para que você possa resolver o conflito antes de tentar o envio novamente.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 text-sm max-h-60 overflow-y-auto">
+              {conflitoPendente.conflitos.map((c) => (
+                <div key={c.identFornecimento} className="rounded-md border p-3 space-y-1">
+                  <p className="font-medium">{c.descricaoItem}</p>
+                  <p className="text-muted-foreground text-xs">Fornecimento: {c.identFornecimento}</p>
+                  <div className="grid grid-cols-3 gap-1 text-xs mt-1">
+                    <div><span className="text-muted-foreground">Saldo disponível</span><br />{c.saldoDisponivel}</div>
+                    <div><span className="text-muted-foreground">Comprometido</span><br />{c.qtdComprometida}</div>
+                    <div><span className="text-muted-foreground">Solicitado aqui</span><br />{c.qtdSolicitadaAtual}</div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Requisições concorrentes: {c.requisicoesConcorrentes.join(', ')}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConflitoPendente(null)} disabled={confirmarCienciaMutation.isPending}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => {
+                  const INICIO = '[ANOTAÇÃO AUTOMÁTICA DO SISTEMA - INÍCIO]'
+                  const FIM = '[ANOTAÇÃO AUTOMÁTICA DO SISTEMA - FIM]'
+                  const dataHora = new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                  const detalhes = conflitoPendente.conflitos.map((c) =>
+                    `"${c.descricaoItem}" (fornecimento: ${c.identFornecimento}) — saldo disponível: ${c.saldoDisponivel}, comprometido por outras requisições enviadas: ${c.qtdComprometida}, solicitado nesta requisição: ${c.qtdSolicitadaAtual} (requisições concorrentes: ${c.requisicoesConcorrentes.join(', ')})`
+                  ).join('; ')
+                  const conteudo = `Em ${dataHora}, o sistema detectou conflito de saldo ao tentar enviar esta requisição. Os seguintes fornecimentos possuem saldo insuficiente em razão de outras requisições enviadas pendentes de aprovação: ${detalhes}. A requisição foi mantida como rascunho para que o conflito seja resolvido antes de nova tentativa de envio.`
+                  const bloco = `${INICIO}\n${conteudo}\n${FIM}`
+                  const atual = (requisicao.observacoes ?? '').trim()
+                  const idxI = atual.indexOf(INICIO)
+                  const idxF = atual.indexOf(FIM)
+                  let novas: string
+                  if (idxI !== -1 && idxF !== -1) {
+                    const antes = atual.slice(0, idxI).trimEnd()
+                    const depois = atual.slice(idxF + FIM.length).trimStart()
+                    novas = [antes, bloco, depois].filter(Boolean).join('\n')
+                  } else {
+                    novas = atual ? `${atual}\n${bloco}` : bloco
+                  }
+                  confirmarCienciaMutation.mutate(novas)
+                }}
+                disabled={confirmarCienciaMutation.isPending}
+              >
+                Entendi, salvar como rascunho
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
@@ -1141,6 +1258,7 @@ export function NovaRequisicaoPage() {
   const user = useAuthStore((s) => s.user)
 
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
+  const [step1Data, setStep1Data] = useState<Step1Data | null>(null)
   const [requisicao, setRequisicao] = useState<IRequisicao | null>(null)
   const [selectedCompra, setSelectedCompra] = useState<IContratacao | null>(null)
   // selectedItems is lifted here so step 3 preserves selection when user goes back from step 4
@@ -1155,7 +1273,7 @@ export function NovaRequisicaoPage() {
         title="Nova Requisição"
         subtitle="Siga os passos para criar uma requisição de material ou serviço."
         actions={
-          <Button variant="outline" onClick={() => navigate('/requisicoes')}>
+          <Button variant="outline" onClick={() => navigate('/requisicoes/minhas_requisicoes')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Cancelar
           </Button>
@@ -1166,27 +1284,30 @@ export function NovaRequisicaoPage() {
 
       {step === 1 && (
         <Step1Dados
-          initialRequisicao={requisicao ?? undefined}
-          onComplete={(req) => {
-            setRequisicao(req)
+          initialData={step1Data ?? undefined}
+          onComplete={(data) => {
+            setStep1Data(data)
             setStep(2)
           }}
         />
       )}
 
-      {step === 2 && userUasg && requisicao && (
-        <Step2Compra
+      {step === 2 && userUasg && step1Data && (
+        <Step2Contratacao
           userUasg={userUasg}
-          tipoRequisicao={requisicao.tipo}
-          onComplete={(compra) => {
-            setSelectedCompra(compra)
+          tipoRequisicao={step1Data.tipo}
+          step1Data={step1Data}
+          existingRequisicao={requisicao}
+          onComplete={(req, contratacao) => {
+            setRequisicao(req)
+            setSelectedCompra(contratacao)
             setStep(3)
           }}
           onBack={() => setStep(1)}
         />
       )}
 
-      {step === 2 && !userUasg && (
+      {step === 2 && (!userUasg || !step1Data) && (
         <Card className="max-w-lg mx-auto">
           <CardContent className="py-10 text-center text-muted-foreground text-sm">
             Não foi possível determinar sua unidade. Tente fazer login novamente.
