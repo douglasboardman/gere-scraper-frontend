@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Plus, Loader2, Pencil } from 'lucide-react'
+import { Plus, Loader2, Pencil, Trash2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -41,6 +41,7 @@ import {
 } from '@/components/ui/select'
 import type { IUsuario, UserRole } from '@/types'
 import { usePermission } from '@/hooks/usePermission'
+import { useAuthStore } from '@/store/auth.store'
 import type { BadgeProps } from '@/components/ui/badge'
 
 type BadgeVariant = BadgeProps['variant']
@@ -78,16 +79,21 @@ export function UsuariosPage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
   const { isAdmin } = usePermission()
+  const currentUser = useAuthStore((s) => s.user)
 
   const { data: usuariosRaw = [], isLoading } = useQuery({
     queryKey: ['usuarios'],
     queryFn: usuariosApi.listar,
   })
 
-  // gestor_unidade não pode ver nem editar usuários admin
-  const usuarios = isAdmin ? usuariosRaw : usuariosRaw.filter((u) => u.role !== 'admin')
+  // Remove o próprio usuário logado da lista (edição do próprio perfil fica na página de perfil)
+  // gestor_unidade também não vê usuários admin
+  const usuarios = usuariosRaw
+    .filter((u) => u.id !== currentUser?.id)
+    .filter((u) => isAdmin || u.role !== 'admin')
 
   const { data: unidades = [] } = useQuery({
     queryKey: ['unidades'],
@@ -128,6 +134,23 @@ export function UsuariosPage() {
         (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
         'Erro ao criar usuário.'
       toast.error(msg)
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => usuariosApi.deletar(id),
+    onSuccess: () => {
+      toast.success('Usuário excluído com sucesso.')
+      queryClient.invalidateQueries({ queryKey: ['usuarios'] })
+      setDeleteConfirmId(null)
+    },
+    onError: (error: unknown) => {
+      const msg =
+        (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data?.message ??
+        (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data?.error ??
+        'Erro ao excluir usuário.'
+      toast.error(msg)
+      setDeleteConfirmId(null)
     },
   })
 
@@ -181,13 +204,25 @@ export function UsuariosPage() {
       id: 'acoes',
       header: '',
       cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate(`/usuarios/${row.original.id}`)}
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
+        <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(`/usuarios/${row.original.id}`)}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          {isAdmin && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={() => setDeleteConfirmId(row.original.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       ),
     },
   ]
@@ -383,6 +418,37 @@ export function UsuariosPage() {
               </DialogFooter>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de confirmação de exclusão */}
+      <Dialog open={!!deleteConfirmId} onOpenChange={(open) => { if (!open) setDeleteConfirmId(null) }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Excluir Usuário</DialogTitle>
+            <DialogDescription>
+              Esta ação é irreversível. O usuário será permanentemente excluído do sistema. Deseja continuar?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirmId(null)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteConfirmId && deleteMutation.mutate(deleteConfirmId)}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                'Excluir'
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

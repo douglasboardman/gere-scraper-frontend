@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { ArrowLeft, Loader2, KeyRound } from 'lucide-react'
+import { ArrowLeft, Loader2, KeyRound, Trash2 } from 'lucide-react'
 import { usuariosApi } from '@/api/usuarios.api'
 import { unidadesApi } from '@/api/unidades.api'
 import { uorgsApi } from '@/api/uorgs.api'
@@ -64,6 +64,7 @@ export function UsuarioEditPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   const { data: usuario, isLoading } = useQuery({
     queryKey: ['usuario', id],
@@ -120,6 +121,22 @@ export function UsuarioEditPage() {
     },
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: () => usuariosApi.deletar(id!),
+    onSuccess: () => {
+      toast.success('Usuário excluído com sucesso.')
+      navigate('/usuarios')
+    },
+    onError: (error: unknown) => {
+      const msg =
+        (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data?.message ??
+        (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data?.error ??
+        'Erro ao excluir usuário.'
+      toast.error(msg)
+      setDeleteDialogOpen(false)
+    },
+  })
+
   const resetSenhaMutation = useMutation({
     mutationFn: () => usuariosApi.resetSenha(id!),
     onSuccess: (data) => {
@@ -159,10 +176,22 @@ export function UsuarioEditPage() {
         title="Editar Usuário"
         subtitle={usuario.nome}
         actions={
-          <Button variant="outline" onClick={() => navigate('/usuarios')}>
-            <ArrowLeft className="h-4 w-4" />
-            Voltar
-          </Button>
+          <div className="flex gap-2">
+            {isAdmin && (
+              <Button
+                variant="outline"
+                className="border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+                Excluir
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => navigate('/usuarios')}>
+              <ArrowLeft className="h-4 w-4" />
+              Voltar
+            </Button>
+          </div>
         }
       />
 
@@ -344,6 +373,37 @@ export function UsuarioEditPage() {
           </Form>
         </div>
       </div>
+
+      {/* Dialog de confirmação de exclusão */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Excluir Usuário</DialogTitle>
+            <DialogDescription>
+              Esta ação é irreversível. O usuário <strong>{usuario?.nome}</strong> será permanentemente excluído do sistema. Deseja continuar?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteMutation.mutate()}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                'Excluir'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog de confirmação de reset de senha */}
       <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
