@@ -37,11 +37,12 @@ import {
 } from '@/components/ui/dialog'
 import { useState } from 'react'
 import type { UserRole } from '@/types'
+import { usePermission } from '@/hooks/usePermission'
 
 const editUsuarioSchema = z.object({
   nome: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
   email: z.string().email('E-mail inválido'),
-  role: z.enum(['admin', 'gestor_compras', 'requerente'] as const),
+  role: z.enum(['admin', 'gestor_unidade', 'gestor_contratos', 'gestor_financeiro', 'gestor_contratacoes', 'requisitante'] as const),
   unidade: z.string().optional(),
   uorg_key: z.string().optional(),
 })
@@ -49,13 +50,17 @@ const editUsuarioSchema = z.object({
 type EditUsuarioFormData = z.infer<typeof editUsuarioSchema>
 
 const roleLabels: Record<UserRole, string> = {
-  admin: 'Administrador',
-  gestor_compras: 'Gestor de Compras',
-  requerente: 'Requerente',
+  admin:               'Administrador',
+  gestor_unidade:      'Gestor de Unidade',
+  gestor_contratos:    'Gestor de Contratos',
+  gestor_financeiro:   'Gestor Financeiro',
+  gestor_contratacoes: 'Gestor de Contratações',
+  requisitante:        'Requisitante',
 }
 
 export function UsuarioEditPage() {
   const { id } = useParams<{ id: string }>()
+  const { isAdmin } = usePermission()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
@@ -78,7 +83,7 @@ export function UsuarioEditPage() {
           nome: usuario.nome,
           email: usuario.email,
           role: usuario.role,
-          unidade: usuario.unidade?.identificador ?? '',
+          unidade: usuario.identUnidade ?? usuario.unidade?.identificador ?? '',
           uorg_key: usuario.uorg_key ?? '',
         }
       : undefined,
@@ -94,7 +99,10 @@ export function UsuarioEditPage() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: (data: EditUsuarioFormData) => usuariosApi.atualizar(id!, data),
+    mutationFn: (data: EditUsuarioFormData) =>
+      isAdmin
+        ? usuariosApi.atualizar(id!, data)
+        : usuariosApi.gestorUnidadeAtualizar(id!, { uorg_key: data.uorg_key, role: data.role }),
     onSuccess: () => {
       toast.success('Usuário atualizado com sucesso.')
       queryClient.invalidateQueries({ queryKey: ['usuarios'] })
@@ -216,9 +224,12 @@ export function UsuarioEditPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="requerente">Requerente</SelectItem>
-                        <SelectItem value="gestor_compras">Gestor de Compras</SelectItem>
-                        <SelectItem value="admin">Administrador</SelectItem>
+                        <SelectItem value="requisitante">Requisitante</SelectItem>
+                        <SelectItem value="gestor_contratos">Gestor de Contratos</SelectItem>
+                        <SelectItem value="gestor_financeiro">Gestor Financeiro</SelectItem>
+                        <SelectItem value="gestor_contratacoes">Gestor de Contratações</SelectItem>
+                        {isAdmin && <SelectItem value="gestor_unidade">Gestor de Unidade</SelectItem>}
+                        {isAdmin && <SelectItem value="admin">Administrador</SelectItem>}
                       </SelectContent>
                     </Select>
                     <FormMessage />

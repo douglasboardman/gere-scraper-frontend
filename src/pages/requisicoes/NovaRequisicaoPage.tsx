@@ -437,8 +437,9 @@ function Step2Contratacao({
 
   const isLoading = loadingForn || loadingContratacoes || loadingItens
 
-  // Filtra compras que possuem pelo menos um item do tipo da requisição
+  // Filtra compras disponíveis que possuem pelo menos um item do tipo da requisição
   const contratacoesFiltradas = contratacoes.filter((c) => {
+    if (c.status !== 'Disponivel') return false
     const itens = itensPorContratacao[c.identificador]
     if (!itens) return true // enquanto carrega, não oculta
     return itens.some((it) => (it.tipo ?? 'Material') === tipoRequisicao)
@@ -485,7 +486,7 @@ function Step2Contratacao({
       ) : contratacoesFiltradas.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center text-muted-foreground text-sm">
-            Nenhuma contratação com itens do tipo <strong>{tipoRequisicao}</strong> encontrada para sua unidade.
+            Nenhuma contratação com itens do tipo <strong>{tipoRequisicao}</strong> disponível para criação de requisição de empenho em sua unidade.
           </CardContent>
         </Card>
       ) : filtered.length === 0 ? (

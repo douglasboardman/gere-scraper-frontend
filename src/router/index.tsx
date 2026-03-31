@@ -36,15 +36,31 @@ import { PerfilPage } from '@/pages/PerfilPage'
 import { SobrePage } from '@/pages/SobrePage'
 
 // Protected route component
-function PrivateRoute({ requireAdmin = false, requireGestorOrAdmin = false, requireNonAdmin = false, requireGestorOnly = false }) {
+function PrivateRoute({
+  requireAdmin = false,
+  requireAdminOrGestorUnidade = false,
+  requireGestorOrAdmin = false,
+  requireNonAdmin = false,
+  requireGestorOnly = false,
+}: {
+  requireAdmin?: boolean
+  requireAdminOrGestorUnidade?: boolean
+  requireGestorOrAdmin?: boolean
+  requireNonAdmin?: boolean
+  requireGestorOnly?: boolean
+}) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const { isAdmin, isGestor } = usePermission()
+  const { isAdmin, isGestor, isGestorUnidade } = usePermission()
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
   }
 
   if (requireAdmin && !isAdmin) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  if (requireAdminOrGestorUnidade && !isAdmin && !isGestorUnidade) {
     return <Navigate to="/dashboard" replace />
   }
 
@@ -199,7 +215,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'unidades',
-            element: <PrivateRoute requireGestorOrAdmin />,
+            element: <PrivateRoute requireAdmin />,
             children: [
               {
                 index: true,
@@ -209,7 +225,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'usuarios',
-            element: <PrivateRoute requireAdmin />,
+            element: <PrivateRoute requireAdminOrGestorUnidade />,
             children: [
               {
                 index: true,
@@ -219,7 +235,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'usuarios/:id',
-            element: <PrivateRoute requireAdmin />,
+            element: <PrivateRoute requireAdminOrGestorUnidade />,
             children: [
               {
                 index: true,

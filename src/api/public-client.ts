@@ -15,4 +15,20 @@ export const publicClient = axios.create({
   },
 })
 
+// Response interceptor: normalize NestJS error messages
+publicClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.data) {
+      const data = error.response.data
+      // NestJS returns { message: 'texto em PT', error: 'English HTTP name' }
+      // Normalize .error to always carry the meaningful Portuguese message
+      if (data.message) {
+        error.response.data.error = data.message
+      }
+    }
+    return Promise.reject(error)
+  }
+)
+
 export default publicClient

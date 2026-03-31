@@ -48,9 +48,12 @@ const perfilSchema = z
 type PerfilFormData = z.infer<typeof perfilSchema>
 
 const roleLabels: Record<string, string> = {
-  admin: 'Administrador',
-  gestor_compras: 'Gestor de Compras',
-  requerente: 'Requerente',
+  admin:               'Administrador',
+  gestor_unidade:      'Gestor de Unidade',
+  gestor_contratos:    'Gestor de Contratos',
+  gestor_financeiro:   'Gestor Financeiro',
+  gestor_contratacoes: 'Gestor de Contratações',
+  requisitante:        'Requisitante',
 }
 
 export function PerfilPage() {
@@ -123,7 +126,7 @@ export function PerfilPage() {
               <h3 className="text-lg font-semibold">{user?.nome}</h3>
               <p className="text-sm text-muted-foreground">{user?.email}</p>
               <Badge variant="secondary" className="mt-1">
-                {roleLabels[user?.role ?? 'requerente']}
+                {roleLabels[user?.role ?? 'requisitante']}
               </Badge>
             </div>
           </div>

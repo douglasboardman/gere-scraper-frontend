@@ -2,14 +2,20 @@
 // Status types
 // ============================================================
 
-export type StatusContratacao = 'Em_Processamento' | 'Processada' | 'Inconsistente' | 'Aguardando_Homologacao'
-export type StatusAta = 'Em_Processamento' | 'Processada' | 'Inconsistente'
-export type StatusItem = 'Em_Processamento' | 'Processado' | 'Inconsistente'
-export type StatusFornecimento = 'Homologado' | 'Nao_Homologado' | 'Esgotado' | 'Cancelado'
+export type StatusContratacao = 'Em_Processamento' | 'Processada' | 'Inconsistente' | 'Disponivel' | 'Encerrada'
+export type StatusAta = 'Em_Processamento' | 'Processada' | 'Inconsistente' | 'Disponivel' | 'Encerrada'
+export type StatusItem = 'Em_Processamento' | 'Processado' | 'Inconsistente' | 'Disponivel' | 'Encerrado'
+export type StatusFornecimento = 'Em_Processamento' | 'Processado' | 'Inconsistente' | 'Disponivel' | 'Encerrado'
 export type StatusRequisicao = 'Rascunho' | 'Enviada' | 'Aprovada' | 'Rejeitada' | 'Empenhada'
 export type StatusJob = 'running' | 'completed' | 'failed'
 
-export type UserRole = 'admin' | 'gestor_compras' | 'requerente'
+export type UserRole =
+  | 'admin'
+  | 'gestor_unidade'
+  | 'gestor_contratos'
+  | 'gestor_financeiro'
+  | 'gestor_contratacoes'
+  | 'requisitante'
 
 export type ModalidadeContratacao =
   | 'Pregão'
@@ -148,8 +154,9 @@ export interface IUsuario {
   email: string
   role: UserRole
   ativo: boolean
+  identUnidade?: string | null
   unidade?: IUnidade | null
-  uorg_key?: string
+  uorg_key?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -258,7 +265,7 @@ export interface AdminUpdateUsuarioData {
   nome?: string
   email?: string
   role?: UserRole
-  unidade?: string
+  identUnidade?: string
   uorg_key?: string
   ativo?: boolean
 }

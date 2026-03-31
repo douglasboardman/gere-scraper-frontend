@@ -32,7 +32,7 @@ interface NavItem {
 interface NavGroup {
   title: string
   items: NavItem[]
-  requiresRole?: 'admin' | 'gestor_compras' | 'admin_or_gestor'
+  requiresRole?: 'admin' | 'admin_or_gestor_unidade' | 'can_approve'
 }
 
 function GereLogo() {
@@ -42,15 +42,22 @@ function GereLogo() {
 }
 
 const roleLabels: Record<string, string> = {
-  admin: 'Administrador',
-  gestor_compras: 'Gestor de Compras',
-  requerente: 'Requerente',
+  admin:               'Administrador',
+  gestor_unidade:      'Gestor de Unidade',
+  gestor_contratos:    'Gestor de Contratos',
+  gestor_financeiro:   'Gestor Financeiro',
+  gestor_contratacoes: 'Gestor de Contratações',
+  requisitante:        'Requisitante',
 }
 
 export function Sidebar() {
   const { user, logout } = useAuthStore()
-  const { isAdmin, isGestor } = usePermission()
+  const { isAdmin, isGestorUnidade, can } = usePermission()
   const navigate = useNavigate()
+
+  const canApprove = can('approve:requisicoes')
+  const canCreateReq = can('create:requisicoes')
+  const canManageUsuarios = can('manage:usuarios') || can('edit:usuarios_unidade')
 
   const navGroups: NavGroup[] = [
     {
@@ -72,20 +79,20 @@ export function Sidebar() {
     {
       title: 'Requisições',
       items: [
-        ...(!isAdmin ? [{ label: 'Minhas Requisições', to: '/requisicoes/minhas_requisicoes', icon: ClipboardList }] : []),
-        ...(!isAdmin ? [{ label: 'Nova Requisição', to: '/requisicoes/nova', icon: PlusCircle }] : []),
+        ...(canCreateReq ? [{ label: 'Minhas Requisições', to: '/requisicoes/minhas_requisicoes', icon: ClipboardList }] : []),
+        ...(canCreateReq ? [{ label: 'Nova Requisição', to: '/requisicoes/nova', icon: PlusCircle }] : []),
         { label: isAdmin ? 'Todas as Requisições' : 'Requisições da Unidade', to: '/requisicoes', icon: Layers, end: true },
-        ...(isGestor
+        ...(canApprove && !isAdmin
           ? [{ label: 'Requisições para Análise', to: '/requisicoes/pendentes', icon: ClipboardCheck }]
           : []),
       ],
     },
     {
       title: 'Administração',
-      requiresRole: 'admin_or_gestor',
+      requiresRole: 'admin_or_gestor_unidade',
       items: [
-        { label: 'Unidades', to: '/unidades', icon: Building2 },
-        ...(isAdmin ? [{ label: 'Usuários', to: '/usuarios', icon: Users }] : []),
+        ...(isAdmin ? [{ label: 'Unidades', to: '/unidades', icon: Building2 }] : []),
+        ...(canManageUsuarios ? [{ label: 'Usuários', to: '/usuarios', icon: Users }] : []),
       ],
     },
   ]
@@ -97,8 +104,9 @@ export function Sidebar() {
 
   const visibleGroups = navGroups.filter((g) => {
     if (!g.requiresRole) return true
-    if (g.requiresRole === 'admin_or_gestor') return isAdmin || isGestor
+    if (g.requiresRole === 'admin_or_gestor_unidade') return (isAdmin || isGestorUnidade) && g.items.length > 0
     if (g.requiresRole === 'admin') return isAdmin
+    if (g.requiresRole === 'can_approve') return canApprove
     return true
   })
 

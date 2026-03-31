@@ -40,6 +40,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { IUsuario, UserRole } from '@/types'
+import { usePermission } from '@/hooks/usePermission'
 import type { BadgeProps } from '@/components/ui/badge'
 
 type BadgeVariant = BadgeProps['variant']
@@ -48,7 +49,7 @@ const novoUsuarioSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('E-mail inválido'),
   senha: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
-  role: z.enum(['admin', 'gestor_compras', 'requerente'] as const),
+  role: z.enum(['admin', 'gestor_unidade', 'gestor_contratos', 'gestor_financeiro', 'gestor_contratacoes', 'requisitante'] as const),
   unidade: z.string().optional(),
   uorg_key: z.string().optional(),
 })
@@ -56,15 +57,21 @@ const novoUsuarioSchema = z.object({
 type NovoUsuarioFormData = z.infer<typeof novoUsuarioSchema>
 
 const roleLabels: Record<UserRole, string> = {
-  admin: 'Administrador',
-  gestor_compras: 'Gestor de Compras',
-  requerente: 'Requerente',
+  admin:               'Administrador',
+  gestor_unidade:      'Gestor de Unidade',
+  gestor_contratos:    'Gestor de Contratos',
+  gestor_financeiro:   'Gestor Financeiro',
+  gestor_contratacoes: 'Gestor de Contratações',
+  requisitante:        'Requisitante',
 }
 
 const roleBadgeVariants: Record<UserRole, BadgeVariant> = {
-  admin: 'default',
-  gestor_compras: 'info',
-  requerente: 'secondary',
+  admin:               'default',
+  gestor_unidade:      'success',
+  gestor_contratos:    'info',
+  gestor_financeiro:   'purple',
+  gestor_contratacoes: 'warning',
+  requisitante:        'secondary',
 }
 
 export function UsuariosPage() {
@@ -72,10 +79,15 @@ export function UsuariosPage() {
   const navigate = useNavigate()
   const [dialogOpen, setDialogOpen] = useState(false)
 
-  const { data: usuarios = [], isLoading } = useQuery({
+  const { isAdmin } = usePermission()
+
+  const { data: usuariosRaw = [], isLoading } = useQuery({
     queryKey: ['usuarios'],
-    queryFn: usuariosApi.listarTodos,
+    queryFn: usuariosApi.listar,
   })
+
+  // gestor_unidade não pode ver nem editar usuários admin
+  const usuarios = isAdmin ? usuariosRaw : usuariosRaw.filter((u) => u.role !== 'admin')
 
   const { data: unidades = [] } = useQuery({
     queryKey: ['unidades'],
@@ -88,7 +100,7 @@ export function UsuariosPage() {
       nome: '',
       email: '',
       senha: '',
-      role: 'requerente',
+      role: 'requisitante',
       unidade: '',
       uorg_key: '',
     },
@@ -266,8 +278,11 @@ export function UsuariosPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="requerente">Requerente</SelectItem>
-                        <SelectItem value="gestor_compras">Gestor de Compras</SelectItem>
+                        <SelectItem value="requisitante">Requisitante</SelectItem>
+                        <SelectItem value="gestor_contratos">Gestor de Contratos</SelectItem>
+                        <SelectItem value="gestor_financeiro">Gestor Financeiro</SelectItem>
+                        <SelectItem value="gestor_contratacoes">Gestor de Contratações</SelectItem>
+                        <SelectItem value="gestor_unidade">Gestor de Unidade</SelectItem>
                         <SelectItem value="admin">Administrador</SelectItem>
                       </SelectContent>
                     </Select>
