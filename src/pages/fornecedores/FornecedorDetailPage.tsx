@@ -138,7 +138,7 @@ export function FornecedorDetailPage() {
                   )}
                   Consultar Sanções
                 </Button>
-                {can('manage:fornecedores') && (
+                {can('edit:fornecedores') && (
                   <Button variant="outline" size="sm" onClick={handleEdit}>
                     <Pencil className="h-4 w-4" />
                     Editar

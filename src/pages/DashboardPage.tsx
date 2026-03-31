@@ -77,7 +77,7 @@ export function DashboardPage() {
 
   const contratacoesEmProcessamento = contratacoes?.filter((c) => c.status === 'Em_Processamento') ?? []
   const atasVigentes = atas?.filter((a) => a.status === 'Processada') ?? []
-  const fornecimentosHomologados = fornecimentos?.filter((f) => f.status === 'Homologado') ?? []
+  const fornecimentosHomologados = fornecimentos?.filter((f) => f.status === 'Disponivel') ?? []
   const requisicoesAbertas = requisicoes?.filter(
     (r) => r.status === 'Enviada' || r.status === 'Rascunho'
   ) ?? []
