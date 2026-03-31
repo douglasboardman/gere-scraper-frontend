@@ -53,4 +53,9 @@ export const usuariosApi = {
     const { data } = await apiClient.post<{ message: string }>(`/usuarios/${id}/reset-senha`)
     return data
   },
+
+  /** Admin exclui usuário (falha se houver requisições ativas) */
+  async deletar(id: string): Promise<void> {
+    await apiClient.delete(`/usuarios/${id}`)
+  },
 }
