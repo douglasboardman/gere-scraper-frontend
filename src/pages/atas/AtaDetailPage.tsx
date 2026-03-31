@@ -9,7 +9,6 @@ import { atasApi } from "@/api/atas.api";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCNPJ } from "@/lib/utils";
@@ -45,8 +44,6 @@ export function AtaDetailPage() {
   const queryClient = useQueryClient();
   const { can } = usePermission();
   const [editMode, setEditMode] = useState(false);
-  const [editIniVigencia, setEditIniVigencia] = useState('');
-  const [editFimVigencia, setEditFimVigencia] = useState('');
   const [editStatus, setEditStatus] = useState('');
 
   const { data: ata, isLoading } = useQuery({
@@ -64,26 +61,18 @@ export function AtaDetailPage() {
       setEditMode(false);
     },
     onError: (error: unknown) => {
-      const msg =
-        (error as { response?: { data?: { error?: string } } })?.response?.data
-          ?.error ?? "Erro ao atualizar ata.";
-      toast.error(msg);
+      const data = (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data;
+      toast.error(data?.message ?? data?.error ?? "Erro ao atualizar ata.");
     },
   });
 
   const handleEdit = () => {
-    setEditIniVigencia(ata?.iniVigencia ? ata.iniVigencia.slice(0, 10) : '');
-    setEditFimVigencia(ata?.fimVigencia ? ata.fimVigencia.slice(0, 10) : '');
     setEditStatus(ata?.status ?? '');
     setEditMode(true);
   };
 
   const handleSave = () => {
-    const payload: Record<string, string> = {};
-    if (editIniVigencia) payload.iniVigencia = editIniVigencia;
-    if (editFimVigencia) payload.fimVigencia = editFimVigencia;
-    if (editStatus) payload.status = editStatus;
-    updateMutation.mutate(payload);
+    if (editStatus) updateMutation.mutate({ status: editStatus });
   };
 
   const formatDate = (d?: string) =>
@@ -107,7 +96,8 @@ export function AtaDetailPage() {
   if (!ata)
     return <div className="text-muted-foreground">Ata não encontrada.</div>;
 
-  const canEdit = can("edit:atas") && ata.status === "Processada";
+  const statusEditaveis = ["Processada", "Disponivel", "Encerrada"];
+  const canEdit = can("edit:atas") && statusEditaveis.includes(ata.status);
 
   return (
     <div>
@@ -176,30 +166,8 @@ export function AtaDetailPage() {
               )}
             </Field>
             <Field label="Fornecedor">{ata.nomeFornecedor || "—"}</Field>
-            <Field label="Vigência Início">
-              {editMode ? (
-                <Input
-                  type="date"
-                  value={editIniVigencia}
-                  onChange={(e) => setEditIniVigencia(e.target.value)}
-                  className="w-40"
-                />
-              ) : (
-                formatDate(ata.iniVigencia)
-              )}
-            </Field>
-            <Field label="Vigência Fim">
-              {editMode ? (
-                <Input
-                  type="date"
-                  value={editFimVigencia}
-                  onChange={(e) => setEditFimVigencia(e.target.value)}
-                  className="w-40"
-                />
-              ) : (
-                formatDate(ata.fimVigencia)
-              )}
-            </Field>
+            <Field label="Vigência Início">{formatDate(ata.iniVigencia)}</Field>
+            <Field label="Vigência Fim">{formatDate(ata.fimVigencia)}</Field>
             <Field label="Status">
               {editMode ? (
                 <Select value={editStatus} onValueChange={setEditStatus}>

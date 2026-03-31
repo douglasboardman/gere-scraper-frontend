@@ -796,7 +796,7 @@ export function RequisicaoDetailPage() {
       qtdSolicitadaAtual: number
       qtdComprometida: number
       saldoDisponivel: number
-      requisicoesConcorrentes: string[]
+      requisicoesConcorrentes: Array<{ identificador: string; nomeRequisitante: string }>
     }>
   } | null>(null)
   const [editItemTarget, setEditItemTarget] = useState<IItemRequisicao | null>(null)
@@ -825,13 +825,15 @@ export function RequisicaoDetailPage() {
       navigate('/requisicoes/minhas_requisicoes')
     },
     onError: (error: unknown) => {
-      type ConflitosItem = { identFornecimento: string; descricaoItem: string; qtdSolicitadaAtual: number; qtdComprometida: number; saldoDisponivel: number; requisicoesConcorrentes: string[] }
-      const axiosErr = error as { response?: { status?: number; data?: { error?: string; conflitos?: ConflitosItem[] } } }
+      type ConflitosItem = { identFornecimento: string; descricaoItem: string; qtdSolicitadaAtual: number; qtdComprometida: number; saldoDisponivel: number; requisicoesConcorrentes: Array<{ identificador: string; nomeRequisitante: string }> }
+      const axiosErr = error as { response?: { status?: number; data?: { message?: string; error?: string; conflitos?: ConflitosItem[] } } }
       if (axiosErr.response?.status === 409 && axiosErr.response.data?.conflitos?.length) {
-        setConflitoPendente({ conflitos: axiosErr.response.data.conflitos })
+        setConflitoPendente({ conflitos: axiosErr.response.data.conflitos as any })
         setActionDialog(null)
       } else {
-        toast.error(axiosErr.response?.data?.error ?? 'Erro inesperado')
+        const msg = axiosErr.response?.data?.message ?? axiosErr.response?.data?.error ?? 'Erro inesperado'
+        toast.error(msg, { duration: 8000 })
+        setActionDialog(null)
       }
     },
   })
@@ -1222,9 +1224,12 @@ export function RequisicaoDetailPage() {
                     <div><span className="text-muted-foreground">Comprometido</span><br />{c.qtdComprometida}</div>
                     <div><span className="text-muted-foreground">Solicitado aqui</span><br />{c.qtdSolicitadaAtual}</div>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Requisições concorrentes: {c.requisicoesConcorrentes.join(', ')}
-                  </p>
+                  <div className="text-xs text-muted-foreground space-y-0.5">
+                    <p className="font-medium">Requisições concorrentes:</p>
+                    {c.requisicoesConcorrentes.map((r) => (
+                      <p key={r.identificador}>{r.identificador} — {r.nomeRequisitante}</p>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
@@ -1238,7 +1243,7 @@ export function RequisicaoDetailPage() {
                   const FIM = '[ANOTAÇÃO AUTOMÁTICA DO SISTEMA - FIM]'
                   const dataHora = new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
                   const detalhes = conflitoPendente.conflitos.map((c) =>
-                    `"${c.descricaoItem}" (fornecimento: ${c.identFornecimento}) — saldo disponível: ${c.saldoDisponivel}, comprometido por outras requisições enviadas: ${c.qtdComprometida}, solicitado nesta requisição: ${c.qtdSolicitadaAtual} (requisições concorrentes: ${c.requisicoesConcorrentes.join(', ')})`
+                    `"${c.descricaoItem}" (fornecimento: ${c.identFornecimento}) — saldo disponível: ${c.saldoDisponivel}, comprometido: ${c.qtdComprometida}, solicitado aqui: ${c.qtdSolicitadaAtual} (concorrentes: ${c.requisicoesConcorrentes.map((r) => `${r.identificador} [${r.nomeRequisitante}]`).join(', ')})`
                   ).join('; ')
                   const conteudo = `Em ${dataHora}, o sistema detectou conflito de saldo ao tentar enviar esta requisição. Os seguintes fornecimentos possuem saldo insuficiente em razão de outras requisições enviadas pendentes de aprovação: ${detalhes}. A requisição foi mantida como rascunho para que o conflito seja resolvido antes de nova tentativa de envio.`
                   const bloco = `${INICIO}\n${conteudo}\n${FIM}`
