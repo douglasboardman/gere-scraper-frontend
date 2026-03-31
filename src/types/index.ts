@@ -247,7 +247,6 @@ export interface LoginResponse {
 export interface RegisterData {
   nome: string
   email: string
-  senha: string
   unidade: string
   uorg_key: string
 }

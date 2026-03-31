@@ -27,19 +27,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-const registerSchema = z
-  .object({
-    nome: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
-    email: z.string().email('E-mail inválido'),
-    senha: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
-    confirmarSenha: z.string().min(1, 'Confirme a senha'),
-    unidade: z.string().min(1, 'Selecione a unidade'),
-    uorg_key: z.string().min(1, 'Selecione a UORG de exercício'),
-  })
-  .refine((data) => data.senha === data.confirmarSenha, {
-    message: 'As senhas não coincidem',
-    path: ['confirmarSenha'],
-  })
+const registerSchema = z.object({
+  nome: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
+  email: z.string().email('E-mail inválido'),
+  unidade: z.string().min(1, 'Selecione a unidade'),
+  uorg_key: z.string().min(1, 'Selecione a UORG de exercício'),
+})
 
 type RegisterFormData = z.infer<typeof registerSchema>
 
@@ -60,8 +53,6 @@ export function RegisterPage() {
     defaultValues: {
       nome: '',
       email: '',
-      senha: '',
-      confirmarSenha: '',
       unidade: '',
       uorg_key: '',
     },
@@ -84,8 +75,7 @@ export function RegisterPage() {
     setIsLoading(true)
     setError(null)
     try {
-      const { confirmarSenha: _, ...registerData } = data
-      await authApi.register(registerData)
+      await authApi.register(data)
       toast.success('Solicitação de cadastro enviada! Aguarde a aprovação do administrador.')
       navigate('/login')
     } catch (err: unknown) {
@@ -198,46 +188,6 @@ export function RegisterPage() {
                   </FormItem>
                 )}
               />
-
-              <div className="grid grid-cols-2 gap-3">
-                <FormField
-                  control={form.control}
-                  name="senha"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Senha *</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="password"
-                          placeholder="Min. 6 caracteres"
-                          autoComplete="new-password"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="confirmarSenha"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirmar senha *</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="password"
-                          placeholder="Repita a senha"
-                          autoComplete="new-password"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
 
               <FormField
                 control={form.control}

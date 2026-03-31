@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { Loader2, KeyRound, CheckCircle2 } from 'lucide-react'
 import { authApi } from '@/api/auth.api'
+import { fetchVersion } from '@/api/version.api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -33,9 +34,15 @@ export function ResetPasswordPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token')
+  const isAtivacao = searchParams.get('mode') === 'ativacao'
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [version, setVersion] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchVersion().then(setVersion).catch(() => {})
+  }, [])
 
   const form = useForm<ResetFormData>({
     resolver: zodResolver(resetSchema),
@@ -111,13 +118,17 @@ export function ResetPasswordPage() {
           </p>
         </div>
 
-        <div className="mt-auto text-center">
-          <p className="text-xs text-gray-500">
-            Desenvolvido por Douglas Ricardo Boardman dos Reis
+        <div className="mt-auto text-center space-y-1">
+          <p className="text-xs text-gray-400 font-medium">
+            GERE{version ? ` | Versão ${version}` : ''}
           </p>
-          <p className="text-xs text-gray-600 mt-0.5">
-            douglas.boardman@gmail.com
-          </p>
+          <Link
+            to="/sobre"
+            className="text-xs hover:underline transition-colors"
+            style={{ color: '#82ab90' }}
+          >
+            Sobre esta Aplicação
+          </Link>
         </div>
       </div>
 
@@ -135,9 +146,13 @@ export function ResetPasswordPage() {
           {success ? (
             <div className="text-center space-y-4">
               <CheckCircle2 className="h-12 w-12 mx-auto" style={{ color: '#2a593a' }} />
-              <h2 className="text-2xl font-bold text-foreground">Senha redefinida</h2>
+              <h2 className="text-2xl font-bold text-foreground">
+                {isAtivacao ? 'Conta ativada!' : 'Senha redefinida'}
+              </h2>
               <p className="text-muted-foreground text-sm">
-                Sua senha foi alterada com sucesso. Agora você pode fazer login com a nova senha.
+                {isAtivacao
+                  ? 'Sua senha foi criada com sucesso. Bem-vindo ao GERE!'
+                  : 'Sua senha foi alterada com sucesso. Agora você pode fazer login com a nova senha.'}
               </p>
               <Button
                 className="w-full"
@@ -150,9 +165,13 @@ export function ResetPasswordPage() {
           ) : (
             <>
               <div>
-                <h2 className="text-2xl font-bold text-foreground">Redefinir Senha</h2>
+                <h2 className="text-2xl font-bold text-foreground">
+                  {isAtivacao ? 'Definir senha de acesso' : 'Redefinir Senha'}
+                </h2>
                 <p className="text-muted-foreground text-sm mt-1">
-                  Informe sua nova senha abaixo
+                  {isAtivacao
+                    ? 'Bem-vindo ao GERE! Crie sua senha para acessar o sistema.'
+                    : 'Informe sua nova senha abaixo'}
                 </p>
               </div>
 
@@ -163,7 +182,7 @@ export function ResetPasswordPage() {
                     name="novaSenha"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nova senha</FormLabel>
+                        <FormLabel>{isAtivacao ? 'Criar senha' : 'Nova senha'}</FormLabel>
                         <FormControl>
                           <Input
                             type="password"
@@ -211,12 +230,12 @@ export function ResetPasswordPage() {
                     {isLoading ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Redefinindo...
+                        {isAtivacao ? 'Ativando...' : 'Redefinindo...'}
                       </>
                     ) : (
                       <>
                         <KeyRound className="h-4 w-4" />
-                        Redefinir Senha
+                        {isAtivacao ? 'Ativar conta' : 'Redefinir Senha'}
                       </>
                     )}
                   </Button>
