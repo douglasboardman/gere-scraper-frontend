@@ -62,10 +62,7 @@ const permissions: Record<UserRole, Action[]> = {
     'edit:fornecedores',
     'delete:fornecedores',
     'create:requisicoes',
-    'approve:requisicoes',
-    'manage:requisicoes_unidade',
     'view:usuarios_unidade',
-    'manage:unidades',
   ],
   gestor_contratos: [
     'edit:atas',

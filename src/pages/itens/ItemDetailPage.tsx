@@ -14,6 +14,13 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { formatCurrency } from '@/lib/utils'
 import { usePermission } from '@/hooks/usePermission'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import type { IItem } from '@/types'
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -33,6 +40,7 @@ export function ItemDetailPage() {
   const [editMode, setEditMode] = useState(false)
   const [editDescBreve, setEditDescBreve] = useState('')
   const [editDescDetalhada, setEditDescDetalhada] = useState('')
+  const [editStatus, setEditStatus] = useState('')
 
   const { data: item, isLoading } = useQuery({
     queryKey: ['item', id],
@@ -49,24 +57,26 @@ export function ItemDetailPage() {
       setEditMode(false)
     },
     onError: (error: unknown) => {
-      const msg =
-        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Erro ao atualizar item.'
-      toast.error(msg)
+      const data = (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data;
+      toast.error(data?.message ?? data?.error ?? 'Erro ao atualizar item.')
     },
   })
 
   const handleEdit = () => {
     setEditDescBreve(item?.descBreve ?? item?.descricaoBreve ?? '')
     setEditDescDetalhada(item?.descDetalhada ?? item?.descricaoDetalhada ?? '')
+    setEditStatus(item?.status ?? '')
     setEditMode(true)
   }
 
   const handleSave = () => {
-    updateMutation.mutate({
-      descBreve: editDescBreve,
-      descDetalhada: editDescDetalhada,
-    })
+    const payload: Partial<IItem> = {}
+    if (item?.status === 'Processado') {
+      payload.descBreve = editDescBreve
+      payload.descDetalhada = editDescDetalhada
+    }
+    if (editStatus) payload.status = editStatus as IItem['status']
+    updateMutation.mutate(payload)
   }
 
   if (isLoading) {
@@ -107,7 +117,7 @@ export function ItemDetailPage() {
               </>
             ) : (
               <>
-                {can('edit:itens') && item.status === 'Processado' && (
+                {can('edit:itens') && ['Processado', 'Disponivel', 'Encerrado'].includes(item.status) && (
                   <Button variant="outline" size="sm" onClick={handleEdit}>
                     <Pencil className="h-4 w-4" />
                     Editar
@@ -152,13 +162,26 @@ export function ItemDetailPage() {
               {valUnitario != null ? formatCurrency(valUnitario) : '—'}
             </Field>
             <Field label="Status">
-              <StatusBadge status={item.status} />
+              {editMode ? (
+                <Select value={editStatus} onValueChange={setEditStatus}>
+                  <SelectTrigger className="w-44">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Processado">Processado</SelectItem>
+                    <SelectItem value="Disponivel">Disponível</SelectItem>
+                    <SelectItem value="Encerrado">Encerrado</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <StatusBadge status={item.status} />
+              )}
             </Field>
             <div className="col-span-2 md:col-span-3">
               <span className="text-xs text-muted-foreground uppercase tracking-wide">
                 Descrição Breve
               </span>
-              {editMode ? (
+              {editMode && item.status === 'Processado' ? (
                 <Textarea
                   className="mt-1"
                   rows={2}
@@ -173,7 +196,7 @@ export function ItemDetailPage() {
               <span className="text-xs text-muted-foreground uppercase tracking-wide">
                 Descrição Detalhada
               </span>
-              {editMode ? (
+              {editMode && item.status === 'Processado' ? (
                 <Textarea
                   className="mt-1"
                   rows={4}

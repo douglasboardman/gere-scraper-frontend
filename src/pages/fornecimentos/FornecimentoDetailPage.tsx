@@ -14,6 +14,13 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency } from '@/lib/utils'
 import { usePermission } from '@/hooks/usePermission'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import type { IFornecimento, IItem, IFornecedor } from '@/types'
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -35,6 +42,7 @@ export function FornecimentoDetailPage() {
   const [editQtdAutorizada, setEditQtdAutorizada] = useState('')
   const [editQtdUtilizada, setEditQtdUtilizada] = useState('')
   const [editSaldo, setEditSaldo] = useState('')
+  const [editStatus, setEditStatus] = useState('')
 
   const { data: fornecimento, isLoading } = useQuery({
     queryKey: ['fornecimento', id],
@@ -51,10 +59,8 @@ export function FornecimentoDetailPage() {
       setEditMode(false)
     },
     onError: (error: unknown) => {
-      const msg =
-        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Erro ao atualizar fornecimento.'
-      toast.error(msg)
+      const data = (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data;
+      toast.error(data?.message ?? data?.error ?? 'Erro ao atualizar fornecimento.')
     },
   })
 
@@ -63,16 +69,20 @@ export function FornecimentoDetailPage() {
     setEditQtdAutorizada(fornecimento?.qtdAutorizada?.toString() ?? '')
     setEditQtdUtilizada(fornecimento?.qtdUtilizada?.toString() ?? '')
     setEditSaldo((fornecimento?.saldoDisponivel ?? fornecimento?.saldo)?.toString() ?? '')
+    setEditStatus(fornecimento?.status ?? '')
     setEditMode(true)
   }
 
   const handleSave = () => {
-    updateMutation.mutate({
-      valUnitHomologado: editValUnit !== '' ? Number(editValUnit) : undefined,
-      qtdAutorizada: editQtdAutorizada !== '' ? Number(editQtdAutorizada) : undefined,
-      qtdUtilizada: editQtdUtilizada !== '' ? Number(editQtdUtilizada) : undefined,
-      saldoDisponivel: editSaldo !== '' ? Number(editSaldo) : undefined,
-    })
+    const payload: Partial<IFornecimento> = {}
+    if (fornecimento?.status === 'Processado') {
+      if (editValUnit !== '') payload.valUnitHomologado = Number(editValUnit)
+      if (editQtdAutorizada !== '') payload.qtdAutorizada = Number(editQtdAutorizada)
+      if (editQtdUtilizada !== '') payload.qtdUtilizada = Number(editQtdUtilizada)
+      if (editSaldo !== '') payload.saldoDisponivel = Number(editSaldo)
+    }
+    if (editStatus) payload.status = editStatus as IFornecimento['status']
+    updateMutation.mutate(payload)
   }
 
   const getItemInfo = (identItem: string | IItem): { label: string; id: string } => {
@@ -125,7 +135,7 @@ export function FornecimentoDetailPage() {
               </>
             ) : (
               <>
-                {can('edit:fornecimentos') && fornecimento.status === 'Processado' && (
+                {can('edit:fornecimentos') && ['Processado', 'Disponivel', 'Encerrado'].includes(fornecimento.status) && (
                   <Button variant="outline" size="sm" onClick={handleEdit}>
                     <Pencil className="h-4 w-4" />
                     Editar
@@ -174,7 +184,7 @@ export function FornecimentoDetailPage() {
               )}
             </Field>
             <Field label="Valor Unitário">
-              {editMode ? (
+              {editMode && fornecimento.status === 'Processado' ? (
                 <Input
                   type="number"
                   step="0.01"
@@ -188,7 +198,7 @@ export function FornecimentoDetailPage() {
               )}
             </Field>
             <Field label="Qtd Autorizada">
-              {editMode ? (
+              {editMode && fornecimento.status === 'Processado' ? (
                 <Input
                   type="number"
                   min={0}
@@ -201,7 +211,7 @@ export function FornecimentoDetailPage() {
               )}
             </Field>
             <Field label="Qtd Utilizada">
-              {editMode ? (
+              {editMode && fornecimento.status === 'Processado' ? (
                 <Input
                   type="number"
                   min={0}
@@ -214,7 +224,7 @@ export function FornecimentoDetailPage() {
               )}
             </Field>
             <Field label="Saldo Disponível">
-              {editMode ? (
+              {editMode && fornecimento.status === 'Processado' ? (
                 <Input
                   type="number"
                   min={0}
@@ -227,7 +237,20 @@ export function FornecimentoDetailPage() {
               )}
             </Field>
             <Field label="Status">
-              <StatusBadge status={fornecimento.status} />
+              {editMode ? (
+                <Select value={editStatus} onValueChange={setEditStatus}>
+                  <SelectTrigger className="w-44">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Processado">Processado</SelectItem>
+                    <SelectItem value="Disponivel">Disponível</SelectItem>
+                    <SelectItem value="Encerrado">Encerrado</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <StatusBadge status={fornecimento.status} />
+              )}
             </Field>
           </div>
           <p className="text-xs text-muted-foreground mt-6">
@@ -235,6 +258,7 @@ export function FornecimentoDetailPage() {
           </p>
         </CardContent>
       </Card>
+
     </div>
   )
 }

@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { ArrowLeft, Pencil, X, Check, ExternalLink } from "lucide-react";
+import { ArrowLeft, Pencil, X, Check, ExternalLink, CheckCircle2, PauseCircle } from "lucide-react";
 import { contratacoesApi } from "@/api/contratacoes.api";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -13,6 +13,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { usePermission } from "@/hooks/usePermission";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { IContratacao } from "@/types";
 
 function Field({
@@ -39,6 +46,7 @@ export function ContratacaoDetailPage() {
   const { can } = usePermission();
   const [editMode, setEditMode] = useState(false);
   const [editObjeto, setEditObjeto] = useState("");
+  const [editStatus, setEditStatus] = useState("");
 
   const { data: contratacao, isLoading } = useQuery({
     queryKey: ["contratacao", identificador],
@@ -56,20 +64,22 @@ export function ContratacaoDetailPage() {
       setEditMode(false);
     },
     onError: (error: unknown) => {
-      const msg =
-        (error as { response?: { data?: { error?: string } } })?.response?.data
-          ?.error ?? "Erro ao atualizar contratação.";
-      toast.error(msg);
+      const data = (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data;
+      toast.error(data?.message ?? data?.error ?? "Erro ao atualizar contratação.");
     },
   });
 
   const handleEdit = () => {
     setEditObjeto(contratacao?.objeto ?? "");
+    setEditStatus(contratacao?.status ?? "");
     setEditMode(true);
   };
 
   const handleSave = () => {
-    updateMutation.mutate({ objeto: editObjeto });
+    const payload: Partial<IContratacao> = {};
+    if (contratacao?.status === "Processada") payload.objeto = editObjeto;
+    if (editStatus) payload.status = editStatus as IContratacao["status"];
+    updateMutation.mutate(payload);
   };
 
   const formatDate = (d?: string) =>
@@ -120,7 +130,7 @@ export function ContratacaoDetailPage() {
               </>
             ) : (
               <>
-                {can("edit:contratacoes") && contratacao.status === "Processada" && (
+                {can("edit:contratacoes") && ["Processada", "Disponivel", "Encerrada"].includes(contratacao.status) && (
                   <Button variant="outline" size="sm" onClick={handleEdit}>
                     <Pencil className="h-4 w-4" />
                     Editar
@@ -160,13 +170,26 @@ export function ContratacaoDetailPage() {
             </Field>
             <Field label="Vigência Fim">{formatDate(contratacao.fimVigencia)}</Field>
             <Field label="Status">
-              <StatusBadge status={contratacao.status} />
+              {editMode ? (
+                <Select value={editStatus} onValueChange={setEditStatus}>
+                  <SelectTrigger className="w-44">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Processada">Processada</SelectItem>
+                    <SelectItem value="Disponivel">Disponível</SelectItem>
+                    <SelectItem value="Encerrada">Encerrada</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <StatusBadge status={contratacao.status} />
+              )}
             </Field>
             <div className="col-span-2 md:col-span-3">
               <span className="text-xs text-muted-foreground uppercase tracking-wide">
                 Objeto
               </span>
-              {editMode ? (
+              {editMode && contratacao.status === "Processada" ? (
                 <Textarea
                   className="mt-1"
                   rows={4}
@@ -187,12 +210,36 @@ export function ContratacaoDetailPage() {
         </CardContent>
       </Card>
 
-      <Button variant="outline" size="sm" asChild>
-        <Link to={`/atas?identContratacao=${contratacao.identificador}`}>
-          <ExternalLink className="h-4 w-4" />
-          Ver Atas desta Contratação
-        </Link>
-      </Button>
+      <div className="flex gap-3 flex-wrap">
+        <Button variant="outline" size="sm" asChild>
+          <Link to={`/atas?identContratacao=${contratacao.identificador}`}>
+            <ExternalLink className="h-4 w-4" />
+            Ver Atas desta Contratação
+          </Link>
+        </Button>
+        {can("edit:contratacoes") && contratacao.status === "Processada" && (
+          <Button
+            size="sm"
+            className="bg-green-700 hover:bg-green-800 text-white"
+            onClick={() => updateMutation.mutate({ status: "Disponivel" } as any)}
+            disabled={updateMutation.isPending}
+          >
+            <CheckCircle2 className="h-4 w-4" />
+            Disponibilizar para Requisições
+          </Button>
+        )}
+        {can("edit:contratacoes") && contratacao.status === "Disponivel" && (
+          <Button
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={() => updateMutation.mutate({ status: "Processada" } as any)}
+            disabled={updateMutation.isPending}
+          >
+            <PauseCircle className="h-4 w-4" />
+            Suspender Disponibilidade
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
