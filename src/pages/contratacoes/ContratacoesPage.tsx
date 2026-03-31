@@ -141,7 +141,7 @@ export function ContratacoesPage() {
         title="Contratações"
         subtitle="Gerencie as contratações e pregões eletrônicos"
         actions={
-          can('manage:compras') ? (
+          can('create:contratacoes') ? (
             <Button onClick={() => navigate('/contratacoes/nova')}>
               <Plus className="h-4 w-4" />
               Nova Contratação

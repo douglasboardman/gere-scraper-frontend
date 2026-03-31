@@ -1,6 +1,8 @@
 import { Badge } from '@/components/ui/badge'
 import type {
   StatusContratacao,
+  StatusAta,
+  StatusItem,
   StatusFornecimento,
   StatusRequisicao,
   StatusJob,
@@ -8,6 +10,8 @@ import type {
 
 type AnyStatus =
   | StatusContratacao
+  | StatusAta
+  | StatusItem
   | StatusFornecimento
   | StatusRequisicao
   | StatusJob
@@ -20,30 +24,26 @@ interface StatusConfig {
 }
 
 const statusMap: Record<string, StatusConfig> = {
-  // Compra / Ata / Item — valores Prisma
+  // Contratação / Ata / Item / Fornecimento — ciclo de vida compartilhado
   'Em_Processamento': { label: 'Em Processamento', variant: 'warning' },
-  'Processada': { label: 'Processada', variant: 'success' },
-  'Processado': { label: 'Processado', variant: 'success' },
-  'Inconsistente': { label: 'Inconsistente', variant: 'destructive' },
-  'Aguardando_Homologacao': { label: 'Ag. Homologação', variant: 'secondary' },
-
-  // Fornecimento
-  'Homologado': { label: 'Homologado', variant: 'success' },
-  'Nao_Homologado': { label: 'Não Homologado', variant: 'secondary' },
-  'Esgotado': { label: 'Esgotado', variant: 'orange' },
-  'Cancelado': { label: 'Cancelado', variant: 'destructive' },
+  'Processada':       { label: 'Processada',        variant: 'secondary' },
+  'Processado':       { label: 'Processado',         variant: 'secondary' },
+  'Inconsistente':    { label: 'Inconsistente',      variant: 'destructive' },
+  'Disponivel':       { label: 'Disponível',         variant: 'success' },
+  'Encerrada':        { label: 'Encerrada',          variant: 'outline' },
+  'Encerrado':        { label: 'Encerrado',          variant: 'outline' },
 
   // Requisição
-  'Rascunho': { label: 'Rascunho', variant: 'secondary' },
-  'Enviada': { label: 'Enviada', variant: 'info' },
-  'Aprovada': { label: 'Aprovada', variant: 'success' },
+  'Rascunho':  { label: 'Rascunho',  variant: 'secondary' },
+  'Enviada':   { label: 'Enviada',   variant: 'info' },
+  'Aprovada':  { label: 'Aprovada',  variant: 'success' },
   'Rejeitada': { label: 'Rejeitada', variant: 'destructive' },
   'Empenhada': { label: 'Empenhada', variant: 'purple' },
 
   // Job
-  'running': { label: 'Executando', variant: 'info' },
-  'completed': { label: 'Concluído', variant: 'success' },
-  'failed': { label: 'Falhou', variant: 'destructive' },
+  'running':   { label: 'Executando', variant: 'info' },
+  'completed': { label: 'Concluído',  variant: 'success' },
+  'failed':    { label: 'Falhou',     variant: 'destructive' },
 }
 
 interface StatusBadgeProps {

@@ -120,7 +120,7 @@ export function ContratacaoDetailPage() {
               </>
             ) : (
               <>
-                {can("manage:compras") && (
+                {can("edit:contratacoes") && contratacao.status === "Processada" && (
                   <Button variant="outline" size="sm" onClick={handleEdit}>
                     <Pencil className="h-4 w-4" />
                     Editar

@@ -55,8 +55,8 @@ export function LoginPage() {
       navigate('/dashboard')
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { error?: string; message?: string } } })?.response?.data?.error ??
         (err as { response?: { data?: { error?: string; message?: string } } })?.response?.data?.message ??
+        (err as { response?: { data?: { error?: string; message?: string } } })?.response?.data?.error ??
         'Credenciais inválidas. Tente novamente.'
       setError(msg)
     } finally {

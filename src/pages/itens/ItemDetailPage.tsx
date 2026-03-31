@@ -107,7 +107,7 @@ export function ItemDetailPage() {
               </>
             ) : (
               <>
-                {can('manage:itens') && (
+                {can('edit:itens') && item.status === 'Processado' && (
                   <Button variant="outline" size="sm" onClick={handleEdit}>
                     <Pencil className="h-4 w-4" />
                     Editar

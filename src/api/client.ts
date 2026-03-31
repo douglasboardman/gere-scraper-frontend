@@ -23,10 +23,18 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Response interceptor: handle 401
+// Response interceptor: normalize NestJS error messages + handle 401
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    if (error.response?.data) {
+      const data = error.response.data
+      // NestJS returns { message: 'texto em PT', error: 'English HTTP name' }
+      // Normalize .error to always carry the meaningful Portuguese message
+      if (data.message) {
+        error.response.data.error = data.message
+      }
+    }
     if (error.response?.status === 401) {
       localStorage.removeItem('gere_token')
       localStorage.removeItem('gere_user')

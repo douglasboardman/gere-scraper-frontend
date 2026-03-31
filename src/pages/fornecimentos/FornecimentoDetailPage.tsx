@@ -125,7 +125,7 @@ export function FornecimentoDetailPage() {
               </>
             ) : (
               <>
-                {can('manage:fornecimentos') && (
+                {can('edit:fornecimentos') && fornecimento.status === 'Processado' && (
                   <Button variant="outline" size="sm" onClick={handleEdit}>
                     <Pencil className="h-4 w-4" />
                     Editar
