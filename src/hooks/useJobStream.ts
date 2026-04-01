@@ -50,6 +50,9 @@ export function useJobStream(jobId: string | null): JobStreamState {
 
       const es = new EventSource(url)
       eventSourceRef.current = es
+      // Evita retry quando o servidor fecha a conexão após enviar um evento terminal (done/error).
+      // O EventSource sempre dispara onerror ao fechar, independentemente de ter sido intencional.
+      let terminalReceived = false
 
       es.addEventListener('progress', (event: MessageEvent) => {
         retriesRef.current = 0
@@ -72,6 +75,7 @@ export function useJobStream(jobId: string | null): JobStreamState {
       })
 
       es.addEventListener('done', (event: MessageEvent) => {
+        terminalReceived = true
         try {
           const payload = JSON.parse(event.data as string)
           setState((prev) => ({
@@ -99,6 +103,7 @@ export function useJobStream(jobId: string | null): JobStreamState {
         const msgEvent = event as MessageEvent
         if (typeof msgEvent.data !== 'string') return // native error — handled by onerror below
 
+        terminalReceived = true
         try {
           const payload = JSON.parse(msgEvent.data)
           setState((prev) => ({
@@ -121,7 +126,7 @@ export function useJobStream(jobId: string | null): JobStreamState {
       // Native connection error — retry a few times before giving up
       es.onerror = () => {
         es.close()
-        if (cancelled) return
+        if (cancelled || terminalReceived) return
 
         if (retriesRef.current < MAX_RETRIES) {
           retriesRef.current++
