@@ -51,11 +51,12 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'gere-auth-storage',
+      // activeJobId não é persistido: jobs são efêmeros e um ID antigo causaria
+      // erros 404 ao tentar reconectar ao SSE em uma nova sessão.
       partialize: (state) => ({
         user: state.user,
         token: state.token,
         isAuthenticated: state.isAuthenticated,
-        activeJobId: state.activeJobId,
       }),
     }
   )
