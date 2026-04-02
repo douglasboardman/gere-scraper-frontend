@@ -75,14 +75,19 @@ export function DashboardPage() {
     queryFn: () => requisicoesApi.listar(),
   })
 
-  const contratacoesEmProcessamento = contratacoes?.filter((c) => c.status === 'Em_Processamento') ?? []
-  const atasVigentes = atas?.filter((a) => a.status === 'Processada') ?? []
-  const fornecimentosHomologados = fornecimentos?.filter((f) => f.status === 'Disponivel') ?? []
-  const requisicoesAbertas = requisicoes?.filter(
-    (r) => r.status === 'Enviada' || r.status === 'Rascunho'
+  const contratacoesEmAnalise = contratacoes?.filter(
+    (c) => c.status === 'Em_Processamento' || c.status === 'Processada'
+  ) ?? []
+  const contratacoesDisponiveis = contratacoes?.filter((c) => c.status === 'Disponivel') ?? []
+  const atasVigentes = atas?.filter((a) => a.status === 'Disponivel') ?? []
+  const fornecimentosDisponiveis = fornecimentos?.filter((f) => f.status === 'Disponivel') ?? []
+  const requisicoesExpedidas = requisicoes?.filter(
+    (r) => r.status === 'Enviada' || r.status === 'Aprovada' || r.status === 'Empenhada'
   ) ?? []
 
-  const recentRequisicoes = (requisicoes ?? []).slice(0, 5)
+  const recentRequisicoes = (requisicoes ?? [])
+    .filter((r) => r.status !== 'Rascunho')
+    .slice(0, 5)
 
   return (
     <div>
@@ -94,9 +99,9 @@ export function DashboardPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
-          title="Total de Contratações"
-          value={loadingContratacoes ? '-' : (contratacoes?.length ?? 0)}
-          description="Contratações cadastradas"
+          title="Contratações Disponíveis"
+          value={loadingContratacoes ? '-' : contratacoesDisponiveis.length}
+          description="Contratações com status Disponível"
           icon={Gavel}
           isLoading={loadingContratacoes}
           color="#2a593a"
@@ -104,23 +109,23 @@ export function DashboardPage() {
         <StatCard
           title="Atas Vigentes"
           value={loadingAtas ? '-' : atasVigentes.length}
-          description="Atas com status Processada"
+          description="Atas com status Disponível"
           icon={FileText}
           isLoading={loadingAtas}
           color="#4b8960"
         />
         <StatCard
           title="Fornecimentos Disponíveis"
-          value={loadingFornecimentos ? '-' : fornecimentosHomologados.length}
+          value={loadingFornecimentos ? '-' : fornecimentosDisponiveis.length}
           description="Homologados com saldo"
           icon={ArrowLeftRight}
           isLoading={loadingFornecimentos}
           color="#82ab90"
         />
         <StatCard
-          title="Requisições Abertas"
-          value={loadingRequisicoes ? '-' : requisicoesAbertas.length}
-          description="Rascunho ou Enviadas"
+          title="Requisições Expedidas"
+          value={loadingRequisicoes ? '-' : requisicoesExpedidas.length}
+          description="Enviadas, Aprovadas ou Empenhadas"
           icon={ClipboardList}
           isLoading={loadingRequisicoes}
           color="#b45309"
@@ -169,21 +174,21 @@ export function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Contratações em Processamento</CardTitle>
-            <CardDescription>Aguardando importação de dados</CardDescription>
+            <CardDescription>Em análise para disponibilização</CardDescription>
           </CardHeader>
           <CardContent>
             {loadingContratacoes ? (
               <div className="space-y-2">
                 {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
               </div>
-            ) : contratacoesEmProcessamento.length === 0 ? (
+            ) : contratacoesEmAnalise.length === 0 ? (
               <div className="flex flex-col items-center py-8 text-muted-foreground">
                 <AlertCircle className="h-8 w-8 mb-2 opacity-40" />
                 <p className="text-sm">Nenhuma contratação em processamento</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {contratacoesEmProcessamento.map((contratacao) => (
+                {contratacoesEmAnalise.map((contratacao) => (
                   <div
                     key={contratacao.identificador}
                     className="flex items-center justify-between py-2 border-b last:border-0"

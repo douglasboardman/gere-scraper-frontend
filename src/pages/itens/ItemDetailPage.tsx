@@ -97,11 +97,19 @@ export function ItemDetailPage() {
   const valUnitario = item.valUnitario ?? item.valorUnitario
   const unMedida = item.unMedida ?? item.unidadeMedida
 
+  const ataObj = typeof item.identAta !== 'string' ? item.identAta : null
+  const contratacao = ataObj?.contratacao ?? (
+    typeof ataObj?.identContratacao !== 'string' ? ataObj?.identContratacao : null
+  )
+  const subtitleContratacao = contratacao
+    ? `Contratação ${contratacao.numContratacao}/${contratacao.anoContratacao}`
+    : null
+
   return (
     <div>
       <PageHeader
         title={`Item Nº ${numItem}`}
-        subtitle={descBreve ?? 'Sem descrição'}
+        subtitle={subtitleContratacao ?? descBreve ?? 'Sem descrição'}
         actions={
           <div className="flex gap-2">
             {editMode ? (

@@ -49,6 +49,7 @@ export interface IAtaRegPrecos {
   identificador: string
   numAta: string
   identContratacao: string | IContratacao
+  contratacao?: IContratacao
   identFornecedor?: string
   cnpjFornecedor?: string
   nomeFornecedor?: string

@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { ArrowLeft, Pencil, X, Check, ShieldAlert, Loader2 } from 'lucide-react'
+import { ArrowLeft, Pencil, X, Check, ShieldAlert, Loader2, List } from 'lucide-react'
 import { fornecedoresApi } from '@/api/fornecedores.api'
 import { SancoesDialog, useSancoesDialog } from '@/components/shared/SancoesDialog'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -13,6 +13,17 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCNPJ } from '@/lib/utils'
+
+function formatTelefone(tel: string | null | undefined): string {
+  if (!tel) return '—'
+  // Espera formato "DD NÚMERO" onde DD são 2 dígitos
+  const match = tel.trim().match(/^(\d{2})\s+(\d+)$/)
+  if (!match) return tel
+  const [, ddd, numero] = match
+  const parte1 = numero.slice(0, -4)
+  const parte2 = numero.slice(-4)
+  return `(${ddd}) ${parte1}-${parte2}`
+}
 import { usePermission } from '@/hooks/usePermission'
 import type { IFornecedor } from '@/types'
 
@@ -207,7 +218,7 @@ export function FornecedorDetailPage() {
                   className="w-44"
                 />
               ) : (
-                telefone || '—'
+                formatTelefone(telefone)
               )}
             </Field>
             <Field label="Telefone 2">
@@ -219,7 +230,7 @@ export function FornecedorDetailPage() {
                   className="w-44"
                 />
               ) : (
-                telefone2 || '—'
+                formatTelefone(telefone2)
               )}
             </Field>
             <div className="col-span-2 md:col-span-3">
@@ -241,6 +252,16 @@ export function FornecedorDetailPage() {
           </p>
         </CardContent>
       </Card>
+
+      <div className="mb-6">
+        <Button
+          variant="outline"
+          onClick={() => navigate(`/fornecimentos?identFornecedor=${fornecedor.identificador}&status=Disponivel`)}
+        >
+          <List className="h-4 w-4" />
+          Listar Fornecimentos Válidos
+        </Button>
+      </div>
 
       <SancoesDialog
         open={sancoesDialog.open}
