@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { API_BASE_URL } from '@/api/client'
 import type { StatusJob } from '@/types'
 
 interface JobStreamState {
@@ -43,8 +44,8 @@ export function useJobStream(jobId: string | null): JobStreamState {
       if (cancelled) return
 
       const token = localStorage.getItem('gere_token')
-      // Usa caminho relativo para passar pelo proxy do Vite (em dev) ou reverse proxy (em prod)
-      const url = `/api/jobs/${jobId}/stream${token ? `?token=${token}` : ''}`
+      // Usa o mesmo baseURL do apiClient para garantir consistência entre dev e prod
+      const url = `${API_BASE_URL}/jobs/${jobId}/stream${token ? `?token=${token}` : ''}`
 
       setState((prev) => ({ ...prev, isActive: true, status: 'running' }))
 
