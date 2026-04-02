@@ -64,6 +64,17 @@ export function ContratacoesPage() {
       ),
     },
     {
+      id: 'numContratacao',
+      header: 'Núm. Contratação',
+      cell: ({ row }) => {
+        const id = row.original.identificador;
+        const raw = id.slice(-9);
+        return (
+          <span className="font-mono text-sm">{raw.slice(0, 5)}/{raw.slice(5)}</span>
+        );
+      },
+    },
+    {
       accessorKey: 'objeto',
       header: 'Objeto',
       cell: ({ row }) => (
