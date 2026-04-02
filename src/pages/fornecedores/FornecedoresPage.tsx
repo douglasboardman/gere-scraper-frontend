@@ -8,6 +8,14 @@ import { DataTable } from '@/components/shared/DataTable'
 import { SancoesDialog, useSancoesDialog } from '@/components/shared/SancoesDialog'
 import { Button } from '@/components/ui/button'
 import { formatCNPJ } from '@/lib/utils'
+
+function formatTelefone(tel: string | null | undefined): string {
+  if (!tel) return '—'
+  const match = tel.trim().match(/^(\d{2})\s+(\d+)$/)
+  if (!match) return tel
+  const [, ddd, numero] = match
+  return `(${ddd}) ${numero.slice(0, -4)}-${numero.slice(-4)}`
+}
 import type { IFornecedor } from '@/types'
 
 export function FornecedoresPage() {
@@ -40,22 +48,6 @@ export function FornecedoresPage() {
       ),
     },
     {
-      id: 'endereco',
-      header: 'Endereço',
-      cell: ({ row }) => {
-        const endereco = row.original.endereco
-        if (endereco) return <span className="text-sm text-muted-foreground">{endereco}</span>
-        const parts = [
-          row.original.logradouro,
-          row.original.numero,
-          row.original.bairro,
-          row.original.municipio,
-          row.original.uf,
-        ].filter(Boolean)
-        return <span className="text-sm text-muted-foreground">{parts.join(', ') || '—'}</span>
-      },
-    },
-    {
       id: 'email',
       header: 'E-mail',
       cell: ({ row }) => (
@@ -69,7 +61,7 @@ export function FornecedoresPage() {
       header: 'Telefone',
       cell: ({ row }) => (
         <span className="text-sm">
-          {row.original.telefone1 ?? row.original.telefone ?? '—'}
+          {formatTelefone(row.original.telefone1 ?? row.original.telefone)}
         </span>
       ),
     },

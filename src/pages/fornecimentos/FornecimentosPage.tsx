@@ -16,21 +16,25 @@ export function FornecimentosPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const idItemParam = searchParams.get("identItem") ?? undefined;
+  const idFornecedorParam = searchParams.get("identFornecedor") ?? undefined;
+  const statusParam = searchParams.get("status") ?? undefined;
   const [uasgFilter, setUasgFilter] = useState("");
   const [appliedUasg, setAppliedUasg] = useState<string | undefined>(undefined);
 
   const { data: fornecimentos = [], isLoading } = useQuery({
-    queryKey: ["fornecimentos", appliedUasg, idItemParam],
+    queryKey: ["fornecimentos", appliedUasg, idItemParam, idFornecedorParam, statusParam],
     queryFn: () =>
       fornecimentosApi.listar({
         ...(idItemParam ? { identItem: idItemParam } : {}),
         ...(appliedUasg ? { uasgUnParticipante: appliedUasg } : {}),
+        ...(idFornecedorParam ? { identFornecedor: idFornecedorParam } : {}),
+        ...(statusParam ? { status: statusParam } : {}),
       }),
   });
 
   const getItemDesc = (identItem: string | IItem): string => {
     if (typeof identItem === "string") return identItem;
-    return identItem.descricaoBreve ?? identItem.numItem ?? "—";
+    return identItem.descBreve ?? identItem.descricaoBreve ?? identItem.numItem ?? "—";
   };
 
   const getFornecedorName = (identFornecedor: string | IFornecedor): string => {
@@ -65,26 +69,17 @@ export function FornecimentosPage() {
       ),
     },
     {
-      accessorKey: "uasgUnParticipante",
-      header: "UASG Part.",
-    },
-    {
-      accessorKey: "qtdAutorizada",
-      header: "Qtd Autorizada",
+      id: "unidade",
+      header: "Unidade Part.",
       cell: ({ row }) => (
-        <span className="text-sm">{row.original.qtdAutorizada ?? "—"}</span>
-      ),
-    },
-    {
-      accessorKey: "qtdUtilizada",
-      header: "Qtd Utilizada",
-      cell: ({ row }) => (
-        <span className="text-sm">{row.original.qtdUtilizada ?? "—"}</span>
+        <span className="text-sm">
+          {row.original.nomeUnParticipante || row.original.uasgUnParticipante}
+        </span>
       ),
     },
     {
       id: "saldo",
-      header: "Saldo",
+      header: "Qtd. Disponível",
       cell: ({ row }) => (
         <span className="text-sm font-medium">
           {row.original.saldoDisponivel != null

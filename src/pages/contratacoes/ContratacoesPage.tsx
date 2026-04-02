@@ -160,7 +160,8 @@ export function ContratacoesPage() {
             <SelectItem value="Em_Processamento">Em Processamento</SelectItem>
             <SelectItem value="Processada">Processada</SelectItem>
             <SelectItem value="Inconsistente">Inconsistente</SelectItem>
-            <SelectItem value="Aguardando_Homologacao">Ag. Homologação</SelectItem>
+            <SelectItem value="Disponivel">Disponível</SelectItem>
+            <SelectItem value="Encerrada">Encerrada</SelectItem>
           </SelectContent>
         </Select>
       </div>

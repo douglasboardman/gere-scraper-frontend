@@ -5,6 +5,8 @@ export const fornecimentosApi = {
   async listar(params?: {
     identItem?: string
     uasgUnParticipante?: string
+    identFornecedor?: string
+    status?: string
   }): Promise<IFornecimento[]> {
     const { data } = await apiClient.get<IFornecimento[]>('/fornecimentos', { params })
     return data
