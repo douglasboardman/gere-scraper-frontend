@@ -61,6 +61,7 @@ import {
 } from '@/components/ui/dialog'
 import { cn, formatCurrency, tipoRequisicaoLabel } from '@/lib/utils'
 import type { IContratacao, IFornecimento, IItem, IRequisicao, IUnidade } from '@/types'
+import { MODALIDADE_LABEL } from '@/types'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -507,7 +508,7 @@ function Step2Contratacao({
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-semibold text-sm text-primary">{contratacao.numEdital}</span>
                     <Badge variant="outline" className="text-xs">
-                      {contratacao.modContratacao}
+                      {MODALIDADE_LABEL[contratacao.modContratacao ?? ''] ?? contratacao.modContratacao}
                     </Badge>
                   </div>
                   <p className="text-sm leading-snug line-clamp-2">{contratacao.objeto}</p>
@@ -1060,7 +1061,7 @@ function Step4Revisao({
               Compra Vinculada
             </p>
             <p className="font-medium">
-              {selectedCompra.numEdital} — {selectedCompra.modContratacao}
+              {selectedCompra.numEdital} — {MODALIDADE_LABEL[selectedCompra.modContratacao ?? ''] ?? selectedCompra.modContratacao}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
               {selectedCompra.objeto}

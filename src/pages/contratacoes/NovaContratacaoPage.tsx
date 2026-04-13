@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { contratacoesApi } from '@/api/contratacoes.api'
 import { unidadesApi } from '@/api/unidades.api'
-import type { IContratacao } from '@/types'
+import type { IContratacao, ModalidadeContratacao } from '@/types'
 import { useAuthStore } from '@/store/auth.store'
 import { usePermission } from '@/hooks/usePermission'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -32,13 +32,26 @@ import {
 
 const currentYear = new Date().getFullYear()
 
-const modalidades = ['Pregão', 'Concorrência', 'Dispensa', 'Inexigibilidade'] as const
+// value = enum Prisma (enviado à API), label = exibição para o usuário
+const modalidades = [
+  { value: 'Pregao', label: 'Pregão' },
+  { value: 'Concorrencia', label: 'Concorrência' },
+  { value: 'Dispensa', label: 'Dispensa' },
+  { value: 'Inexigibilidade', label: 'Inexigibilidade' },
+  { value: 'Concorrencia_Eletronica', label: 'Concorrência Eletrônica' },
+  { value: 'Concorrencia_Presencial', label: 'Concorrência Presencial' },
+  { value: 'Pregao_Eletronico', label: 'Pregão Eletrônico' },
+  { value: 'Pregao_Presencial', label: 'Pregão Presencial' },
+  { value: 'Chamada_Publica', label: 'Chamada Pública' },
+] as const
+
+const modalidadeValues = modalidades.map(m => m.value) as unknown as [string, ...string[]]
 
 const novaCompraSchema = z.object({
   numContratacao: z.string().min(1, 'Número da contratacao é obrigatório'),
   anoContratacao: z.string().regex(/^\d{4}$/, 'Ano deve ter 4 dígitos'),
   uasgUnGestora: z.string().min(1, 'UASG da unidade gestora é obrigatória'),
-  modalidade: z.enum(modalidades, {
+  modalidade: z.enum(modalidadeValues, {
     errorMap: () => ({ message: 'Selecione a modalidade' }),
   }),
   uasgParticipante: z.string().optional(),
@@ -75,7 +88,7 @@ export function NovaContratacaoPage() {
         numContratacao: data.numContratacao,
         anoContratacao: data.anoContratacao,
         uasgUnGestora: data.uasgUnGestora,
-        modalidade: data.modalidade,
+        modalidade: data.modalidade as ModalidadeContratacao,
         ...(isAdmin && data.uasgParticipante ? { uasgParticipante: data.uasgParticipante } : {}),
       }),
     onSuccess: (result) => {
@@ -184,8 +197,8 @@ export function NovaContratacaoPage() {
                         </FormControl>
                         <SelectContent>
                           {modalidades.map((m) => (
-                            <SelectItem key={m} value={m}>
-                              {m}
+                            <SelectItem key={m.value} value={m.value}>
+                              {m.label}
                             </SelectItem>
                           ))}
                         </SelectContent>

@@ -6,6 +6,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { ArrowLeft, Pencil, X, Check, ExternalLink, CheckCircle2, PauseCircle } from "lucide-react";
 import { contratacoesApi } from "@/api/contratacoes.api";
+import { MODALIDADE_LABEL } from "@/types";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -162,7 +163,7 @@ export function ContratacaoDetailPage() {
             <Field label="Nome UN Gestora">{contratacao.nomeUnGestora || "—"}</Field>
             <Field label="Cód. UN Gestora">{contratacao.codUnGestora || "—"}</Field>
             <Field label="Modalidade">
-              {contratacao.modContratacao || "—"}
+              {MODALIDADE_LABEL[contratacao.modContratacao ?? ''] ?? contratacao.modContratacao ?? "—"}
             </Field>
             <Field label="Nº Edital">{contratacao.numEdital || "—"}</Field>
             <Field label="Vigência Início">
