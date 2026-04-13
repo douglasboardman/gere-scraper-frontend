@@ -18,10 +18,30 @@ export type UserRole =
   | 'requisitante'
 
 export type ModalidadeContratacao =
-  | 'Pregão'
-  | 'Concorrência'
+  | 'Pregao'
+  | 'Concorrencia'
   | 'Dispensa'
   | 'Inexigibilidade'
+  | 'Concorrencia_Eletronica'
+  | 'Concorrencia_Presencial'
+  | 'Pregao_Eletronico'
+  | 'Pregao_Presencial'
+  | 'Chamada_Publica'
+
+export const MODALIDADE_LABEL: Record<string, string> = {
+  Pregao: 'Pregão',
+  Concorrencia: 'Concorrência',
+  Dispensa: 'Dispensa',
+  Inexigibilidade: 'Inexigibilidade',
+  Concorrencia_Eletronica: 'Concorrência Eletrônica',
+  Concorrencia_Presencial: 'Concorrência Presencial',
+  Pregao_Eletronico: 'Pregão Eletrônico',
+  Pregao_Presencial: 'Pregão Presencial',
+  Chamada_Publica: 'Chamada Pública',
+  // Fallback para dados antigos (pré-migração)
+  'Pregão': 'Pregão',
+  'Concorrência': 'Concorrência',
+}
 
 // ============================================================
 // Backend models
