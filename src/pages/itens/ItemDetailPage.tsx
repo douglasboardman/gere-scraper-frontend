@@ -4,12 +4,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { ArrowLeft, Pencil, X, Check, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Pencil, X, Check, Eye } from 'lucide-react'
 import { itensApi } from '@/api/itens.api'
+import { fornecimentosApi } from '@/api/fornecimentos.api'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { formatCurrency } from '@/lib/utils'
@@ -21,7 +22,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { IItem } from '@/types'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import type { IItem, IContratacao } from '@/types'
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -45,6 +54,12 @@ export function ItemDetailPage() {
   const { data: item, isLoading } = useQuery({
     queryKey: ['item', id],
     queryFn: () => itensApi.obter(id!),
+    enabled: !!id,
+  })
+
+  const { data: fornecimentos = [] } = useQuery({
+    queryKey: ['fornecimentos', { identItem: id }],
+    queryFn: () => fornecimentosApi.listar({ identItem: id! }),
     enabled: !!id,
   })
 
@@ -150,17 +165,32 @@ export function ItemDetailPage() {
             <Field label="Nº Item">
               <span className="font-mono">{numItem}</span>
             </Field>
-            <Field label="Ata">
-              {typeof item.identAta === 'string' ? (
-                <Link to={`/atas/${item.identAta}`} className="font-mono text-primary hover:underline">
-                  {item.identAta}
-                </Link>
-              ) : (
-                <Link to={`/atas/${item.identAta?.identificador}`} className="font-mono text-primary hover:underline">
-                  {item.identAta?.identificador ?? '—'}
-                </Link>
-              )}
-            </Field>
+            {item.identAta && (
+              <Field label="Ata">
+                {typeof item.identAta === 'string' ? (
+                  <Link to={`/atas/${item.identAta}`} className="font-mono text-primary hover:underline">
+                    {item.identAta}
+                  </Link>
+                ) : (
+                  <Link to={`/atas/${(item.identAta as any).identificador}`} className="font-mono text-primary hover:underline">
+                    {(item.identAta as any).identificador ?? '—'}
+                  </Link>
+                )}
+              </Field>
+            )}
+            {!item.identAta && item.identContratacao && (
+              <Field label="Contratação">
+                {typeof item.identContratacao === 'string' ? (
+                  <Link to={`/contratacoes/${item.identContratacao}`} className="font-mono text-primary hover:underline">
+                    {item.identContratacao}
+                  </Link>
+                ) : (
+                  <Link to={`/contratacoes/${(item.identContratacao as IContratacao).identificador}`} className="font-mono text-primary hover:underline">
+                    {(item.identContratacao as IContratacao).identificador}
+                  </Link>
+                )}
+              </Field>
+            )}
             <Field label="Tipo">{item.tipo || '—'}</Field>
             <Field label="Unidade de Medida">{unMedida || '—'}</Field>
             <Field label="Qtd Homologada">
@@ -224,12 +254,53 @@ export function ItemDetailPage() {
         </CardContent>
       </Card>
 
-      <Button variant="outline" size="sm" asChild>
-        <Link to={`/fornecimentos?identItem=${item.identificador}`}>
-          <ExternalLink className="h-4 w-4" />
-          Ver Fornecimentos deste Item
-        </Link>
-      </Button>
+      {fornecimentos.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Fornecimentos ({fornecimentos.length})</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>UASG Participante</TableHead>
+                  <TableHead>Qtd Autorizada</TableHead>
+                  <TableHead>Saldo</TableHead>
+                  <TableHead>Valor Unit.</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {fornecimentos.map((f) => (
+                  <TableRow key={f.identificador}>
+                    <TableCell className="text-sm">{f.uasgUnParticipante}</TableCell>
+                    <TableCell className="text-sm">{f.qtdAutorizada ?? '—'}</TableCell>
+                    <TableCell className="text-sm">{f.saldoDisponivel ?? f.saldo ?? '—'}</TableCell>
+                    <TableCell className="text-sm">
+                      {(f.valorUnitario ?? f.valUnitHomologado) != null
+                        ? formatCurrency(f.valorUnitario ?? f.valUnitHomologado ?? 0)
+                        : '—'}
+                    </TableCell>
+                    <TableCell><StatusBadge status={f.status} /></TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        title="Ver detalhes"
+                        onClick={() => navigate(`/fornecimentos/${f.identificador}`)}
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

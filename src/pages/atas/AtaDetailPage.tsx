@@ -4,14 +4,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { ArrowLeft, Pencil, X, Check, ExternalLink } from "lucide-react";
+import { ArrowLeft, Pencil, X, Check, Eye } from "lucide-react";
 import { atasApi } from "@/api/atas.api";
+import { itensApi } from "@/api/itens.api";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCNPJ } from "@/lib/utils";
+import { formatCNPJ, formatCurrency } from "@/lib/utils";
 import { usePermission } from "@/hooks/usePermission";
 import {
   Select,
@@ -20,6 +21,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 function Field({
   label,
@@ -49,6 +58,12 @@ export function AtaDetailPage() {
   const { data: ata, isLoading } = useQuery({
     queryKey: ["ata", id],
     queryFn: () => atasApi.obter(id!),
+    enabled: !!id,
+  });
+
+  const { data: itens = [] } = useQuery({
+    queryKey: ["itens", { identAta: id }],
+    queryFn: () => itensApi.listar({ identAta: id! }),
     enabled: !!id,
   });
 
@@ -194,12 +209,61 @@ export function AtaDetailPage() {
         </CardContent>
       </Card>
 
-      <Button variant="outline" size="sm" asChild>
-        <Link to={`/itens?identAta=${ata.identificador}`}>
-          <ExternalLink className="h-4 w-4" />
-          Ver Itens desta Ata
-        </Link>
-      </Button>
+      {itens.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Itens ({itens.length})</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nº Item</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Qtd Homologada</TableHead>
+                  <TableHead>Valor Unitário</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {itens.map((item) => (
+                  <TableRow key={item.identificador}>
+                    <TableCell className="font-mono text-sm">
+                      {item.sequencialItemPregao ?? item.numItem ?? "—"}
+                    </TableCell>
+                    <TableCell className="text-sm max-w-xs truncate" title={item.descBreve}>
+                      {item.descBreve ?? item.descricaoBreve ?? "—"}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {item.qtdHomologada != null
+                        ? `${item.qtdHomologada} ${item.unMedida ?? item.unidadeMedida ?? ""}`
+                        : "—"}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {(item.valUnitario ?? item.valorUnitario) != null
+                        ? formatCurrency(item.valUnitario ?? item.valorUnitario ?? 0)
+                        : "—"}
+                    </TableCell>
+                    <TableCell><StatusBadge status={item.status} /></TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        title="Ver detalhes"
+                        onClick={() => navigate(`/itens/${item.identificador}`)}
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

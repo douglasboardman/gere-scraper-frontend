@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Eye, Search } from "lucide-react";
-import { ManageSearchIcon } from "@/components/icons/ManageSearchIcon";
+import { Eye, Search, ArrowLeftRight } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { itensApi } from "@/api/itens.api";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -41,6 +40,11 @@ export function ItensPage() {
   };
 
   const getContratacaoInfo = (item: IItem) => {
+    // Legado items: identAta is null, identContratacao is the embedded object
+    if (!item.identAta && item.identContratacao && typeof item.identContratacao !== "string") {
+      const c = item.identContratacao as IContratacao;
+      return { numContratacao: c.numContratacao, anoContratacao: c.anoContratacao };
+    }
     const identAta = item.identAta;
     if (!identAta || typeof identAta === "string") return null;
     const identContratacao = (identAta as IAtaRegPrecos).identContratacao;
@@ -183,7 +187,7 @@ export function ItensPage() {
               navigate(`/fornecimentos?identItem=${row.original.identificador}`)
             }
           >
-            <ManageSearchIcon className="h-3.5 w-3.5" />
+            <ArrowLeftRight className="h-3.5 w-3.5" />
           </Button>
         </div>
       ),

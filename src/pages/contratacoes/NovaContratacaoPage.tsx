@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { contratacoesApi } from '@/api/contratacoes.api'
 import { unidadesApi } from '@/api/unidades.api'
-import type { IContratacao, ModalidadeContratacao } from '@/types'
+import type { IContratacao, ModalidadeContratacao, AmparoLegal } from '@/types'
 import { useAuthStore } from '@/store/auth.store'
 import { usePermission } from '@/hooks/usePermission'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -33,25 +33,37 @@ import {
 const currentYear = new Date().getFullYear()
 
 // value = enum Prisma (enviado à API), label = exibição para o usuário
-const modalidades = [
-  { value: 'Pregao', label: 'Pregão' },
-  { value: 'Concorrencia', label: 'Concorrência' },
-  { value: 'Dispensa', label: 'Dispensa' },
-  { value: 'Inexigibilidade', label: 'Inexigibilidade' },
-  { value: 'Concorrencia_Eletronica', label: 'Concorrência Eletrônica' },
-  { value: 'Concorrencia_Presencial', label: 'Concorrência Presencial' },
+const modalidades14133 = [
   { value: 'Pregao_Eletronico', label: 'Pregão Eletrônico' },
   { value: 'Pregao_Presencial', label: 'Pregão Presencial' },
+  { value: 'Concorrencia_Eletronica', label: 'Concorrência Eletrônica' },
+  { value: 'Concorrencia_Presencial', label: 'Concorrência Presencial' },
+  { value: 'Dispensa', label: 'Dispensa' },
+  { value: 'Inexigibilidade', label: 'Inexigibilidade' },
   { value: 'Chamada_Publica', label: 'Chamada Pública' },
 ] as const
 
-const modalidadeValues = modalidades.map(m => m.value) as unknown as [string, ...string[]]
+// Modalidades válidas no SIASG para contratações sob a Lei 8.666/93
+const modalidades8666 = [
+  { value: 'Concorrencia', label: 'Concorrência' },
+  { value: 'Pregao', label: 'Pregão' },
+  { value: 'Dispensa', label: 'Dispensa' },
+  { value: 'Inexigibilidade', label: 'Inexigibilidade' },
+] as const
+
+const allModalidadeValues = [
+  ...modalidades14133.map(m => m.value),
+  ...modalidades8666.map(m => m.value),
+] as unknown as [string, ...string[]]
 
 const novaCompraSchema = z.object({
-  numContratacao: z.string().min(1, 'Número da contratacao é obrigatório'),
+  amparoLegal: z.enum(['LEI_14133_2021', 'LEI_8666_1993'], {
+    errorMap: () => ({ message: 'Selecione o amparo legal' }),
+  }),
+  numContratacao: z.string().min(1, 'Número da contratação é obrigatório'),
   anoContratacao: z.string().regex(/^\d{4}$/, 'Ano deve ter 4 dígitos'),
   uasgUnGestora: z.string().min(1, 'UASG da unidade gestora é obrigatória'),
-  modalidade: z.enum(modalidadeValues, {
+  modalidade: z.enum(allModalidadeValues, {
     errorMap: () => ({ message: 'Selecione a modalidade' }),
   }),
   uasgParticipante: z.string().optional(),
@@ -74,6 +86,7 @@ export function NovaContratacaoPage() {
   const form = useForm<NovaCompraFormData>({
     resolver: zodResolver(novaCompraSchema),
     defaultValues: {
+      amparoLegal: 'LEI_14133_2021',
       numContratacao: '',
       anoContratacao: String(currentYear),
       uasgUnGestora: '',
@@ -82,9 +95,13 @@ export function NovaContratacaoPage() {
     },
   })
 
+  const amparoLegalAtual = useWatch({ control: form.control, name: 'amparoLegal' })
+  const modalidadesDisponiveis = amparoLegalAtual === 'LEI_8666_1993' ? modalidades8666 : modalidades14133
+
   const mutation = useMutation({
     mutationFn: (data: NovaCompraFormData) =>
       contratacoesApi.criar({
+        amparoLegal: data.amparoLegal as AmparoLegal,
         numContratacao: data.numContratacao,
         anoContratacao: data.anoContratacao,
         uasgUnGestora: data.uasgUnGestora,
@@ -143,6 +160,28 @@ export function NovaContratacaoPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
+                  name="amparoLegal"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2">
+                      <FormLabel>Amparo Legal *</FormLabel>
+                      <Select onValueChange={(v) => { field.onChange(v); form.setValue('modalidade', undefined as any) }} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o amparo legal..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="LEI_14133_2021">Lei 14.133/2021 — Nova Lei de Licitações</SelectItem>
+                          <SelectItem value="LEI_8666_1993">Lei 8.666/1993 — Lei Anterior</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="numContratacao"
                   render={({ field }) => (
                     <FormItem>
@@ -196,7 +235,7 @@ export function NovaContratacaoPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {modalidades.map((m) => (
+                          {modalidadesDisponiveis.map((m) => (
                             <SelectItem key={m.value} value={m.value}>
                               {m.label}
                             </SelectItem>
