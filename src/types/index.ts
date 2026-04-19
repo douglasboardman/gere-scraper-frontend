@@ -6,6 +6,7 @@ export type StatusContratacao = 'Em_Processamento' | 'Processada' | 'Inconsisten
 export type StatusAta = 'Em_Processamento' | 'Processada' | 'Inconsistente' | 'Disponivel' | 'Encerrada'
 export type StatusItem = 'Em_Processamento' | 'Processado' | 'Inconsistente' | 'Disponivel' | 'Encerrado'
 export type StatusFornecimento = 'Em_Processamento' | 'Processado' | 'Inconsistente' | 'Disponivel' | 'Encerrado'
+export type StatusContrato = 'Em_Processamento' | 'Processado' | 'Inconsistente' | 'Disponivel' | 'Encerrado'
 export type StatusRequisicao = 'Rascunho' | 'Enviada' | 'Aprovada' | 'Rejeitada' | 'Empenhada'
 export type StatusJob = 'running' | 'completed' | 'failed'
 
@@ -47,6 +48,13 @@ export const MODALIDADE_LABEL: Record<string, string> = {
 // Backend models
 // ============================================================
 
+export type AmparoLegal = 'LEI_14133_2021' | 'LEI_8666_1993'
+
+export const AMPARO_LEGAL_LABEL: Record<AmparoLegal, string> = {
+  LEI_14133_2021: 'Lei 14.133/2021',
+  LEI_8666_1993: 'Lei 8.666/1993',
+}
+
 export interface IContratacao {
   identificador: string
   uasgUnGestora: string
@@ -58,11 +66,13 @@ export interface IContratacao {
   numEdital?: string
   objeto?: string
   uasgsParticipantes?: string[]
+  amparoLegal?: AmparoLegal
   iniVigencia?: string
   fimVigencia?: string
   status: StatusContratacao
   createdAt: string
   updatedAt: string
+  _count?: { atas: number; contratos: number }
 }
 
 export interface IAtaRegPrecos {
@@ -84,7 +94,8 @@ export interface IItem {
   identificador: string
   sequencialItemPregao?: string
   numItem?: string
-  identAta: string | IAtaRegPrecos
+  identAta: string | IAtaRegPrecos | null
+  identContratacao?: string | IContratacao
   descBreve?: string
   descDetalhada?: string
   descricaoBreve?: string
@@ -127,6 +138,7 @@ export interface IFornecimento {
   identificador: string
   identItem: string | IItem
   identFornecedor: string
+  identContrato?: string | IContrato | null
   nomeFornecedor?: string | null
   cnpjFornecedor?: string | null
   nomeUnParticipante?: string
@@ -138,6 +150,25 @@ export interface IFornecimento {
   valorUnitario?: number
   valUnitHomologado?: number
   status: StatusFornecimento
+  createdAt: string
+  updatedAt: string
+}
+
+export interface IContrato {
+  identificador: string
+  numContrato: string
+  identContratacao: string | IContratacao
+  contratacao?: IContratacao
+  objeto?: string
+  uasgContratante: string
+  unGestoraOrigemContrato?: string
+  cnpjContratado: string
+  iniVigencia: string
+  fimVigencia?: string
+  valorGlobal: number
+  numParcelas?: number
+  valorParcelas?: number
+  status: StatusContrato
   createdAt: string
   updatedAt: string
 }
@@ -182,7 +213,7 @@ export interface IUsuario {
   updatedAt: string
 }
 
-export type TipoRequisicao = 'Material' | 'Servico'
+export type TipoRequisicao = 'Material' | 'Servico' | 'Outras_Obrigacoes'
 
 export interface IRequisicao {
   identificador: string
@@ -299,6 +330,7 @@ export interface CriarContratacaoData {
   anoContratacao: string
   uasgUnGestora: string
   modalidade: ModalidadeContratacao
+  amparoLegal: AmparoLegal
   uasgParticipante?: string
 }
 
@@ -314,6 +346,27 @@ export interface CriarItemRequisicaoData {
   identFornecimento: string
   quantidadeSolicitada: number
   observacao?: string
+}
+
+export interface CriarContratoData {
+  identContratacao: string
+  numContrato: string
+  uasgContratante: string
+  unGestoraOrigemContrato?: string
+  cnpjContratado: string
+  objeto?: string
+  iniVigencia: string
+  fimVigencia?: string
+  valorGlobal: number
+  numParcelas?: number
+  valorParcelas?: number
+}
+
+export interface CriarFornecimentoManualData {
+  identItem: string
+  identContrato?: string
+  qtdAutorizada: number
+  valUnitHomologado: number
 }
 
 export interface CriarUnidadeData {

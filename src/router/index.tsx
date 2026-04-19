@@ -20,6 +20,10 @@ import { FornecedoresPage } from '@/pages/fornecedores/FornecedoresPage'
 import { FornecedorDetailPage } from '@/pages/fornecedores/FornecedorDetailPage'
 import { FornecimentosPage } from '@/pages/fornecimentos/FornecimentosPage'
 import { FornecimentoDetailPage } from '@/pages/fornecimentos/FornecimentoDetailPage'
+import { NovoFornecimentoPage } from '@/pages/fornecimentos/NovoFornecimentoPage'
+import { ContratosPage } from '@/pages/contratos/ContratosPage'
+import { ContratoDetailPage } from '@/pages/contratos/ContratoDetailPage'
+import { NovoContratoPage } from '@/pages/contratos/NovoContratoPage'
 import { RequisicoesPage } from '@/pages/requisicoes/RequisicoesPage'
 import { RequisicoesUnidadePage } from '@/pages/requisicoes/RequisicoesUnidadePage'
 import { MinhasRequisicoesPage } from '@/pages/requisicoes/MinhasRequisicoesPage'
@@ -163,8 +167,26 @@ export const router = createBrowserRouter([
             element: <FornecimentosPage />,
           },
           {
+            path: 'fornecimentos/novo',
+            element: <PrivateRoute requireGestorOrAdmin />,
+            children: [{ index: true, element: <NovoFornecimentoPage /> }],
+          },
+          {
             path: 'fornecimentos/:id',
             element: <FornecimentoDetailPage />,
+          },
+          {
+            path: 'contratos',
+            element: <ContratosPage />,
+          },
+          {
+            path: 'contratos/novo',
+            element: <PrivateRoute requireGestorOrAdmin />,
+            children: [{ index: true, element: <NovoContratoPage /> }],
+          },
+          {
+            path: 'contratos/:id',
+            element: <ContratoDetailPage />,
           },
           {
             path: 'requisicoes',

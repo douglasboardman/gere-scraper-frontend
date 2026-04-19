@@ -1,19 +1,23 @@
 import { useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { ArrowLeft, Pencil, X, Check, ExternalLink, CheckCircle2, PauseCircle } from "lucide-react";
+import { ArrowLeft, Pencil, X, Check, CheckCircle2, PauseCircle, Eye } from "lucide-react";
 import { contratacoesApi } from "@/api/contratacoes.api";
+import { atasApi } from "@/api/atas.api";
+import { contratosApi } from "@/api/contratos.api";
 import { MODALIDADE_LABEL } from "@/types";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { usePermission } from "@/hooks/usePermission";
+import { useAuthStore } from "@/store/auth.store";
+import { formatCurrency } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -21,20 +25,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { IContratacao } from "@/types";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import type { IContratacao, IAtaRegPrecos, IContrato } from "@/types";
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <span className="text-xs text-muted-foreground uppercase tracking-wide">
-        {label}
-      </span>
+      <span className="text-xs text-muted-foreground uppercase tracking-wide">{label}</span>
       <div className="mt-1 text-sm font-medium">{children}</div>
     </div>
   );
@@ -44,7 +48,8 @@ export function ContratacaoDetailPage() {
   const { identificador } = useParams<{ identificador: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { can } = usePermission();
+  const { can, isAdmin } = usePermission();
+  const usuario = useAuthStore((s) => s.user);
   const [editMode, setEditMode] = useState(false);
   const [editObjeto, setEditObjeto] = useState("");
   const [editStatus, setEditStatus] = useState("");
@@ -54,6 +59,22 @@ export function ContratacaoDetailPage() {
     queryFn: () => contratacoesApi.obter(identificador!),
     enabled: !!identificador,
   });
+
+  const { data: atas = [] } = useQuery<IAtaRegPrecos[]>({
+    queryKey: ["atas", { identContratacao: identificador }],
+    queryFn: () => atasApi.listar(identificador!),
+    enabled: !!identificador,
+  });
+
+  const { data: todosContratos = [] } = useQuery<IContrato[]>({
+    queryKey: ["contratos", "contratacao", identificador],
+    queryFn: () => contratosApi.listarPorContratacao(identificador!),
+    enabled: !!identificador,
+  });
+
+  const contratos = isAdmin
+    ? todosContratos
+    : todosContratos.filter((ct) => ct.uasgContratante === usuario?.unidade?.uasg);
 
   const updateMutation = useMutation({
     mutationFn: (data: Partial<IContratacao>) =>
@@ -104,27 +125,18 @@ export function ContratacaoDetailPage() {
         title={`Contratação ${contratacao.numContratacao}/${contratacao.anoContratacao}`}
         subtitle={
           contratacao.objeto
-            ? contratacao.objeto.slice(0, 80) +
-              (contratacao.objeto.length > 80 ? "…" : "")
+            ? contratacao.objeto.slice(0, 80) + (contratacao.objeto.length > 80 ? "…" : "")
             : "Sem objeto definido"
         }
         actions={
           <div className="flex gap-2">
             {editMode ? (
               <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditMode(false)}
-                >
+                <Button variant="outline" size="sm" onClick={() => setEditMode(false)}>
                   <X className="h-4 w-4" />
                   Cancelar
                 </Button>
-                <Button
-                  size="sm"
-                  onClick={handleSave}
-                  disabled={updateMutation.isPending}
-                >
+                <Button size="sm" onClick={handleSave} disabled={updateMutation.isPending}>
                   <Check className="h-4 w-4" />
                   {updateMutation.isPending ? "Salvando..." : "Salvar"}
                 </Button>
@@ -137,11 +149,7 @@ export function ContratacaoDetailPage() {
                     Editar
                   </Button>
                 )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate("/contratacoes")}
-                >
+                <Button variant="outline" size="sm" onClick={() => navigate("/contratacoes")}>
                   <ArrowLeft className="h-4 w-4" />
                   Voltar
                 </Button>
@@ -151,6 +159,7 @@ export function ContratacaoDetailPage() {
         }
       />
 
+      {/* Main info card */}
       <Card className="mb-6">
         <CardContent className="pt-6">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-5">
@@ -163,12 +172,10 @@ export function ContratacaoDetailPage() {
             <Field label="Nome UN Gestora">{contratacao.nomeUnGestora || "—"}</Field>
             <Field label="Cód. UN Gestora">{contratacao.codUnGestora || "—"}</Field>
             <Field label="Modalidade">
-              {MODALIDADE_LABEL[contratacao.modContratacao ?? ''] ?? contratacao.modContratacao ?? "—"}
+              {MODALIDADE_LABEL[contratacao.modContratacao ?? ""] ?? contratacao.modContratacao ?? "—"}
             </Field>
             <Field label="Nº Edital">{contratacao.numEdital || "—"}</Field>
-            <Field label="Vigência Início">
-              {formatDate(contratacao.iniVigencia)}
-            </Field>
+            <Field label="Vigência Início">{formatDate(contratacao.iniVigencia)}</Field>
             <Field label="Vigência Fim">{formatDate(contratacao.fimVigencia)}</Field>
             <Field label="Status">
               {editMode ? (
@@ -187,9 +194,7 @@ export function ContratacaoDetailPage() {
               )}
             </Field>
             <div className="col-span-2 md:col-span-3">
-              <span className="text-xs text-muted-foreground uppercase tracking-wide">
-                Objeto
-              </span>
+              <span className="text-xs text-muted-foreground uppercase tracking-wide">Objeto</span>
               {editMode && contratacao.status === "Processada" ? (
                 <Textarea
                   className="mt-1"
@@ -203,21 +208,13 @@ export function ContratacaoDetailPage() {
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-6">
-            Atualizado em{" "}
-            {format(new Date(contratacao.updatedAt), "dd/MM/yyyy HH:mm", {
-              locale: ptBR,
-            })}
+            Atualizado em {format(new Date(contratacao.updatedAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
           </p>
         </CardContent>
       </Card>
 
-      <div className="flex gap-3 flex-wrap">
-        <Button variant="outline" size="sm" asChild>
-          <Link to={`/atas?identContratacao=${contratacao.identificador}`}>
-            <ExternalLink className="h-4 w-4" />
-            Ver Atas desta Contratação
-          </Link>
-        </Button>
+      {/* Status actions */}
+      <div className="flex gap-3 flex-wrap mb-6">
         {can("edit:contratacoes") && contratacao.status === "Processada" && (
           <Button
             size="sm"
@@ -241,6 +238,104 @@ export function ContratacaoDetailPage() {
           </Button>
         )}
       </div>
+
+      {/* Atas embeddidas */}
+      {atas.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Atas de Registro de Preços ({atas.length})</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nº Ata</TableHead>
+                  <TableHead>Fornecedor</TableHead>
+                  <TableHead>Vigência</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {atas.map((ata) => (
+                  <TableRow key={ata.identificador}>
+                    <TableCell className="font-mono text-sm">{ata.numAta}</TableCell>
+                    <TableCell className="text-sm">{ata.nomeFornecedor ?? ata.cnpjFornecedor ?? "—"}</TableCell>
+                    <TableCell className="text-sm whitespace-nowrap">
+                      {ata.iniVigencia ? formatDate(ata.iniVigencia) : "—"}
+                      {" → "}
+                      {ata.fimVigencia ? formatDate(ata.fimVigencia) : "—"}
+                    </TableCell>
+                    <TableCell><StatusBadge status={ata.status} /></TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        title="Ver detalhes"
+                        onClick={() => navigate(`/atas/${ata.identificador}`)}
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Contratos embeddidos */}
+      {contratos.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Contratos ({contratos.length})</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nº Contrato</TableHead>
+                  <TableHead>CNPJ Contratado</TableHead>
+                  <TableHead>UASG Contratante</TableHead>
+                  <TableHead>Vigência</TableHead>
+                  <TableHead>Valor Global</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {contratos.map((ct) => (
+                  <TableRow key={ct.identificador}>
+                    <TableCell className="font-mono text-sm">{ct.numContrato}</TableCell>
+                    <TableCell className="font-mono text-sm">{ct.cnpjContratado}</TableCell>
+                    <TableCell className="text-sm">{ct.uasgContratante}</TableCell>
+                    <TableCell className="text-sm whitespace-nowrap">
+                      {formatDate(ct.iniVigencia)}
+                      {" → "}
+                      {ct.fimVigencia ? formatDate(ct.fimVigencia) : "—"}
+                    </TableCell>
+                    <TableCell className="text-sm">{formatCurrency(ct.valorGlobal)}</TableCell>
+                    <TableCell><StatusBadge status={ct.status} /></TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        title="Ver detalhes"
+                        onClick={() => navigate(`/contratos/${ct.identificador}`)}
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

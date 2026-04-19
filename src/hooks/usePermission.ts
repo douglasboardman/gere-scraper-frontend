@@ -2,15 +2,18 @@ import { useAuthStore } from '@/store/auth.store'
 import type { UserRole } from '@/types'
 
 type Action =
-  // Contratações / Atas / Itens / Fornecimentos
+  // Contratações / Atas / Itens / Fornecimentos / Contratos
   | 'create:contratacoes'
   | 'edit:contratacoes'
   | 'delete:contratacoes'
   | 'edit:atas'
   | 'edit:itens'
   | 'edit:fornecimentos'
+  | 'create:fornecimentos'
   | 'edit:fornecedores'
   | 'delete:fornecedores'
+  | 'create:contratos'
+  | 'edit:contratos'
   // Requisições
   | 'create:requisicoes'
   | 'approve:requisicoes'
@@ -32,8 +35,11 @@ const permissions: Record<UserRole, Action[]> = {
     'edit:atas',
     'edit:itens',
     'edit:fornecimentos',
+    'create:fornecimentos',
     'edit:fornecedores',
     'delete:fornecedores',
+    'create:contratos',
+    'edit:contratos',
     'list:all_requisicoes',
     'delete:any_requisicao',
     'approve:requisicoes',
@@ -46,6 +52,11 @@ const permissions: Record<UserRole, Action[]> = {
     'edit:contratacoes',
     'delete:contratacoes',
     'edit:atas',
+    'edit:itens',
+    'edit:fornecimentos',
+    'create:fornecimentos',
+    'create:contratos',
+    'edit:contratos',
     'create:requisicoes',
     'approve:requisicoes',
     'manage:requisicoes_unidade',
@@ -59,14 +70,22 @@ const permissions: Record<UserRole, Action[]> = {
     'edit:atas',
     'edit:itens',
     'edit:fornecimentos',
+    'create:fornecimentos',
     'edit:fornecedores',
     'delete:fornecedores',
+    'create:contratos',
+    'edit:contratos',
     'create:requisicoes',
     'view:usuarios_unidade',
   ],
   gestor_contratos: [
     'edit:atas',
+    'edit:itens',
+    'edit:fornecimentos',
+    'create:fornecimentos',
     'edit:fornecedores',
+    'create:contratos',
+    'edit:contratos',
     'create:requisicoes',
     'manage:requisicoes_unidade',
     'view:usuarios_unidade',

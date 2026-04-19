@@ -14,6 +14,7 @@ import {
   LogOut,
   ChevronRight,
   Layers,
+  ScrollText,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
@@ -74,6 +75,7 @@ export function Sidebar() {
         { label: 'Itens', to: '/itens', icon: Package },
         { label: 'Fornecedores', to: '/fornecedores', icon: Truck },
         { label: 'Fornecimentos', to: '/fornecimentos', icon: ArrowLeftRight },
+        { label: 'Contratos', to: '/contratos', icon: ScrollText },
       ],
     },
     {

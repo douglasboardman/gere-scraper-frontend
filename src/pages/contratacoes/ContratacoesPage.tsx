@@ -4,8 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { Plus, Eye, Trash2, TriangleAlert } from 'lucide-react'
-import { ManageSearchIcon } from '@/components/icons/ManageSearchIcon'
+import { Plus, Eye, Trash2, TriangleAlert, FileText, ScrollText, Package } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { contratacoesApi } from '@/api/contratacoes.api'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -110,39 +109,66 @@ export function ContratacoesPage() {
     },
     {
       id: 'acoes',
-      header: 'Ações',
-      cell: ({ row }) => (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-            title="Ver detalhes"
-            onClick={() => navigate(`/contratacoes/${row.original.identificador}`)}
-          >
-            <Eye className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-            title="Ver Atas"
-            onClick={() => navigate(`/atas?identContratacao=${row.original.identificador}`)}
-          >
-            <ManageSearchIcon className="h-3.5 w-3.5" />
-          </Button>
-          {isAdmin && (
+      header: () => <div className="text-right">Ações</div>,
+      cell: ({ row }) => {
+        const c = row.original
+        const hasAtas = (c._count?.atas ?? 0) > 0
+        const hasContratos = (c._count?.contratos ?? 0) > 0
+        return (
+          <div className="flex items-center justify-end gap-1">
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={() => setDeleteId(row.original.identificador)}
+              className="h-8 w-8 p-0"
+              title="Ver detalhes"
+              onClick={() => navigate(`/contratacoes/${c.identificador}`)}
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Eye className="h-3.5 w-3.5" />
             </Button>
-          )}
-        </div>
-      ),
+            {hasAtas && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                title="Ver Atas"
+                onClick={() => navigate(`/atas?identContratacao=${c.identificador}`)}
+              >
+                <FileText className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            {hasContratos && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                title="Ver Contratos"
+                onClick={() => navigate(`/contratos?identContratacao=${c.identificador}`)}
+              >
+                <ScrollText className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              title="Ver Itens"
+              onClick={() => navigate(`/itens?identContratacao=${c.identificador}`)}
+            >
+              <Package className="h-3.5 w-3.5" />
+            </Button>
+            {isAdmin && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={() => setDeleteId(c.identificador)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+        )
+      },
     },
   ]
 

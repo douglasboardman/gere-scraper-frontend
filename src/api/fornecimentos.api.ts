@@ -1,9 +1,10 @@
 import apiClient from './client'
-import type { IFornecimento } from '@/types'
+import type { IFornecimento, CriarFornecimentoManualData } from '@/types'
 
 export const fornecimentosApi = {
   async listar(params?: {
     identItem?: string
+    identContrato?: string
     uasgUnParticipante?: string
     identFornecedor?: string
     status?: string
@@ -24,6 +25,11 @@ export const fornecimentosApi = {
 
   async listarPorContratacaoUnidade(identContratacao: string, uasg: string): Promise<IFornecimento[]> {
     const { data } = await apiClient.get<IFornecimento[]>(`/fornecimentos/contratacao/${identContratacao}/unidade/${uasg}`)
+    return data
+  },
+
+  async criar(body: CriarFornecimentoManualData): Promise<IFornecimento> {
+    const { data } = await apiClient.post<IFornecimento>('/fornecimentos', body)
     return data
   },
 
