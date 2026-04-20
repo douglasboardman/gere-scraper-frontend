@@ -13,7 +13,7 @@ import { formatCurrency, formatCNPJ } from '@/lib/utils'
 import { usePermission } from '@/hooks/usePermission'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import type { IContrato, IContratacao } from '@/types'
+import type { IContrato } from '@/types'
 
 export function ContratosPage() {
   const navigate = useNavigate()
@@ -30,14 +30,9 @@ export function ContratosPage() {
     queryFn: () => contratosApi.listar({ identContratacao }),
   })
 
-  const getContratacaoInfo = (identContratacao: string | IContratacao) => {
-    if (typeof identContratacao === 'string') return null
-    return identContratacao
-  }
-
   const contratosFiltrados = contratos.filter((c) => {
     if (uasgFilter.trim() && !c.uasgContratante.includes(uasgFilter.trim())) return false
-    if (cnpjFilter.trim() && !(c.cnpjContratado ?? '').replace(/\D/g, '').includes(cnpjFilter.replace(/\D/g, ''))) return false
+    if (cnpjFilter.trim() && !(c.fornecedor?.cnpj ?? '').replace(/\D/g, '').includes(cnpjFilter.replace(/\D/g, ''))) return false
     if (objetoFilter.trim() && !(c.objeto ?? '').toLowerCase().includes(objetoFilter.toLowerCase())) return false
     if (statusFilter && c.status !== statusFilter) return false
     return true
@@ -48,17 +43,12 @@ export function ContratosPage() {
       id: 'contratacao',
       header: 'Contratação',
       cell: ({ row }) => {
-        const ct = getContratacaoInfo(row.original.identContratacao)
+        const ct = row.original.contratacao
         if (!ct) return <span className="font-mono text-xs text-muted-foreground">{typeof row.original.identContratacao === 'string' ? row.original.identContratacao : '—'}</span>
         return (
-          <div>
-            <p className="font-mono text-xs text-muted-foreground whitespace-nowrap">
-              {ct.numContratacao}/{ct.anoContratacao}
-            </p>
-            {ct.objeto && (
-              <p className="text-xs text-muted-foreground truncate max-w-[160px]">{ct.objeto}</p>
-            )}
-          </div>
+          <span className="font-mono text-sm font-medium whitespace-nowrap">
+            {ct.numContratacao}/{ct.anoContratacao}
+          </span>
         )
       },
     },
@@ -81,18 +71,23 @@ export function ContratosPage() {
       header: 'UASG Contratante',
       cell: ({ row }) => (
         <div>
-          <span className="text-sm font-mono">{row.original.uasgContratante}</span>
           {row.original.unGestoraOrigemContrato && (
-            <p className="text-xs text-muted-foreground">{row.original.unGestoraOrigemContrato}</p>
+            <p className="font-mono text-xs text-muted-foreground">Origem: {row.original.unGestoraOrigemContrato}</p>
           )}
+          <span className="text-sm font-mono">{row.original.uasgContratante}</span>
         </div>
       ),
     },
     {
-      id: 'cnpjContratado',
-      header: 'CNPJ Contratado',
+      id: 'fornecedor',
+      header: 'Fornecedor',
       cell: ({ row }) => (
-        <span className="font-mono text-sm">{formatCNPJ(row.original.cnpjContratado)}</span>
+        <div>
+          <p className="font-mono text-xs text-muted-foreground">{formatCNPJ(row.original.fornecedor?.cnpj ?? '')}</p>
+          {row.original.fornecedor?.nome && (
+            <p className="text-sm">{row.original.fornecedor.nome}</p>
+          )}
+        </div>
       ),
     },
     {

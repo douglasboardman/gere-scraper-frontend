@@ -211,8 +211,13 @@ export function ContratoDetailPage() {
                 {contrato.unGestoraOrigemContrato && (
                   <Field label="UN Gestora Origem">{contrato.unGestoraOrigemContrato}</Field>
                 )}
-                <Field label="CNPJ Contratado">
-                  <span className="font-mono">{formatCNPJ(contrato.cnpjContratado)}</span>
+                <Field label="Fornecedor">
+                  <div>
+                    <span className="font-mono text-xs text-muted-foreground">{formatCNPJ(contrato.fornecedor?.cnpj ?? '')}</span>
+                    {contrato.fornecedor?.nome && (
+                      <p className="text-sm">{contrato.fornecedor.nome}</p>
+                    )}
+                  </div>
                 </Field>
                 <Field label="Objeto">
                   {editMode && contrato.status === 'Processado' ? (
@@ -278,6 +283,8 @@ export function ContratoDetailPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50 hover:bg-muted/50">
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Item</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Descrição</TableHead>
                       <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">UASG Participante</TableHead>
                       <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Qtd Autorizada</TableHead>
                       <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Saldo</TableHead>
@@ -289,6 +296,12 @@ export function ContratoDetailPage() {
                   <TableBody>
                     {fornecimentos.map((f) => (
                       <TableRow key={f.identificador} className="hover:bg-muted/40 transition-colors duration-100">
+                        <TableCell className="font-mono text-sm">
+                          {typeof f.identItem === 'object' ? f.identItem.sequencialItemPregao ?? '—' : '—'}
+                        </TableCell>
+                        <TableCell className="text-sm max-w-[220px]">
+                          {typeof f.identItem === 'object' ? (f.identItem.descDetalhada ?? f.identItem.descBreve ?? '—') : '—'}
+                        </TableCell>
                         <TableCell className="text-sm">{f.uasgUnParticipante}</TableCell>
                         <TableCell className="text-sm">{f.qtdAutorizada ?? '—'}</TableCell>
                         <TableCell className="text-sm">{f.saldoDisponivel ?? f.saldo ?? '—'}</TableCell>
