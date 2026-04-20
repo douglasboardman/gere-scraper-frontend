@@ -12,9 +12,10 @@ import { MODALIDADE_LABEL } from "@/types";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermission } from "@/hooks/usePermission";
 import { useAuthStore } from "@/store/auth.store";
 import { formatCurrency } from "@/lib/utils";
@@ -159,183 +160,216 @@ export function ContratacaoDetailPage() {
         }
       />
 
-      {/* Main info card */}
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-5">
-            <Field label="Identificador">
-              <span className="font-mono">{contratacao.identificador}</span>
-            </Field>
-            <Field label="Nº Contratação">{contratacao.numContratacao || "—"}</Field>
-            <Field label="Ano">{contratacao.anoContratacao || "—"}</Field>
-            <Field label="UASG Gestora">{contratacao.uasgUnGestora || "—"}</Field>
-            <Field label="Nome UN Gestora">{contratacao.nomeUnGestora || "—"}</Field>
-            <Field label="Cód. UN Gestora">{contratacao.codUnGestora || "—"}</Field>
-            <Field label="Modalidade">
-              {MODALIDADE_LABEL[contratacao.modContratacao ?? ""] ?? contratacao.modContratacao ?? "—"}
-            </Field>
-            <Field label="Nº Edital">{contratacao.numEdital || "—"}</Field>
-            <Field label="Vigência Início">{formatDate(contratacao.iniVigencia)}</Field>
-            <Field label="Vigência Fim">{formatDate(contratacao.fimVigencia)}</Field>
-            <Field label="Status">
-              {editMode ? (
-                <Select value={editStatus} onValueChange={setEditStatus}>
-                  <SelectTrigger className="w-44">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Processada">Processada</SelectItem>
-                    <SelectItem value="Disponivel">Disponível</SelectItem>
-                    <SelectItem value="Encerrada">Encerrada</SelectItem>
-                  </SelectContent>
-                </Select>
-              ) : (
-                <StatusBadge status={contratacao.status} />
+      <Tabs defaultValue="informacoes">
+        <TabsList className="mb-4">
+          <TabsTrigger value="informacoes">Informações</TabsTrigger>
+          <TabsTrigger value="atas">
+            Atas
+            {atas.length > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full text-[10px] font-semibold bg-primary/10 text-primary">
+                {atas.length}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="contratos">
+            Contratos
+            {contratos.length > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full text-[10px] font-semibold bg-primary/10 text-primary">
+                {contratos.length}
+              </span>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ─── ABA: Informações ─────────────────────────── */}
+        <TabsContent value="informacoes">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-5">
+                <Field label="Identificador">
+                  <span className="font-mono">{contratacao.identificador}</span>
+                </Field>
+                <Field label="Nº Contratação">{contratacao.numContratacao || "—"}</Field>
+                <Field label="Ano">{contratacao.anoContratacao || "—"}</Field>
+                <Field label="UASG Gestora">{contratacao.uasgUnGestora || "—"}</Field>
+                <Field label="Nome UN Gestora">{contratacao.nomeUnGestora || "—"}</Field>
+                <Field label="Cód. UN Gestora">{contratacao.codUnGestora || "—"}</Field>
+                <Field label="Modalidade">
+                  {MODALIDADE_LABEL[contratacao.modContratacao ?? ""] ?? contratacao.modContratacao ?? "—"}
+                </Field>
+                <Field label="Nº Edital">{contratacao.numEdital || "—"}</Field>
+                <Field label="Vigência Início">{formatDate(contratacao.iniVigencia)}</Field>
+                <Field label="Vigência Fim">{formatDate(contratacao.fimVigencia)}</Field>
+                <Field label="Status">
+                  {editMode ? (
+                    <Select value={editStatus} onValueChange={setEditStatus}>
+                      <SelectTrigger className="w-44">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Processada">Processada</SelectItem>
+                        <SelectItem value="Disponivel">Disponível</SelectItem>
+                        <SelectItem value="Encerrada">Encerrada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <StatusBadge status={contratacao.status} />
+                  )}
+                </Field>
+                <div className="col-span-2 md:col-span-3">
+                  <span className="text-xs text-muted-foreground uppercase tracking-wide">Objeto</span>
+                  {editMode && contratacao.status === "Processada" ? (
+                    <Textarea
+                      className="mt-1"
+                      rows={4}
+                      value={editObjeto}
+                      onChange={(e) => setEditObjeto(e.target.value)}
+                    />
+                  ) : (
+                    <p className="mt-1 text-sm leading-relaxed">{contratacao.objeto || "—"}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Status actions */}
+              {can("edit:contratacoes") && (contratacao.status === "Processada" || contratacao.status === "Disponivel") && (
+                <div className="flex gap-3 flex-wrap mt-6 pt-5 border-t">
+                  {contratacao.status === "Processada" && (
+                    <Button
+                      size="sm"
+                      className="bg-green-700 hover:bg-green-800 text-white"
+                      onClick={() => updateMutation.mutate({ status: "Disponivel" } as any)}
+                      disabled={updateMutation.isPending}
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                      Disponibilizar para Requisições
+                    </Button>
+                  )}
+                  {contratacao.status === "Disponivel" && (
+                    <Button
+                      size="sm"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => updateMutation.mutate({ status: "Processada" } as any)}
+                      disabled={updateMutation.isPending}
+                    >
+                      <PauseCircle className="h-4 w-4" />
+                      Suspender Disponibilidade
+                    </Button>
+                  )}
+                </div>
               )}
-            </Field>
-            <div className="col-span-2 md:col-span-3">
-              <span className="text-xs text-muted-foreground uppercase tracking-wide">Objeto</span>
-              {editMode && contratacao.status === "Processada" ? (
-                <Textarea
-                  className="mt-1"
-                  rows={4}
-                  value={editObjeto}
-                  onChange={(e) => setEditObjeto(e.target.value)}
-                />
+
+              <p className="text-xs text-muted-foreground mt-6">
+                Atualizado em {format(new Date(contratacao.updatedAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ─── ABA: Atas ────────────────────────────────── */}
+        <TabsContent value="atas">
+          <Card>
+            <CardContent className="p-0">
+              {atas.length === 0 ? (
+                <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
+                  Nenhuma ata vinculada a esta contratação.
+                </div>
               ) : (
-                <p className="mt-1 text-sm leading-relaxed">{contratacao.objeto || "—"}</p>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50 hover:bg-muted/50">
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Nº Ata</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Fornecedor</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Vigência</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</TableHead>
+                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {atas.map((ata) => (
+                      <TableRow key={ata.identificador} className="hover:bg-muted/40 transition-colors duration-100">
+                        <TableCell className="font-mono text-sm">{ata.numAta}</TableCell>
+                        <TableCell className="text-sm">{ata.nomeFornecedor ?? ata.cnpjFornecedor ?? "—"}</TableCell>
+                        <TableCell className="text-sm whitespace-nowrap">
+                          {ata.iniVigencia ? formatDate(ata.iniVigencia) : "—"}
+                          {" → "}
+                          {ata.fimVigencia ? formatDate(ata.fimVigencia) : "—"}
+                        </TableCell>
+                        <TableCell><StatusBadge status={ata.status} /></TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            title="Ver detalhes"
+                            onClick={() => navigate(`/atas/${ata.identificador}`)}
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               )}
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground mt-6">
-            Atualizado em {format(new Date(contratacao.updatedAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-          </p>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* Status actions */}
-      <div className="flex gap-3 flex-wrap mb-6">
-        {can("edit:contratacoes") && contratacao.status === "Processada" && (
-          <Button
-            size="sm"
-            className="bg-green-700 hover:bg-green-800 text-white"
-            onClick={() => updateMutation.mutate({ status: "Disponivel" } as any)}
-            disabled={updateMutation.isPending}
-          >
-            <CheckCircle2 className="h-4 w-4" />
-            Disponibilizar para Requisições
-          </Button>
-        )}
-        {can("edit:contratacoes") && contratacao.status === "Disponivel" && (
-          <Button
-            size="sm"
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-            onClick={() => updateMutation.mutate({ status: "Processada" } as any)}
-            disabled={updateMutation.isPending}
-          >
-            <PauseCircle className="h-4 w-4" />
-            Suspender Disponibilidade
-          </Button>
-        )}
-      </div>
-
-      {/* Atas embeddidas */}
-      {atas.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Atas de Registro de Preços ({atas.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nº Ata</TableHead>
-                  <TableHead>Fornecedor</TableHead>
-                  <TableHead>Vigência</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {atas.map((ata) => (
-                  <TableRow key={ata.identificador}>
-                    <TableCell className="font-mono text-sm">{ata.numAta}</TableCell>
-                    <TableCell className="text-sm">{ata.nomeFornecedor ?? ata.cnpjFornecedor ?? "—"}</TableCell>
-                    <TableCell className="text-sm whitespace-nowrap">
-                      {ata.iniVigencia ? formatDate(ata.iniVigencia) : "—"}
-                      {" → "}
-                      {ata.fimVigencia ? formatDate(ata.fimVigencia) : "—"}
-                    </TableCell>
-                    <TableCell><StatusBadge status={ata.status} /></TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        title="Ver detalhes"
-                        onClick={() => navigate(`/atas/${ata.identificador}`)}
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Contratos embeddidos */}
-      {contratos.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Contratos ({contratos.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nº Contrato</TableHead>
-                  <TableHead>CNPJ Contratado</TableHead>
-                  <TableHead>UASG Contratante</TableHead>
-                  <TableHead>Vigência</TableHead>
-                  <TableHead>Valor Global</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {contratos.map((ct) => (
-                  <TableRow key={ct.identificador}>
-                    <TableCell className="font-mono text-sm">{ct.numContrato}</TableCell>
-                    <TableCell className="font-mono text-sm">{ct.cnpjContratado}</TableCell>
-                    <TableCell className="text-sm">{ct.uasgContratante}</TableCell>
-                    <TableCell className="text-sm whitespace-nowrap">
-                      {formatDate(ct.iniVigencia)}
-                      {" → "}
-                      {ct.fimVigencia ? formatDate(ct.fimVigencia) : "—"}
-                    </TableCell>
-                    <TableCell className="text-sm">{formatCurrency(ct.valorGlobal)}</TableCell>
-                    <TableCell><StatusBadge status={ct.status} /></TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        title="Ver detalhes"
-                        onClick={() => navigate(`/contratos/${ct.identificador}`)}
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+        {/* ─── ABA: Contratos ───────────────────────────── */}
+        <TabsContent value="contratos">
+          <Card>
+            <CardContent className="p-0">
+              {contratos.length === 0 ? (
+                <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
+                  Nenhum contrato vinculado a esta contratação.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50 hover:bg-muted/50">
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Nº Contrato</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">CNPJ Contratado</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">UASG Contratante</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Vigência</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Valor Global</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</TableHead>
+                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {contratos.map((ct) => (
+                      <TableRow key={ct.identificador} className="hover:bg-muted/40 transition-colors duration-100">
+                        <TableCell className="font-mono text-sm">{ct.numContrato}</TableCell>
+                        <TableCell className="font-mono text-sm">{ct.cnpjContratado}</TableCell>
+                        <TableCell className="text-sm">{ct.uasgContratante}</TableCell>
+                        <TableCell className="text-sm whitespace-nowrap">
+                          {formatDate(ct.iniVigencia)}
+                          {" → "}
+                          {ct.fimVigencia ? formatDate(ct.fimVigencia) : "—"}
+                        </TableCell>
+                        <TableCell className="text-sm">{formatCurrency(ct.valorGlobal)}</TableCell>
+                        <TableCell><StatusBadge status={ct.status} /></TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            title="Ver detalhes"
+                            onClick={() => navigate(`/contratos/${ct.identificador}`)}
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

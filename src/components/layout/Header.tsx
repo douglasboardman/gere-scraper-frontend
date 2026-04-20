@@ -1,6 +1,6 @@
 import { useLocation, Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
-import { User, LogOut, ChevronRight } from 'lucide-react'
+import { User, LogOut } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,7 +52,6 @@ export function Header() {
   const { user, logout } = useAuthStore()
 
   const crumbs = getBreadcrumb(location.pathname)
-  const pageTitle = routeTitles[location.pathname] ?? 'GERE'
 
   const handleLogout = () => {
     logout()
@@ -60,18 +59,20 @@ export function Header() {
   }
 
   return (
-    <header className="h-16 border-b bg-white flex items-center justify-between px-6 shrink-0 shadow-sm">
+    <header className="h-16 border-b bg-white/95 backdrop-blur-sm flex items-center justify-between px-6 shrink-0 shadow-sm">
       {/* Left: breadcrumb */}
       <div className="flex items-center gap-1 text-sm">
         {crumbs.map((crumb, idx) => (
-          <span key={crumb.to ?? idx} className="flex items-center gap-1">
-            {idx > 0 && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+          <span key={crumb.to ?? idx} className="flex items-center gap-1.5">
+            {idx > 0 && (
+              <span className="text-muted-foreground/40 select-none text-xs">/</span>
+            )}
             {idx === crumbs.length - 1 || !crumb.to ? (
               <span className="font-semibold text-foreground">{crumb.label}</span>
             ) : (
               <Link
                 to={crumb.to}
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors duration-150"
               >
                 {crumb.label}
               </Link>
@@ -83,8 +84,8 @@ export function Header() {
       {/* Right: user menu */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="flex items-center gap-2 h-9 px-2">
-            <Avatar className="h-7 w-7">
+          <Button variant="ghost" className="flex items-center gap-2 h-9 px-2 hover:bg-muted/60 transition-colors duration-150">
+            <Avatar className="h-7 w-7 ring-1 ring-border">
               <AvatarFallback className="text-xs bg-primary text-primary-foreground">
                 {user?.nome?.charAt(0).toUpperCase() ?? 'U'}
               </AvatarFallback>

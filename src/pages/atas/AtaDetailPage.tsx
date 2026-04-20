@@ -10,8 +10,9 @@ import { itensApi } from "@/api/itens.api";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCNPJ, formatCurrency } from "@/lib/utils";
 import { usePermission } from "@/hooks/usePermission";
 import {
@@ -30,18 +31,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <span className="text-xs text-muted-foreground uppercase tracking-wide">
-        {label}
-      </span>
+      <span className="text-xs text-muted-foreground uppercase tracking-wide">{label}</span>
       <div className="mt-1 text-sm font-medium">{children}</div>
     </div>
   );
@@ -150,120 +143,137 @@ export function AtaDetailPage() {
         }
       />
 
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-5">
-            <Field label="Nº Ata">
-              <span className="font-mono">{ata.numAta}</span>
-            </Field>
-            <Field label="ID Contratação">
-              {typeof ata.identContratacao === "string" ? (
-                <Link
-                  to={`/contratacoes/${ata.identContratacao}`}
-                  className="font-mono text-primary hover:underline"
-                >
-                  {ata.identContratacao}
-                </Link>
-              ) : (
-                <Link
-                  to={`/contratacoes/${ata.identContratacao.identificador}`}
-                  className="font-mono text-primary hover:underline"
-                >
-                  {ata.identContratacao.identificador}
-                </Link>
-              )}
-            </Field>
-            <Field label="CNPJ Fornecedor">
-              {ata.cnpjFornecedor ? (
-                <span className="font-mono">{formatCNPJ(ata.cnpjFornecedor)}</span>
-              ) : (
-                "—"
-              )}
-            </Field>
-            <Field label="Fornecedor">{ata.nomeFornecedor || "—"}</Field>
-            <Field label="Vigência Início">{formatDate(ata.iniVigencia)}</Field>
-            <Field label="Vigência Fim">{formatDate(ata.fimVigencia)}</Field>
-            <Field label="Status">
-              {editMode ? (
-                <Select value={editStatus} onValueChange={setEditStatus}>
-                  <SelectTrigger className="w-44">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Processada">Processada</SelectItem>
-                    <SelectItem value="Disponivel">Disponível</SelectItem>
-                    <SelectItem value="Encerrada">Encerrada</SelectItem>
-                  </SelectContent>
-                </Select>
-              ) : (
-                <StatusBadge status={ata.status} />
-              )}
-            </Field>
-          </div>
-          <p className="text-xs text-muted-foreground mt-6">
-            Atualizado em{" "}
-            {format(new Date(ata.updatedAt), "dd/MM/yyyy HH:mm", {
-              locale: ptBR,
-            })}
-          </p>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="informacoes">
+        <TabsList className="mb-4">
+          <TabsTrigger value="informacoes">Informações</TabsTrigger>
+          <TabsTrigger value="itens">
+            Itens
+            {itens.length > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full text-[10px] font-semibold bg-primary/10 text-primary">
+                {itens.length}
+              </span>
+            )}
+          </TabsTrigger>
+        </TabsList>
 
-      {itens.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Itens ({itens.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nº Item</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Qtd Homologada</TableHead>
-                  <TableHead>Valor Unitário</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {itens.map((item) => (
-                  <TableRow key={item.identificador}>
-                    <TableCell className="font-mono text-sm">
-                      {item.sequencialItemPregao ?? item.numItem ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-sm max-w-xs truncate" title={item.descBreve}>
-                      {item.descBreve ?? item.descricaoBreve ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {item.qtdHomologada != null
-                        ? `${item.qtdHomologada} ${item.unMedida ?? item.unidadeMedida ?? ""}`
-                        : "—"}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {(item.valUnitario ?? item.valorUnitario) != null
-                        ? formatCurrency(item.valUnitario ?? item.valorUnitario ?? 0)
-                        : "—"}
-                    </TableCell>
-                    <TableCell><StatusBadge status={item.status} /></TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        title="Ver detalhes"
-                        onClick={() => navigate(`/itens/${item.identificador}`)}
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+        {/* ─── ABA: Informações ─────────────────────────── */}
+        <TabsContent value="informacoes">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-5">
+                <Field label="Nº Ata">
+                  <span className="font-mono">{ata.numAta}</span>
+                </Field>
+                <Field label="ID Contratação">
+                  {typeof ata.identContratacao === "string" ? (
+                    <Link
+                      to={`/contratacoes/${ata.identContratacao}`}
+                      className="font-mono text-primary hover:underline"
+                    >
+                      {ata.identContratacao}
+                    </Link>
+                  ) : (
+                    <Link
+                      to={`/contratacoes/${ata.identContratacao.identificador}`}
+                      className="font-mono text-primary hover:underline"
+                    >
+                      {ata.identContratacao.identificador}
+                    </Link>
+                  )}
+                </Field>
+                <Field label="CNPJ Fornecedor">
+                  {ata.cnpjFornecedor ? (
+                    <span className="font-mono">{formatCNPJ(ata.cnpjFornecedor)}</span>
+                  ) : "—"}
+                </Field>
+                <Field label="Fornecedor">{ata.nomeFornecedor || "—"}</Field>
+                <Field label="Vigência Início">{formatDate(ata.iniVigencia)}</Field>
+                <Field label="Vigência Fim">{formatDate(ata.fimVigencia)}</Field>
+                <Field label="Status">
+                  {editMode ? (
+                    <Select value={editStatus} onValueChange={setEditStatus}>
+                      <SelectTrigger className="w-44">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Processada">Processada</SelectItem>
+                        <SelectItem value="Disponivel">Disponível</SelectItem>
+                        <SelectItem value="Encerrada">Encerrada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <StatusBadge status={ata.status} />
+                  )}
+                </Field>
+              </div>
+              <p className="text-xs text-muted-foreground mt-6">
+                Atualizado em{" "}
+                {format(new Date(ata.updatedAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ─── ABA: Itens ───────────────────────────────── */}
+        <TabsContent value="itens">
+          <Card>
+            <CardContent className="p-0">
+              {itens.length === 0 ? (
+                <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
+                  Nenhum item vinculado a esta ata.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50 hover:bg-muted/50">
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Nº Item</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Descrição</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Qtd Homologada</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Valor Unitário</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</TableHead>
+                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {itens.map((item) => (
+                      <TableRow key={item.identificador} className="hover:bg-muted/40 transition-colors duration-100">
+                        <TableCell className="font-mono text-sm">
+                          {item.sequencialItemPregao ?? item.numItem ?? "—"}
+                        </TableCell>
+                        <TableCell className="text-sm max-w-xs truncate" title={item.descBreve}>
+                          {item.descBreve ?? item.descricaoBreve ?? "—"}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {item.qtdHomologada != null
+                            ? `${item.qtdHomologada} ${item.unMedida ?? item.unidadeMedida ?? ""}`
+                            : "—"}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {(item.valUnitario ?? item.valorUnitario) != null
+                            ? formatCurrency(item.valUnitario ?? item.valorUnitario ?? 0)
+                            : "—"}
+                        </TableCell>
+                        <TableCell><StatusBadge status={item.status} /></TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            title="Ver detalhes"
+                            onClick={() => navigate(`/itens/${item.identificador}`)}
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
