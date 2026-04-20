@@ -26,16 +26,22 @@ interface StatCardProps {
   icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>
   isLoading: boolean
   color?: string
+  delay?: number
 }
 
-function StatCard({ title, value, description, icon: Icon, isLoading, color = '#2a593a' }: StatCardProps) {
+function StatCard({ title, value, description, icon: Icon, isLoading, color = '#2a593a', delay = 0 }: StatCardProps) {
   return (
-    <Card>
+    <Card
+      className="hover:shadow-md transition-shadow duration-200 animate-slide-up"
+      style={{ animationDelay: `${delay}ms` }}
+    >
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
         <div
-          className="h-8 w-8 rounded-md flex items-center justify-center"
-          style={{ backgroundColor: `${color}20` }}
+          className="h-9 w-9 rounded-lg flex items-center justify-center"
+          style={{
+            background: `linear-gradient(135deg, ${color}20 0%, ${color}35 100%)`,
+          }}
         >
           <Icon className="h-4 w-4" style={{ color }} />
         </div>
@@ -44,7 +50,7 @@ function StatCard({ title, value, description, icon: Icon, isLoading, color = '#
         {isLoading ? (
           <Skeleton className="h-8 w-16" />
         ) : (
-          <div className="text-3xl font-bold text-foreground">{value}</div>
+          <div className="text-3xl font-bold text-foreground tabular-nums">{value}</div>
         )}
         <p className="text-xs text-muted-foreground mt-1">{description}</p>
       </CardContent>
@@ -105,6 +111,7 @@ export function DashboardPage() {
           icon={Gavel}
           isLoading={loadingContratacoes}
           color="#2a593a"
+          delay={0}
         />
         <StatCard
           title="Atas Vigentes"
@@ -113,6 +120,7 @@ export function DashboardPage() {
           icon={FileText}
           isLoading={loadingAtas}
           color="#4b8960"
+          delay={50}
         />
         <StatCard
           title="Fornecimentos Disponíveis"
@@ -121,6 +129,7 @@ export function DashboardPage() {
           icon={ArrowLeftRight}
           isLoading={loadingFornecimentos}
           color="#82ab90"
+          delay={100}
         />
         <StatCard
           title="Requisições Expedidas"
@@ -129,10 +138,11 @@ export function DashboardPage() {
           icon={ClipboardList}
           isLoading={loadingRequisicoes}
           color="#b45309"
+          delay={150}
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in" style={{ animationDelay: '200ms' }}>
         {/* Recent Requisitions */}
         <Card>
           <CardHeader>
@@ -150,11 +160,11 @@ export function DashboardPage() {
                 <p className="text-sm">Nenhuma requisição encontrada</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-1">
                 {recentRequisicoes.map((req: IRequisicao) => (
                   <div
                     key={req.identificador}
-                    className="flex items-center justify-between py-2 border-b last:border-0"
+                    className="flex items-center justify-between py-2.5 px-2 border-b last:border-0 rounded-sm hover:bg-muted/30 transition-colors duration-100 cursor-default"
                   >
                     <div>
                       <p className="text-sm font-medium">{req.identificador}</p>
@@ -187,11 +197,11 @@ export function DashboardPage() {
                 <p className="text-sm">Nenhuma contratação em processamento</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-1">
                 {contratacoesEmAnalise.map((contratacao) => (
                   <div
                     key={contratacao.identificador}
-                    className="flex items-center justify-between py-2 border-b last:border-0"
+                    className="flex items-center justify-between py-2.5 px-2 border-b last:border-0 rounded-sm hover:bg-muted/30 transition-colors duration-100 cursor-default"
                   >
                     <div>
                       <p className="text-sm font-medium">{contratacao.identificador}</p>

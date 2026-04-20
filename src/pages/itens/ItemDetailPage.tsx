@@ -10,9 +10,10 @@ import { fornecimentosApi } from '@/api/fornecimentos.api'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatCurrency } from '@/lib/utils'
 import { usePermission } from '@/hooks/usePermission'
 import {
@@ -105,7 +106,6 @@ export function ItemDetailPage() {
 
   if (!item) return <div className="text-muted-foreground">Item não encontrado.</div>
 
-  // Backend field names (actual): descBreve, descDetalhada, valUnitario, unMedida, sequencialItemPregao
   const numItem = item.sequencialItemPregao ?? item.numItem ?? item.identificador
   const descBreve = item.descBreve ?? item.descricaoBreve
   const descDetalhada = item.descDetalhada ?? item.descricaoDetalhada
@@ -156,151 +156,168 @@ export function ItemDetailPage() {
         }
       />
 
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-5">
-            <Field label="Identificador">
-              <span className="font-mono text-xs">{item.identificador}</span>
-            </Field>
-            <Field label="Nº Item">
-              <span className="font-mono">{numItem}</span>
-            </Field>
-            {item.identAta && (
-              <Field label="Ata">
-                {typeof item.identAta === 'string' ? (
-                  <Link to={`/atas/${item.identAta}`} className="font-mono text-primary hover:underline">
-                    {item.identAta}
-                  </Link>
-                ) : (
-                  <Link to={`/atas/${(item.identAta as any).identificador}`} className="font-mono text-primary hover:underline">
-                    {(item.identAta as any).identificador ?? '—'}
-                  </Link>
-                )}
-              </Field>
-            )}
-            {!item.identAta && item.identContratacao && (
-              <Field label="Contratação">
-                {typeof item.identContratacao === 'string' ? (
-                  <Link to={`/contratacoes/${item.identContratacao}`} className="font-mono text-primary hover:underline">
-                    {item.identContratacao}
-                  </Link>
-                ) : (
-                  <Link to={`/contratacoes/${(item.identContratacao as IContratacao).identificador}`} className="font-mono text-primary hover:underline">
-                    {(item.identContratacao as IContratacao).identificador}
-                  </Link>
-                )}
-              </Field>
-            )}
-            <Field label="Tipo">{item.tipo || '—'}</Field>
-            <Field label="Unidade de Medida">{unMedida || '—'}</Field>
-            <Field label="Qtd Homologada">
-              {item.qtdHomologada != null ? `${item.qtdHomologada}${unMedida ? ` ${unMedida}` : ''}` : '—'}
-            </Field>
-            <Field label="Valor Unitário">
-              {valUnitario != null ? formatCurrency(valUnitario) : '—'}
-            </Field>
-            <Field label="Status">
-              {editMode ? (
-                <Select value={editStatus} onValueChange={setEditStatus}>
-                  <SelectTrigger className="w-44">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Processado">Processado</SelectItem>
-                    <SelectItem value="Disponivel">Disponível</SelectItem>
-                    <SelectItem value="Encerrado">Encerrado</SelectItem>
-                  </SelectContent>
-                </Select>
-              ) : (
-                <StatusBadge status={item.status} />
-              )}
-            </Field>
-            <div className="col-span-2 md:col-span-3">
-              <span className="text-xs text-muted-foreground uppercase tracking-wide">
-                Descrição Breve
+      <Tabs defaultValue="informacoes">
+        <TabsList className="mb-4">
+          <TabsTrigger value="informacoes">Informações</TabsTrigger>
+          <TabsTrigger value="fornecimentos">
+            Fornecimentos
+            {fornecimentos.length > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full text-[10px] font-semibold bg-primary/10 text-primary">
+                {fornecimentos.length}
               </span>
-              {editMode && item.status === 'Processado' ? (
-                <Textarea
-                  className="mt-1"
-                  rows={2}
-                  value={editDescBreve}
-                  onChange={(e) => setEditDescBreve(e.target.value)}
-                />
-              ) : (
-                <p className="mt-1 text-sm">{descBreve || '—'}</p>
-              )}
-            </div>
-            <div className="col-span-2 md:col-span-3">
-              <span className="text-xs text-muted-foreground uppercase tracking-wide">
-                Descrição Detalhada
-              </span>
-              {editMode && item.status === 'Processado' ? (
-                <Textarea
-                  className="mt-1"
-                  rows={4}
-                  value={editDescDetalhada}
-                  onChange={(e) => setEditDescDetalhada(e.target.value)}
-                />
-              ) : (
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                  {descDetalhada || '—'}
-                </p>
-              )}
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground mt-6">
-            Atualizado em {format(new Date(item.updatedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-          </p>
-        </CardContent>
-      </Card>
+            )}
+          </TabsTrigger>
+        </TabsList>
 
-      {fornecimentos.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Fornecimentos ({fornecimentos.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>UASG Participante</TableHead>
-                  <TableHead>Qtd Autorizada</TableHead>
-                  <TableHead>Saldo</TableHead>
-                  <TableHead>Valor Unit.</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {fornecimentos.map((f) => (
-                  <TableRow key={f.identificador}>
-                    <TableCell className="text-sm">{f.uasgUnParticipante}</TableCell>
-                    <TableCell className="text-sm">{f.qtdAutorizada ?? '—'}</TableCell>
-                    <TableCell className="text-sm">{f.saldoDisponivel ?? f.saldo ?? '—'}</TableCell>
-                    <TableCell className="text-sm">
-                      {(f.valorUnitario ?? f.valUnitHomologado) != null
-                        ? formatCurrency(f.valorUnitario ?? f.valUnitHomologado ?? 0)
-                        : '—'}
-                    </TableCell>
-                    <TableCell><StatusBadge status={f.status} /></TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        title="Ver detalhes"
-                        onClick={() => navigate(`/fornecimentos/${f.identificador}`)}
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+        {/* ─── ABA: Informações ─────────────────────────── */}
+        <TabsContent value="informacoes">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-5">
+                <Field label="Identificador">
+                  <span className="font-mono text-xs">{item.identificador}</span>
+                </Field>
+                <Field label="Nº Item">
+                  <span className="font-mono">{numItem}</span>
+                </Field>
+                {item.identAta && (
+                  <Field label="Ata">
+                    {typeof item.identAta === 'string' ? (
+                      <Link to={`/atas/${item.identAta}`} className="font-mono text-primary hover:underline">
+                        {item.identAta}
+                      </Link>
+                    ) : (
+                      <Link to={`/atas/${(item.identAta as any).identificador}`} className="font-mono text-primary hover:underline">
+                        {(item.identAta as any).identificador ?? '—'}
+                      </Link>
+                    )}
+                  </Field>
+                )}
+                {!item.identAta && item.identContratacao && (
+                  <Field label="Contratação">
+                    {typeof item.identContratacao === 'string' ? (
+                      <Link to={`/contratacoes/${item.identContratacao}`} className="font-mono text-primary hover:underline">
+                        {item.identContratacao}
+                      </Link>
+                    ) : (
+                      <Link to={`/contratacoes/${(item.identContratacao as IContratacao).identificador}`} className="font-mono text-primary hover:underline">
+                        {(item.identContratacao as IContratacao).identificador}
+                      </Link>
+                    )}
+                  </Field>
+                )}
+                <Field label="Tipo">{item.tipo || '—'}</Field>
+                <Field label="Unidade de Medida">{unMedida || '—'}</Field>
+                <Field label="Qtd Homologada">
+                  {item.qtdHomologada != null ? `${item.qtdHomologada}${unMedida ? ` ${unMedida}` : ''}` : '—'}
+                </Field>
+                <Field label="Valor Unitário">
+                  {valUnitario != null ? formatCurrency(valUnitario) : '—'}
+                </Field>
+                <Field label="Status">
+                  {editMode ? (
+                    <Select value={editStatus} onValueChange={setEditStatus}>
+                      <SelectTrigger className="w-44">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Processado">Processado</SelectItem>
+                        <SelectItem value="Disponivel">Disponível</SelectItem>
+                        <SelectItem value="Encerrado">Encerrado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <StatusBadge status={item.status} />
+                  )}
+                </Field>
+                <div className="col-span-2 md:col-span-3">
+                  <span className="text-xs text-muted-foreground uppercase tracking-wide">Descrição Breve</span>
+                  {editMode && item.status === 'Processado' ? (
+                    <Textarea
+                      className="mt-1"
+                      rows={2}
+                      value={editDescBreve}
+                      onChange={(e) => setEditDescBreve(e.target.value)}
+                    />
+                  ) : (
+                    <p className="mt-1 text-sm">{descBreve || '—'}</p>
+                  )}
+                </div>
+                <div className="col-span-2 md:col-span-3">
+                  <span className="text-xs text-muted-foreground uppercase tracking-wide">Descrição Detalhada</span>
+                  {editMode && item.status === 'Processado' ? (
+                    <Textarea
+                      className="mt-1"
+                      rows={4}
+                      value={editDescDetalhada}
+                      onChange={(e) => setEditDescDetalhada(e.target.value)}
+                    />
+                  ) : (
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                      {descDetalhada || '—'}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-6">
+                Atualizado em {format(new Date(item.updatedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ─── ABA: Fornecimentos ───────────────────────── */}
+        <TabsContent value="fornecimentos">
+          <Card>
+            <CardContent className="p-0">
+              {fornecimentos.length === 0 ? (
+                <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
+                  Nenhum fornecimento vinculado a este item.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50 hover:bg-muted/50">
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">UASG Participante</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Qtd Autorizada</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Saldo</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Valor Unit.</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</TableHead>
+                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {fornecimentos.map((f) => (
+                      <TableRow key={f.identificador} className="hover:bg-muted/40 transition-colors duration-100">
+                        <TableCell className="text-sm">{f.uasgUnParticipante}</TableCell>
+                        <TableCell className="text-sm">{f.qtdAutorizada ?? '—'}</TableCell>
+                        <TableCell className="text-sm">{f.saldoDisponivel ?? f.saldo ?? '—'}</TableCell>
+                        <TableCell className="text-sm">
+                          {(f.valorUnitario ?? f.valUnitHomologado) != null
+                            ? formatCurrency(f.valorUnitario ?? f.valUnitHomologado ?? 0)
+                            : '—'}
+                        </TableCell>
+                        <TableCell><StatusBadge status={f.status} /></TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            title="Ver detalhes"
+                            onClick={() => navigate(`/fornecimentos/${f.identificador}`)}
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

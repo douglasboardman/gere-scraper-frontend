@@ -10,15 +10,8 @@ import { fornecimentosApi } from '@/api/fornecimentos.api'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { Card, CardContent } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatCNPJ } from '@/lib/utils'
@@ -30,6 +23,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import type { IContrato, IContratacao } from '@/types'
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -129,6 +130,7 @@ export function ContratoDetailPage() {
 
   const ctLink = getContratacaoLink(contrato.identContratacao)
   const canEdit = can('edit:contratos') && !['Em_Processamento', 'Inconsistente'].includes(contrato.status)
+  const formatDate = (d?: string) => d ? format(new Date(d), 'dd/MM/yyyy', { locale: ptBR }) : '—'
 
   return (
     <div>
@@ -176,185 +178,146 @@ export function ContratoDetailPage() {
         }
       />
 
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-5">
-            <Field label="Identificador">
-              <span className="font-mono text-xs">{contrato.identificador}</span>
-            </Field>
-            <Field label="Nº Contrato">
-              <span className="font-mono">{contrato.numContrato}</span>
-            </Field>
-            <Field label="Contratação">
-              <Link to={`/contratacoes/${ctLink.id}`} className="text-primary hover:underline">
-                {ctLink.label}
-              </Link>
-            </Field>
-            <Field label="UASG Contratante">{contrato.uasgContratante}</Field>
-            {contrato.unGestoraOrigemContrato && (
-              <Field label="UN Gestora Origem">{contrato.unGestoraOrigemContrato}</Field>
+      <Tabs defaultValue="informacoes">
+        <TabsList className="mb-4">
+          <TabsTrigger value="informacoes">Informações</TabsTrigger>
+          <TabsTrigger value="fornecimentos">
+            Fornecimentos
+            {fornecimentos.length > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full text-[10px] font-semibold bg-primary/10 text-primary">
+                {fornecimentos.length}
+              </span>
             )}
-            <Field label="CNPJ Contratado">
-              <span className="font-mono">{formatCNPJ(contrato.cnpjContratado)}</span>
-            </Field>
+          </TabsTrigger>
+        </TabsList>
 
-            <Field label="Objeto">
-              {editMode && contrato.status === 'Processado' ? (
-                <Input
-                  value={editObjeto}
-                  onChange={(e) => setEditObjeto(e.target.value)}
-                  className="w-full"
-                />
+        {/* ─── ABA: Informações ─────────────────────────── */}
+        <TabsContent value="informacoes">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-5">
+                <Field label="Identificador">
+                  <span className="font-mono text-xs">{contrato.identificador}</span>
+                </Field>
+                <Field label="Nº Contrato">
+                  <span className="font-mono">{contrato.numContrato}</span>
+                </Field>
+                <Field label="Contratação">
+                  <Link to={`/contratacoes/${ctLink.id}`} className="text-primary hover:underline">
+                    {ctLink.label}
+                  </Link>
+                </Field>
+                <Field label="UASG Contratante">{contrato.uasgContratante}</Field>
+                {contrato.unGestoraOrigemContrato && (
+                  <Field label="UN Gestora Origem">{contrato.unGestoraOrigemContrato}</Field>
+                )}
+                <Field label="CNPJ Contratado">
+                  <span className="font-mono">{formatCNPJ(contrato.cnpjContratado)}</span>
+                </Field>
+                <Field label="Objeto">
+                  {editMode && contrato.status === 'Processado' ? (
+                    <Input value={editObjeto} onChange={(e) => setEditObjeto(e.target.value)} className="w-full" />
+                  ) : (contrato.objeto ?? '—')}
+                </Field>
+                <Field label="Início Vigência">
+                  {editMode && contrato.status === 'Processado' ? (
+                    <Input type="date" value={editIniVigencia} onChange={(e) => setEditIniVigencia(e.target.value)} className="w-44" />
+                  ) : formatDate(contrato.iniVigencia)}
+                </Field>
+                <Field label="Fim Vigência">
+                  {editMode && contrato.status === 'Processado' ? (
+                    <Input type="date" value={editFimVigencia} onChange={(e) => setEditFimVigencia(e.target.value)} className="w-44" />
+                  ) : formatDate(contrato.fimVigencia)}
+                </Field>
+                <Field label="Valor Global">
+                  {editMode && contrato.status === 'Processado' ? (
+                    <Input type="number" step="0.01" min={0} value={editValorGlobal} onChange={(e) => setEditValorGlobal(e.target.value)} className="w-44" />
+                  ) : formatCurrency(contrato.valorGlobal)}
+                </Field>
+                <Field label="Nº Parcelas">
+                  {editMode && contrato.status === 'Processado' ? (
+                    <Input type="number" min={1} value={editNumParcelas} onChange={(e) => setEditNumParcelas(e.target.value)} className="w-32" />
+                  ) : (contrato.numParcelas ?? '—')}
+                </Field>
+                <Field label="Valor Parcelas">
+                  {editMode && contrato.status === 'Processado' ? (
+                    <Input type="number" step="0.01" min={0} value={editValorParcelas} onChange={(e) => setEditValorParcelas(e.target.value)} className="w-44" />
+                  ) : (contrato.valorParcelas != null ? formatCurrency(contrato.valorParcelas) : '—')}
+                </Field>
+                <Field label="Status">
+                  {editMode ? (
+                    <Select value={editStatus} onValueChange={setEditStatus}>
+                      <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Processado">Processado</SelectItem>
+                        <SelectItem value="Disponivel">Disponível</SelectItem>
+                        <SelectItem value="Encerrado">Encerrado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <StatusBadge status={contrato.status} />
+                  )}
+                </Field>
+              </div>
+              <p className="text-xs text-muted-foreground mt-6">
+                Atualizado em {format(new Date(contrato.updatedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ─── ABA: Fornecimentos ───────────────────────── */}
+        <TabsContent value="fornecimentos">
+          <Card>
+            <CardContent className="p-0">
+              {fornecimentos.length === 0 ? (
+                <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
+                  Nenhum fornecimento vinculado a este contrato.
+                </div>
               ) : (
-                contrato.objeto ?? '—'
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50 hover:bg-muted/50">
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">UASG Participante</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Qtd Autorizada</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Saldo</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Valor Unit.</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</TableHead>
+                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {fornecimentos.map((f) => (
+                      <TableRow key={f.identificador} className="hover:bg-muted/40 transition-colors duration-100">
+                        <TableCell className="text-sm">{f.uasgUnParticipante}</TableCell>
+                        <TableCell className="text-sm">{f.qtdAutorizada ?? '—'}</TableCell>
+                        <TableCell className="text-sm">{f.saldoDisponivel ?? f.saldo ?? '—'}</TableCell>
+                        <TableCell className="text-sm">
+                          {(f.valorUnitario ?? f.valUnitHomologado) != null
+                            ? formatCurrency(f.valorUnitario ?? f.valUnitHomologado ?? 0)
+                            : '—'}
+                        </TableCell>
+                        <TableCell><StatusBadge status={f.status} /></TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            title="Ver detalhes"
+                            onClick={() => navigate(`/fornecimentos/${f.identificador}`)}
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               )}
-            </Field>
-
-            <Field label="Início Vigência">
-              {editMode && contrato.status === 'Processado' ? (
-                <Input
-                  type="date"
-                  value={editIniVigencia}
-                  onChange={(e) => setEditIniVigencia(e.target.value)}
-                  className="w-44"
-                />
-              ) : (
-                contrato.iniVigencia
-                  ? format(new Date(contrato.iniVigencia), 'dd/MM/yyyy', { locale: ptBR })
-                  : '—'
-              )}
-            </Field>
-
-            <Field label="Fim Vigência">
-              {editMode && contrato.status === 'Processado' ? (
-                <Input
-                  type="date"
-                  value={editFimVigencia}
-                  onChange={(e) => setEditFimVigencia(e.target.value)}
-                  className="w-44"
-                />
-              ) : (
-                contrato.fimVigencia
-                  ? format(new Date(contrato.fimVigencia), 'dd/MM/yyyy', { locale: ptBR })
-                  : '—'
-              )}
-            </Field>
-
-            <Field label="Valor Global">
-              {editMode && contrato.status === 'Processado' ? (
-                <Input
-                  type="number"
-                  step="0.01"
-                  min={0}
-                  value={editValorGlobal}
-                  onChange={(e) => setEditValorGlobal(e.target.value)}
-                  className="w-44"
-                />
-              ) : (
-                formatCurrency(contrato.valorGlobal)
-              )}
-            </Field>
-
-            <Field label="Nº Parcelas">
-              {editMode && contrato.status === 'Processado' ? (
-                <Input
-                  type="number"
-                  min={1}
-                  value={editNumParcelas}
-                  onChange={(e) => setEditNumParcelas(e.target.value)}
-                  className="w-32"
-                />
-              ) : (
-                contrato.numParcelas ?? '—'
-              )}
-            </Field>
-
-            <Field label="Valor Parcelas">
-              {editMode && contrato.status === 'Processado' ? (
-                <Input
-                  type="number"
-                  step="0.01"
-                  min={0}
-                  value={editValorParcelas}
-                  onChange={(e) => setEditValorParcelas(e.target.value)}
-                  className="w-44"
-                />
-              ) : (
-                contrato.valorParcelas != null ? formatCurrency(contrato.valorParcelas) : '—'
-              )}
-            </Field>
-
-            <Field label="Status">
-              {editMode ? (
-                <Select value={editStatus} onValueChange={setEditStatus}>
-                  <SelectTrigger className="w-44">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Processado">Processado</SelectItem>
-                    <SelectItem value="Disponivel">Disponível</SelectItem>
-                    <SelectItem value="Encerrado">Encerrado</SelectItem>
-                  </SelectContent>
-                </Select>
-              ) : (
-                <StatusBadge status={contrato.status} />
-              )}
-            </Field>
-          </div>
-
-          <p className="text-xs text-muted-foreground mt-6">
-            Atualizado em {format(new Date(contrato.updatedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-          </p>
-        </CardContent>
-      </Card>
-
-      {fornecimentos.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Fornecimentos ({fornecimentos.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>UASG Participante</TableHead>
-                  <TableHead>Qtd Autorizada</TableHead>
-                  <TableHead>Saldo</TableHead>
-                  <TableHead>Valor Unit.</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {fornecimentos.map((f) => (
-                  <TableRow key={f.identificador}>
-                    <TableCell className="text-sm">{f.uasgUnParticipante}</TableCell>
-                    <TableCell className="text-sm">{f.qtdAutorizada ?? '—'}</TableCell>
-                    <TableCell className="text-sm">{f.saldoDisponivel ?? f.saldo ?? '—'}</TableCell>
-                    <TableCell className="text-sm">
-                      {(f.valorUnitario ?? f.valUnitHomologado) != null
-                        ? formatCurrency(f.valorUnitario ?? f.valUnitHomologado ?? 0)
-                        : '—'}
-                    </TableCell>
-                    <TableCell><StatusBadge status={f.status} /></TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        title="Ver detalhes"
-                        onClick={() => navigate(`/fornecimentos/${f.identificador}`)}
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
