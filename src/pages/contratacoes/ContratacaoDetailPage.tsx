@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermission } from "@/hooks/usePermission";
 import { useAuthStore } from "@/store/auth.store";
-import { formatCurrency } from "@/lib/utils";
+import { formatCNPJ, formatCurrency } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -341,7 +341,10 @@ export function ContratacaoDetailPage() {
                     {contratos.map((ct) => (
                       <TableRow key={ct.identificador} className="hover:bg-muted/40 transition-colors duration-100">
                         <TableCell className="font-mono text-sm">{ct.numContrato}</TableCell>
-                        <TableCell className="font-mono text-sm">{ct.cnpjContratado}</TableCell>
+                        <TableCell>
+                          <p className="font-mono text-xs text-muted-foreground">{formatCNPJ(ct.fornecedor?.cnpj ?? '')}</p>
+                          {ct.fornecedor?.nome && <p className="text-sm">{ct.fornecedor.nome}</p>}
+                        </TableCell>
                         <TableCell className="text-sm">{ct.uasgContratante}</TableCell>
                         <TableCell className="text-sm whitespace-nowrap">
                           {formatDate(ct.iniVigencia)}

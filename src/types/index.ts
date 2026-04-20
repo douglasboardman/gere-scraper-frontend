@@ -162,7 +162,8 @@ export interface IContrato {
   objeto?: string
   uasgContratante: string
   unGestoraOrigemContrato?: string
-  cnpjContratado: string
+  identFornecedor: string
+  fornecedor?: IFornecedor
   iniVigencia: string
   fimVigencia?: string
   valorGlobal: number
