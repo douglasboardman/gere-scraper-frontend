@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Eye, Search, ArrowLeftRight } from "lucide-react";
+import { TableRow, TableCell } from "@/components/ui/table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { itensApi } from "@/api/itens.api";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -16,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatCurrency, truncate } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import type { IItem, IAtaRegPrecos, IContratacao } from "@/types";
 
 export function ItensPage() {
@@ -28,6 +29,14 @@ export function ItensPage() {
   const [descFilter, setDescFilter] = useState("");
   const [contratacaoFilter, setContratacaoFilter] = useState("");
   const [tipoFilter, setTipoFilter] = useState("all");
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (id: string) =>
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
 
   const { data: itens = [], isLoading } = useQuery({
     queryKey: ["itens", identAta, identContratacao],
@@ -51,6 +60,18 @@ export function ItensPage() {
     if (!identContratacao || typeof identContratacao === "string") return null;
     const c = identContratacao as IContratacao;
     return { numContratacao: c.numContratacao, anoContratacao: c.anoContratacao };
+  };
+
+  const getContratacaoIdent = (item: IItem): string | null => {
+    if (item.identContratacao) {
+      if (typeof item.identContratacao === "string") return item.identContratacao;
+      return (item.identContratacao as IContratacao).identificador ?? null;
+    }
+    const identAta = item.identAta;
+    if (!identAta || typeof identAta === "string") return null;
+    const ic = (identAta as IAtaRegPrecos).identContratacao;
+    if (!ic) return null;
+    return typeof ic === "string" ? ic : (ic as IContratacao).identificador ?? null;
   };
 
   const itensFiltrados = itens.filter((item) => {
@@ -96,12 +117,19 @@ export function ItensPage() {
       id: "contratacao",
       header: "Contratação",
       cell: ({ row }) => {
-        const c = getContratacaoInfo(row.original);
-        if (!c) return <span className="text-muted-foreground">—</span>;
+        const identificador = getContratacaoIdent(row.original);
+        const numCompra = (() => {
+          if (!identificador?.startsWith("C")) return null;
+          const body = identificador.slice(1);
+          if (body.length < 11) return null;
+          return `${body.slice(6, -4)}/${body.slice(-4)}`;
+        })();
+        if (!identificador) return <span className="text-muted-foreground">—</span>;
         return (
-          <span className="font-mono text-sm whitespace-nowrap">
-            {c.numContratacao}/{c.anoContratacao}
-          </span>
+          <div>
+            <p className="font-mono text-xs text-muted-foreground">{identificador}</p>
+            <p className="text-sm">{numCompra ?? identificador}</p>
+          </div>
         );
       },
     },
@@ -109,20 +137,19 @@ export function ItensPage() {
       id: "descBreve",
       header: "Descrição Breve",
       cell: ({ row }) => {
+        const id = row.original.identificador;
         const desc = row.original.descBreve ?? row.original.descricaoBreve;
-        return <span className="text-sm font-medium">{desc ?? "—"}</span>;
-      },
-    },
-    {
-      id: "descDetalhada",
-      header: "Descrição Detalhada",
-      cell: ({ row }) => {
-        const desc =
-          row.original.descDetalhada ?? row.original.descricaoDetalhada;
         return (
-          <span className="text-sm text-muted-foreground" title={desc}>
-            {desc ? truncate(desc, 80) : "—"}
-          </span>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-medium">{desc ?? "—"}</span>
+            <Button
+              size="sm"
+              className="h-5 px-1.5 text-[10px] shrink-0 bg-background border border-input text-foreground hover:text-muted-foreground hover:bg-background"
+              onClick={() => toggleExpand(id)}
+            >
+              Desc. Detalhada
+            </Button>
+          </div>
         );
       },
     },
@@ -183,9 +210,7 @@ export function ItensPage() {
             size="sm"
             className="h-8 w-8 p-0"
             title="Ver Fornecimentos"
-            onClick={() =>
-              navigate(`/fornecimentos?identItem=${row.original.identificador}`)
-            }
+            onClick={() => navigate(`/fornecimentos?identItem=${row.original.identificador}`)}
           >
             <ArrowLeftRight className="h-3.5 w-3.5" />
           </Button>
@@ -241,6 +266,19 @@ export function ItensPage() {
         isLoading={isLoading}
         searchable={false}
         emptyMessage="Nenhum item encontrado."
+        renderExpandedRow={(row, colSpan) => {
+          if (!expandedIds.has(row.original.identificador)) return null;
+          const desc = row.original.descDetalhada ?? row.original.descricaoDetalhada;
+          return (
+            <TableRow className="hover:bg-muted">
+              <TableCell colSpan={colSpan} className="bg-muted py-3 px-4">
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {desc ?? "—"}
+                </p>
+              </TableCell>
+            </TableRow>
+          );
+        }}
       />
     </div>
   );

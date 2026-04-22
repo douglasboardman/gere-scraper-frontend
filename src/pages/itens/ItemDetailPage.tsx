@@ -116,9 +116,20 @@ export function ItemDetailPage() {
   const contratacao = ataObj?.contratacao ?? (
     typeof ataObj?.identContratacao !== 'string' ? ataObj?.identContratacao : null
   )
-  const subtitleContratacao = contratacao
-    ? `Contratação ${contratacao.numContratacao}/${contratacao.anoContratacao}`
-    : null
+  const subtitleContratacao = (() => {
+    if (contratacao) {
+      return `Contratação: ${contratacao.numContratacao}/${contratacao.anoContratacao} | UASG Gestora: ${contratacao.uasgUnGestora}`
+    }
+    const identStr =
+      (typeof ataObj?.identContratacao === 'string' ? ataObj.identContratacao : null) ??
+      (typeof item.identContratacao === 'string' ? item.identContratacao :
+        item.identContratacao ? (item.identContratacao as IContratacao).identificador : null)
+    if (identStr?.startsWith('C')) {
+      const body = identStr.slice(1)
+      if (body.length >= 11) return `Contratação: ${body.slice(6, -4)}/${body.slice(-4)} | UASG Gestora: ${body.slice(0, 6)}`
+    }
+    return null
+  })()
 
   return (
     <div>

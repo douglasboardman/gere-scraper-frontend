@@ -289,7 +289,12 @@ export function ContratacaoDetailPage() {
                     {atas.map((ata) => (
                       <TableRow key={ata.identificador} className="hover:bg-muted/40 transition-colors duration-100">
                         <TableCell className="font-mono text-sm">{ata.numAta}</TableCell>
-                        <TableCell className="text-sm">{ata.nomeFornecedor ?? ata.cnpjFornecedor ?? "—"}</TableCell>
+                        <TableCell>
+                          {ata.cnpjFornecedor && (
+                            <p className="font-mono text-xs text-muted-foreground">{formatCNPJ(ata.cnpjFornecedor)}</p>
+                          )}
+                          <p className="text-sm">{ata.nomeFornecedor ?? "—"}</p>
+                        </TableCell>
                         <TableCell className="text-sm whitespace-nowrap">
                           {ata.iniVigencia ? formatDate(ata.iniVigencia) : "—"}
                           {" → "}
