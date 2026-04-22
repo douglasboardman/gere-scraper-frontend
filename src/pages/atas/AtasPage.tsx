@@ -44,15 +44,23 @@ export function AtasPage() {
     },
     {
       accessorKey: "identContratacao",
-      header: "ID Contratação",
+      header: "Contratação",
       cell: ({ row }) => {
-        const identContratacao = row.original.identContratacao;
+        const ic = row.original.identContratacao;
+        const identificador = typeof ic === "string" ? ic : ic?.identificador;
+        const numCompra = (() => {
+          if (!identificador?.startsWith("C")) return null;
+          const body = identificador.slice(1);
+          if (body.length < 11) return null;
+          return `${body.slice(6, -4)}/${body.slice(-4)}`;
+        })();
         return (
-          <span className="text-sm">
-            {typeof identContratacao === "string"
-              ? identContratacao
-              : (identContratacao?.identificador ?? "—")}
-          </span>
+          <div>
+            {identificador && (
+              <p className="font-mono text-xs text-muted-foreground">{identificador}</p>
+            )}
+            <p className="text-sm">{numCompra ?? identificador ?? "—"}</p>
+          </div>
         );
       },
     },

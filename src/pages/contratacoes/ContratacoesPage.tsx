@@ -14,7 +14,6 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { usePermission } from '@/hooks/usePermission'
 import type { IContratacao } from '@/types'
-import { truncate } from '@/lib/utils'
 import {
   Select,
   SelectContent,
@@ -77,9 +76,7 @@ export function ContratacoesPage() {
       accessorKey: 'objeto',
       header: 'Objeto',
       cell: ({ row }) => (
-        <span className="text-sm" title={row.original.objeto}>
-          {row.original.objeto ? truncate(row.original.objeto, 60) : '—'}
-        </span>
+        <span className="text-sm">{row.original.objeto ?? '—'}</span>
       ),
     },
     {

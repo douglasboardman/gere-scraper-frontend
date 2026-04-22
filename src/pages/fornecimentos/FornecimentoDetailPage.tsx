@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { IFornecimento, IItem, IFornecedor } from '@/types'
+import type { IFornecimento, IItem, IFornecedor, IContratacao } from '@/types'
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -106,11 +106,23 @@ export function FornecimentoDetailPage() {
   const isItemObj = typeof fornecimento.identItem !== 'string'
   const isFornecedorObj = typeof fornecimento.identFornecedor !== 'string'
 
+  const contratacaoSuffix = (() => {
+    if (!isItemObj) return ''
+    const ic = (fornecimento.identItem as IItem).identContratacao
+    if (!ic) return ''
+    if (typeof ic !== 'string') {
+      const c = ic as IContratacao
+      return ` | C ${c.numContratacao}/${c.anoContratacao}`
+    }
+    const body = ic.startsWith('C') ? ic.slice(1) : ''
+    return body.length >= 11 ? ` | C ${body.slice(6, -4)}/${body.slice(-4)}` : ''
+  })()
+
   return (
     <div>
       <PageHeader
         title={`Fornecimento ${fornecimento.identificador}`}
-        subtitle={`UASG Participante: ${fornecimento.uasgUnParticipante}${fornecimento.nomeUnParticipante ? ` — ${fornecimento.nomeUnParticipante}` : ''}`}
+        subtitle={`UASG Participante: ${fornecimento.uasgUnParticipante}${fornecimento.nomeUnParticipante ? ` — ${fornecimento.nomeUnParticipante}` : ''}${contratacaoSuffix}`}
         actions={
           <div className="flex gap-2">
             {editMode ? (

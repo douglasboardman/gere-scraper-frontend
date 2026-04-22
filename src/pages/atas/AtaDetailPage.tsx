@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -47,6 +47,14 @@ export function AtaDetailPage() {
   const { can } = usePermission();
   const [editMode, setEditMode] = useState(false);
   const [editStatus, setEditStatus] = useState('');
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (id: string) =>
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
 
   const { data: ata, isLoading } = useQuery({
     queryKey: ["ata", id],
@@ -107,11 +115,19 @@ export function AtaDetailPage() {
   const statusEditaveis = ["Processada", "Disponivel", "Encerrada"];
   const canEdit = can("edit:atas") && statusEditaveis.includes(ata.status);
 
+  const identContStr = typeof ata.identContratacao === 'string'
+    ? ata.identContratacao
+    : (ata.identContratacao as { identificador: string }).identificador
+  const identBody = identContStr.startsWith('C') ? identContStr.slice(1) : ''
+  const subtitleAta = identBody.length >= 11
+    ? `Contratação: ${identBody.slice(6, -4)}/${identBody.slice(-4)} | UASG Gestora: ${identBody.slice(0, 6)}`
+    : `Contratação: ${identContStr}`
+
   return (
     <div>
       <PageHeader
         title={`Ata Nº ${ata.numAta}/${anoAta()}`}
-        subtitle={`Contratação: ${ata.identContratacao}`}
+        subtitle={subtitleAta}
         actions={
           <div className="flex gap-2">
             {editMode ? (
@@ -236,36 +252,56 @@ export function AtaDetailPage() {
                   </TableHeader>
                   <TableBody>
                     {itens.map((item) => (
-                      <TableRow key={item.identificador} className="hover:bg-muted/40 transition-colors duration-100">
-                        <TableCell className="font-mono text-sm">
-                          {item.sequencialItemPregao ?? item.numItem ?? "—"}
-                        </TableCell>
-                        <TableCell className="text-sm max-w-xs truncate" title={item.descBreve}>
-                          {item.descBreve ?? item.descricaoBreve ?? "—"}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {item.qtdHomologada != null
-                            ? `${item.qtdHomologada} ${item.unMedida ?? item.unidadeMedida ?? ""}`
-                            : "—"}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {(item.valUnitario ?? item.valorUnitario) != null
-                            ? formatCurrency(item.valUnitario ?? item.valorUnitario ?? 0)
-                            : "—"}
-                        </TableCell>
-                        <TableCell><StatusBadge status={item.status} /></TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            title="Ver detalhes"
-                            onClick={() => navigate(`/itens/${item.identificador}`)}
-                          >
-                            <Eye className="h-3.5 w-3.5" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
+                      <Fragment key={item.identificador}>
+                        <TableRow className="hover:bg-muted/40 transition-colors duration-100">
+                          <TableCell className="font-mono text-sm">
+                            {item.sequencialItemPregao ?? item.numItem ?? "—"}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-medium">{item.descBreve ?? item.descricaoBreve ?? "—"}</span>
+                              <Button
+                                size="sm"
+                                className="h-5 px-1.5 text-[10px] shrink-0 bg-background border border-input text-foreground hover:text-muted-foreground hover:bg-background"
+                                onClick={() => toggleExpand(item.identificador)}
+                              >
+                                Desc. Detalhada
+                              </Button>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {item.qtdHomologada != null
+                              ? `${item.qtdHomologada} ${item.unMedida ?? item.unidadeMedida ?? ""}`
+                              : "—"}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {(item.valUnitario ?? item.valorUnitario) != null
+                              ? formatCurrency(item.valUnitario ?? item.valorUnitario ?? 0)
+                              : "—"}
+                          </TableCell>
+                          <TableCell><StatusBadge status={item.status} /></TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              title="Ver detalhes"
+                              onClick={() => navigate(`/itens/${item.identificador}`)}
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                        {expandedIds.has(item.identificador) && (
+                          <TableRow className="hover:bg-muted">
+                            <TableCell colSpan={6} className="bg-muted py-3 px-4">
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                {item.descDetalhada ?? item.descricaoDetalhada ?? "—"}
+                              </p>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </Fragment>
                     ))}
                   </TableBody>
                 </Table>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, Fragment } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
@@ -6,6 +6,7 @@ import {
   getPaginationRowModel,
   flexRender,
   type ColumnDef,
+  type Row,
 } from '@tanstack/react-table'
 import {
   Table,
@@ -28,6 +29,7 @@ interface DataTableProps<TData> {
   searchable?: boolean
   searchPlaceholder?: string
   emptyMessage?: string
+  renderExpandedRow?: (row: Row<TData>, colSpan: number) => React.ReactNode
 }
 
 export function DataTable<TData>({
@@ -37,6 +39,7 @@ export function DataTable<TData>({
   searchable = true,
   searchPlaceholder = 'Buscar...',
   emptyMessage = 'Nenhum registro encontrado.',
+  renderExpandedRow,
 }: DataTableProps<TData>) {
   const [globalFilter, setGlobalFilter] = useState<string>('')
 
@@ -109,17 +112,19 @@ export function DataTable<TData>({
           <TableBody className="animate-fade-in">
             {table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
-                  className="hover:bg-muted/40 transition-colors duration-100 cursor-default"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
+                <Fragment key={row.id}>
+                  <TableRow
+                    data-state={row.getIsSelected() && 'selected'}
+                    className="hover:bg-muted/40 transition-colors duration-100 cursor-default"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  {renderExpandedRow?.(row, columns.length)}
+                </Fragment>
               ))
             ) : (
               <TableRow>

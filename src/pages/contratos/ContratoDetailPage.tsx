@@ -110,7 +110,11 @@ export function ContratoDetailPage() {
   }
 
   const getContratacaoLink = (identContratacao: string | IContratacao) => {
-    if (typeof identContratacao === 'string') return { id: identContratacao, label: identContratacao }
+    if (typeof identContratacao === 'string') {
+      const body = identContratacao.startsWith('C') ? identContratacao.slice(1) : ''
+      const label = body.length >= 11 ? `${body.slice(6, -4)}/${body.slice(-4)}` : identContratacao
+      return { id: identContratacao, label }
+    }
     return {
       id: identContratacao.identificador,
       label: `${identContratacao.numContratacao}/${identContratacao.anoContratacao}`,
@@ -136,7 +140,7 @@ export function ContratoDetailPage() {
     <div>
       <PageHeader
         title={`Contrato ${contrato.numContrato}`}
-        subtitle={`UASG Contratante: ${contrato.uasgContratante}${contrato.unGestoraOrigemContrato ? ` — ${contrato.unGestoraOrigemContrato}` : ''}`}
+        subtitle={`UASG Contratante: ${contrato.uasgContratante}${contrato.unGestoraOrigemContrato ? ` — UASG Origem Contrato: ${contrato.unGestoraOrigemContrato}` : ''} | C ${ctLink.label}`}
         actions={
           <div className="flex gap-2">
             {editMode ? (
