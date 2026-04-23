@@ -6,6 +6,8 @@ import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { ArrowLeft, Pencil, X, Check, Eye } from 'lucide-react'
 import { itensApi } from '@/api/itens.api'
+import { useEditGuard } from '@/hooks/useEditGuard'
+import { UnsavedChangesDialog } from '@/components/shared/UnsavedChangesDialog'
 import { fornecimentosApi } from '@/api/fornecimentos.api'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
@@ -51,6 +53,7 @@ export function ItemDetailPage() {
   const [editDescBreve, setEditDescBreve] = useState('')
   const [editDescDetalhada, setEditDescDetalhada] = useState('')
   const [editStatus, setEditStatus] = useState('')
+  const [activeTab, setActiveTab] = useState('informacoes')
 
   const { data: item, isLoading } = useQuery({
     queryKey: ['item', id],
@@ -94,6 +97,18 @@ export function ItemDetailPage() {
     if (editStatus) payload.status = editStatus as IItem['status']
     updateMutation.mutate(payload)
   }
+
+  const resetEditState = () => {
+    setEditMode(false)
+    setEditDescBreve(item?.descBreve ?? item?.descricaoBreve ?? '')
+    setEditDescDetalhada(item?.descDetalhada ?? item?.descricaoDetalhada ?? '')
+    setEditStatus(item?.status ?? '')
+  }
+
+  const { isDialogOpen, handleNavigate, handleStay, guardTabChange } = useEditGuard(
+    editMode,
+    resetEditState,
+  )
 
   if (isLoading) {
     return (
@@ -150,24 +165,16 @@ export function ItemDetailPage() {
                 </Button>
               </>
             ) : (
-              <>
-                {can('edit:itens') && ['Processado', 'Disponivel', 'Encerrado'].includes(item.status) && (
-                  <Button variant="outline" size="sm" onClick={handleEdit}>
-                    <Pencil className="h-4 w-4" />
-                    Editar
-                  </Button>
-                )}
-                <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-                  <ArrowLeft className="h-4 w-4" />
-                  Voltar
-                </Button>
-              </>
+              <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+                <ArrowLeft className="h-4 w-4" />
+                Voltar
+              </Button>
             )}
           </div>
         }
       />
 
-      <Tabs defaultValue="informacoes">
+      <Tabs value={activeTab} onValueChange={guardTabChange(setActiveTab)}>
         <TabsList className="mb-4">
           <TabsTrigger value="informacoes">Informações</TabsTrigger>
           <TabsTrigger value="fornecimentos">
@@ -270,6 +277,14 @@ export function ItemDetailPage() {
                   )}
                 </div>
               </div>
+              {can('edit:itens') && item.status === 'Processado' && !editMode && (
+                <div className="flex gap-3 flex-wrap mt-6 pt-5 border-t">
+                  <Button variant="outline" size="sm" onClick={handleEdit}>
+                    <Pencil className="h-4 w-4" />
+                    Editar
+                  </Button>
+                </div>
+              )}
               <p className="text-xs text-muted-foreground mt-6">
                 Atualizado em {format(new Date(item.updatedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
               </p>
@@ -329,6 +344,11 @@ export function ItemDetailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      <UnsavedChangesDialog
+        open={isDialogOpen}
+        onNavigate={handleNavigate}
+        onStay={handleStay}
+      />
     </div>
   )
 }

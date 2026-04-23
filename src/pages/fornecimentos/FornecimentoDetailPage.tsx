@@ -6,6 +6,8 @@ import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { ArrowLeft, Pencil, X, Check } from 'lucide-react'
 import { fornecimentosApi } from '@/api/fornecimentos.api'
+import { useEditGuard } from '@/hooks/useEditGuard'
+import { UnsavedChangesDialog } from '@/components/shared/UnsavedChangesDialog'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -90,6 +92,17 @@ export function FornecimentoDetailPage() {
     return { label: identFornecedor.nome ?? '—', id: identFornecedor.identificador }
   }
 
+  const resetEditState = () => {
+    setEditMode(false)
+    setEditValUnit(fornecimento?.valUnitHomologado?.toString() ?? '')
+    setEditQtdAutorizada(fornecimento?.qtdAutorizada?.toString() ?? '')
+    setEditQtdUtilizada(fornecimento?.qtdUtilizada?.toString() ?? '')
+    setEditSaldo((fornecimento?.saldoDisponivel ?? fornecimento?.saldo)?.toString() ?? '')
+    setEditStatus(fornecimento?.status ?? '')
+  }
+
+  const { isDialogOpen, handleNavigate, handleStay } = useEditGuard(editMode, resetEditState)
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -137,18 +150,10 @@ export function FornecimentoDetailPage() {
                 </Button>
               </>
             ) : (
-              <>
-                {can('edit:fornecimentos') && ['Processado', 'Disponivel', 'Encerrado'].includes(fornecimento.status) && (
-                  <Button variant="outline" size="sm" onClick={handleEdit}>
-                    <Pencil className="h-4 w-4" />
-                    Editar
-                  </Button>
-                )}
-                <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-                  <ArrowLeft className="h-4 w-4" />
-                  Voltar
-                </Button>
-              </>
+              <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+                <ArrowLeft className="h-4 w-4" />
+                Voltar
+              </Button>
             )}
           </div>
         }
@@ -278,12 +283,24 @@ export function FornecimentoDetailPage() {
             </div>
           )}
 
+          {can('edit:fornecimentos') && fornecimento.status === 'Processado' && !editMode && (
+            <div className="flex gap-3 flex-wrap mt-6 pt-5 border-t">
+              <Button variant="outline" size="sm" onClick={handleEdit}>
+                <Pencil className="h-4 w-4" />
+                Editar
+              </Button>
+            </div>
+          )}
           <p className="text-xs text-muted-foreground mt-6">
             Atualizado em {format(new Date(fornecimento.updatedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
           </p>
         </CardContent>
       </Card>
-
+      <UnsavedChangesDialog
+        open={isDialogOpen}
+        onNavigate={handleNavigate}
+        onStay={handleStay}
+      />
     </div>
   )
 }
