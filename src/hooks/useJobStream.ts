@@ -9,6 +9,7 @@ interface JobStreamState {
   atasProcessadas: number
   atasTotal: number
   mensagem: string
+  errorCode: string | null
   status: StatusJob | null
   isActive: boolean
 }
@@ -20,6 +21,7 @@ const initialState: JobStreamState = {
   atasProcessadas: 0,
   atasTotal: 0,
   mensagem: '',
+  errorCode: null,
   status: null,
   isActive: false,
 }
@@ -110,6 +112,7 @@ export function useJobStream(jobId: string | null): JobStreamState {
           setState((prev) => ({
             ...prev,
             mensagem: payload.mensagem ?? 'Erro no processamento.',
+            errorCode: payload.errorCode ?? null,
             status: 'failed',
             isActive: false,
           }))
@@ -117,6 +120,7 @@ export function useJobStream(jobId: string | null): JobStreamState {
           setState((prev) => ({
             ...prev,
             mensagem: 'Erro no processamento.',
+            errorCode: null,
             status: 'failed',
             isActive: false,
           }))
