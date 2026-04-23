@@ -6,6 +6,8 @@ import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { ArrowLeft, Pencil, X, Check, ShieldAlert, Loader2, List } from 'lucide-react'
 import { fornecedoresApi } from '@/api/fornecedores.api'
+import { useEditGuard } from '@/hooks/useEditGuard'
+import { UnsavedChangesDialog } from '@/components/shared/UnsavedChangesDialog'
 import { SancoesDialog, useSancoesDialog } from '@/components/shared/SancoesDialog'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -94,6 +96,18 @@ export function FornecedorDetailPage() {
 
   const sancoesDialog = useSancoesDialog()
 
+  const resetEditState = () => {
+    setEditMode(false)
+    setEditNome(fornecedor?.nome ?? '')
+    setEditEmail(fornecedor?.email1 ?? fornecedor?.email ?? '')
+    setEditEmail2(fornecedor?.email2 ?? '')
+    setEditTelefone(fornecedor?.telefone1 ?? fornecedor?.telefone ?? '')
+    setEditTelefone2(fornecedor?.telefone2 ?? '')
+    setEditEndereco(fornecedor?.endereco ?? '')
+  }
+
+  const { isDialogOpen, handleNavigate, handleStay } = useEditGuard(editMode, resetEditState)
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -149,12 +163,6 @@ export function FornecedorDetailPage() {
                   )}
                   Consultar Sanções
                 </Button>
-                {can('edit:fornecedores') && (
-                  <Button variant="outline" size="sm" onClick={handleEdit}>
-                    <Pencil className="h-4 w-4" />
-                    Editar
-                  </Button>
-                )}
                 <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
                   <ArrowLeft className="h-4 w-4" />
                   Voltar
@@ -247,6 +255,14 @@ export function FornecedorDetailPage() {
               )}
             </div>
           </div>
+          {can('edit:fornecedores') && !editMode && (
+            <div className="flex gap-3 flex-wrap mt-6 pt-5 border-t">
+              <Button variant="outline" size="sm" onClick={handleEdit}>
+                <Pencil className="h-4 w-4" />
+                Editar
+              </Button>
+            </div>
+          )}
           <p className="text-xs text-muted-foreground mt-6">
             Atualizado em {format(new Date(fornecedor.updatedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
           </p>
@@ -268,6 +284,11 @@ export function FornecedorDetailPage() {
         onClose={sancoesDialog.fechar}
         nomeFornecedor={sancoesDialog.nomeFornecedor}
         sancoes={sancoesDialog.sancoes}
+      />
+      <UnsavedChangesDialog
+        open={isDialogOpen}
+        onNavigate={handleNavigate}
+        onStay={handleStay}
       />
     </div>
   )

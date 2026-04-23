@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -8,6 +8,9 @@ import { ArrowLeft, Pencil, X, Check, CheckCircle2, PauseCircle, Eye } from "luc
 import { contratacoesApi } from "@/api/contratacoes.api";
 import { atasApi } from "@/api/atas.api";
 import { contratosApi } from "@/api/contratos.api";
+import { itensApi } from "@/api/itens.api";
+import { useEditGuard } from "@/hooks/useEditGuard";
+import { UnsavedChangesDialog } from "@/components/shared/UnsavedChangesDialog";
 import { MODALIDADE_LABEL } from "@/types";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -34,7 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { IContratacao, IAtaRegPrecos, IContrato } from "@/types";
+import type { IContratacao, IAtaRegPrecos, IContrato, IItem } from "@/types";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -54,6 +57,26 @@ export function ContratacaoDetailPage() {
   const [editMode, setEditMode] = useState(false);
   const [editObjeto, setEditObjeto] = useState("");
   const [editStatus, setEditStatus] = useState("");
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState('informacoes');
+
+  const resetEditState = () => {
+    setEditMode(false);
+    setEditObjeto(contratacao?.objeto ?? '');
+    setEditStatus(contratacao?.status ?? '');
+  };
+
+  const { isDialogOpen, handleNavigate, handleStay, guardTabChange } = useEditGuard(
+    editMode,
+    resetEditState,
+  );
+
+  const toggleExpand = (id: string) =>
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
 
   const { data: contratacao, isLoading } = useQuery({
     queryKey: ["contratacao", identificador],
@@ -70,6 +93,12 @@ export function ContratacaoDetailPage() {
   const { data: todosContratos = [] } = useQuery<IContrato[]>({
     queryKey: ["contratos", "contratacao", identificador],
     queryFn: () => contratosApi.listarPorContratacao(identificador!),
+    enabled: !!identificador,
+  });
+
+  const { data: itens = [] } = useQuery<IItem[]>({
+    queryKey: ["itens", { identContratacao: identificador }],
+    queryFn: () => itensApi.listar({ identContratacao: identificador! }),
     enabled: !!identificador,
   });
 
@@ -143,24 +172,16 @@ export function ContratacaoDetailPage() {
                 </Button>
               </>
             ) : (
-              <>
-                {can("edit:contratacoes") && ["Processada", "Disponivel", "Encerrada"].includes(contratacao.status) && (
-                  <Button variant="outline" size="sm" onClick={handleEdit}>
-                    <Pencil className="h-4 w-4" />
-                    Editar
-                  </Button>
-                )}
-                <Button variant="outline" size="sm" onClick={() => navigate("/contratacoes")}>
-                  <ArrowLeft className="h-4 w-4" />
-                  Voltar
-                </Button>
-              </>
+              <Button variant="outline" size="sm" onClick={() => navigate("/contratacoes")}>
+                <ArrowLeft className="h-4 w-4" />
+                Voltar
+              </Button>
             )}
           </div>
         }
       />
 
-      <Tabs defaultValue="informacoes">
+      <Tabs value={activeTab} onValueChange={guardTabChange(setActiveTab)}>
         <TabsList className="mb-4">
           <TabsTrigger value="informacoes">Informações</TabsTrigger>
           <TabsTrigger value="atas">
@@ -176,6 +197,14 @@ export function ContratacaoDetailPage() {
             {contratos.length > 0 && (
               <span className="ml-1.5 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full text-[10px] font-semibold bg-primary/10 text-primary">
                 {contratos.length}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="itens">
+            Itens
+            {itens.length > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full text-[10px] font-semibold bg-primary/10 text-primary">
+                {itens.length}
               </span>
             )}
           </TabsTrigger>
@@ -232,7 +261,7 @@ export function ContratacaoDetailPage() {
               </div>
 
               {/* Status actions */}
-              {can("edit:contratacoes") && (contratacao.status === "Processada" || contratacao.status === "Disponivel") && (
+              {can("edit:contratacoes") && (contratacao.status === "Processada" || contratacao.status === "Disponivel") && !editMode && (
                 <div className="flex gap-3 flex-wrap mt-6 pt-5 border-t">
                   {contratacao.status === "Processada" && (
                     <Button
@@ -256,6 +285,15 @@ export function ContratacaoDetailPage() {
                       Suspender Disponibilidade
                     </Button>
                   )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEdit}
+                    disabled={contratacao.status !== "Processada"}
+                  >
+                    <Pencil className="h-4 w-4" />
+                    Editar
+                  </Button>
                 </div>
               )}
 
@@ -377,7 +415,91 @@ export function ContratacaoDetailPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        {/* ─── ABA: Itens ───────────────────────────────── */}
+        <TabsContent value="itens">
+          <Card>
+            <CardContent className="p-0">
+              {itens.length === 0 ? (
+                <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
+                  Nenhum item vinculado a esta contratação.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50 hover:bg-muted/50">
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Nº Item</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Descrição</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Qtd Homologada</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Valor Unitário</TableHead>
+                      <TableHead className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Status</TableHead>
+                      <TableHead className="text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {itens.map((item) => (
+                      <Fragment key={item.identificador}>
+                        <TableRow className="hover:bg-muted/40 transition-colors duration-100">
+                          <TableCell className="font-mono text-sm">
+                            {item.sequencialItemPregao ?? item.numItem ?? "—"}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-medium">{item.descBreve ?? item.descricaoBreve ?? "—"}</span>
+                              <Button
+                                size="sm"
+                                className="h-5 px-1.5 text-[10px] shrink-0 bg-background border border-input text-foreground hover:text-muted-foreground hover:bg-background"
+                                onClick={() => toggleExpand(item.identificador)}
+                              >
+                                Desc. Detalhada
+                              </Button>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {item.qtdHomologada != null
+                              ? `${item.qtdHomologada} ${item.unMedida ?? item.unidadeMedida ?? ""}`
+                              : "—"}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {(item.valUnitario ?? item.valorUnitario) != null
+                              ? formatCurrency(item.valUnitario ?? item.valorUnitario ?? 0)
+                              : "—"}
+                          </TableCell>
+                          <TableCell><StatusBadge status={item.status} /></TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              title="Ver detalhes"
+                              onClick={() => navigate(`/itens/${item.identificador}`)}
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                        {expandedIds.has(item.identificador) && (
+                          <TableRow className="hover:bg-muted">
+                            <TableCell colSpan={6} className="bg-muted py-3 px-4">
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                {item.descDetalhada ?? item.descricaoDetalhada ?? "—"}
+                              </p>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </Fragment>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
+      <UnsavedChangesDialog
+        open={isDialogOpen}
+        onNavigate={handleNavigate}
+        onStay={handleStay}
+      />
     </div>
   );
 }

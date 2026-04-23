@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { ArrowLeft, Pencil, X, Check, Eye } from "lucide-react";
 import { atasApi } from "@/api/atas.api";
 import { itensApi } from "@/api/itens.api";
+import { useEditGuard } from "@/hooks/useEditGuard";
+import { UnsavedChangesDialog } from "@/components/shared/UnsavedChangesDialog";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -48,6 +50,7 @@ export function AtaDetailPage() {
   const [editMode, setEditMode] = useState(false);
   const [editStatus, setEditStatus] = useState('');
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState('informacoes');
 
   const toggleExpand = (id: string) =>
     setExpandedIds((prev) => {
@@ -100,6 +103,16 @@ export function AtaDetailPage() {
     }
   };
 
+  const resetEditState = () => {
+    setEditMode(false);
+    setEditStatus(ata?.status ?? '');
+  };
+
+  const { isDialogOpen, handleNavigate, handleStay, guardTabChange } = useEditGuard(
+    editMode,
+    resetEditState,
+  );
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -112,8 +125,7 @@ export function AtaDetailPage() {
   if (!ata)
     return <div className="text-muted-foreground">Ata não encontrada.</div>;
 
-  const statusEditaveis = ["Processada", "Disponivel", "Encerrada"];
-  const canEdit = can("edit:atas") && statusEditaveis.includes(ata.status);
+  const canEdit = can("edit:atas") && ata.status === "Processada";
 
   const identContStr = typeof ata.identContratacao === 'string'
     ? ata.identContratacao
@@ -142,24 +154,16 @@ export function AtaDetailPage() {
                 </Button>
               </>
             ) : (
-              <>
-                {canEdit && (
-                  <Button variant="outline" size="sm" onClick={handleEdit}>
-                    <Pencil className="h-4 w-4" />
-                    Editar
-                  </Button>
-                )}
-                <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-                  <ArrowLeft className="h-4 w-4" />
-                  Voltar
-                </Button>
-              </>
+              <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+                <ArrowLeft className="h-4 w-4" />
+                Voltar
+              </Button>
             )}
           </div>
         }
       />
 
-      <Tabs defaultValue="informacoes">
+      <Tabs value={activeTab} onValueChange={guardTabChange(setActiveTab)}>
         <TabsList className="mb-4">
           <TabsTrigger value="informacoes">Informações</TabsTrigger>
           <TabsTrigger value="itens">
@@ -222,6 +226,14 @@ export function AtaDetailPage() {
                   )}
                 </Field>
               </div>
+              {canEdit && !editMode && (
+                <div className="flex gap-3 flex-wrap mt-6 pt-5 border-t">
+                  <Button variant="outline" size="sm" onClick={handleEdit}>
+                    <Pencil className="h-4 w-4" />
+                    Editar
+                  </Button>
+                </div>
+              )}
               <p className="text-xs text-muted-foreground mt-6">
                 Atualizado em{" "}
                 {format(new Date(ata.updatedAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
@@ -310,6 +322,11 @@ export function AtaDetailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      <UnsavedChangesDialog
+        open={isDialogOpen}
+        onNavigate={handleNavigate}
+        onStay={handleStay}
+      />
     </div>
   );
 }

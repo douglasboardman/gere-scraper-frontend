@@ -6,6 +6,8 @@ import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { ArrowLeft, Pencil, X, Check, RefreshCw, Eye } from 'lucide-react'
 import { contratosApi } from '@/api/contratos.api'
+import { useEditGuard } from '@/hooks/useEditGuard'
+import { UnsavedChangesDialog } from '@/components/shared/UnsavedChangesDialog'
 import { fornecimentosApi } from '@/api/fornecimentos.api'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
@@ -55,6 +57,7 @@ export function ContratoDetailPage() {
   const [editNumParcelas, setEditNumParcelas] = useState('')
   const [editValorParcelas, setEditValorParcelas] = useState('')
   const [editStatus, setEditStatus] = useState('')
+  const [activeTab, setActiveTab] = useState('informacoes')
 
   const { data: contrato, isLoading } = useQuery({
     queryKey: ['contrato', id],
@@ -121,6 +124,22 @@ export function ContratoDetailPage() {
     }
   }
 
+  const resetEditState = () => {
+    setEditMode(false)
+    setEditObjeto(contrato?.objeto ?? '')
+    setEditIniVigencia(contrato?.iniVigencia ? contrato.iniVigencia.substring(0, 10) : '')
+    setEditFimVigencia(contrato?.fimVigencia ? contrato.fimVigencia.substring(0, 10) : '')
+    setEditValorGlobal(contrato?.valorGlobal?.toString() ?? '')
+    setEditNumParcelas(contrato?.numParcelas?.toString() ?? '')
+    setEditValorParcelas(contrato?.valorParcelas?.toString() ?? '')
+    setEditStatus(contrato?.status ?? '')
+  }
+
+  const { isDialogOpen, handleNavigate, handleStay, guardTabChange } = useEditGuard(
+    editMode,
+    resetEditState,
+  )
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -133,7 +152,7 @@ export function ContratoDetailPage() {
   if (!contrato) return <div className="text-muted-foreground">Contrato não encontrado.</div>
 
   const ctLink = getContratacaoLink(contrato.identContratacao)
-  const canEdit = can('edit:contratos') && !['Em_Processamento', 'Inconsistente'].includes(contrato.status)
+  const canEdit = can('edit:contratos') && contrato.status === 'Processado'
   const formatDate = (d?: string) => d ? format(new Date(d), 'dd/MM/yyyy', { locale: ptBR }) : '—'
 
   return (
@@ -156,12 +175,6 @@ export function ContratoDetailPage() {
               </>
             ) : (
               <>
-                {canEdit && (
-                  <Button variant="outline" size="sm" onClick={handleEdit}>
-                    <Pencil className="h-4 w-4" />
-                    Editar
-                  </Button>
-                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -182,7 +195,7 @@ export function ContratoDetailPage() {
         }
       />
 
-      <Tabs defaultValue="informacoes">
+      <Tabs value={activeTab} onValueChange={guardTabChange(setActiveTab)}>
         <TabsList className="mb-4">
           <TabsTrigger value="informacoes">Informações</TabsTrigger>
           <TabsTrigger value="fornecimentos">
@@ -268,6 +281,14 @@ export function ContratoDetailPage() {
                   )}
                 </Field>
               </div>
+              {canEdit && !editMode && (
+                <div className="flex gap-3 flex-wrap mt-6 pt-5 border-t">
+                  <Button variant="outline" size="sm" onClick={handleEdit}>
+                    <Pencil className="h-4 w-4" />
+                    Editar
+                  </Button>
+                </div>
+              )}
               <p className="text-xs text-muted-foreground mt-6">
                 Atualizado em {format(new Date(contrato.updatedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
               </p>
@@ -335,6 +356,11 @@ export function ContratoDetailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      <UnsavedChangesDialog
+        open={isDialogOpen}
+        onNavigate={handleNavigate}
+        onStay={handleStay}
+      />
     </div>
   )
 }
