@@ -74,7 +74,7 @@ type NovaCompraFormData = z.infer<typeof novaCompraSchema>
 export function NovaContratacaoPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { setActiveJobId } = useAuthStore()
+  const { setActiveJobId, setActiveJobFormData } = useAuthStore()
   const { isAdmin } = usePermission()
 
   const { data: unidades = [] } = useQuery({
@@ -108,12 +108,19 @@ export function NovaContratacaoPage() {
         modalidade: data.modalidade as ModalidadeContratacao,
         ...(isAdmin && data.uasgParticipante ? { uasgParticipante: data.uasgParticipante } : {}),
       }),
-    onSuccess: (result) => {
+    onSuccess: (result, variables) => {
       // setQueryData atualiza o cache diretamente, sem network round-trip nem respeito ao staleTime
       if (!result.reimport) {
         queryClient.setQueryData<IContratacao[]>(['contratacoes'], (old) => [result.contratacao, ...(old ?? [])])
       }
       setActiveJobId(result.jobId)
+      setActiveJobFormData({
+        numContratacao: variables.numContratacao,
+        anoContratacao: variables.anoContratacao,
+        uasgUnGestora: variables.uasgUnGestora,
+        modalidade: variables.modalidade,
+        amparoLegal: variables.amparoLegal,
+      })
 
       const msg = result.reimport
         ? 'Contratação já processada. Importando fornecimentos para sua unidade...'
