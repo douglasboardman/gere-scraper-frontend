@@ -2,11 +2,20 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { IUsuario } from '@/types'
 
+export interface ActiveJobFormData {
+  numContratacao: string
+  anoContratacao: string
+  uasgUnGestora: string
+  modalidade: string
+  amparoLegal: string
+}
+
 interface AuthState {
   user: IUsuario | null
   token: string | null
   isAuthenticated: boolean
   activeJobId: string | null
+  activeJobFormData: ActiveJobFormData | null
 }
 
 interface AuthActions {
@@ -14,6 +23,7 @@ interface AuthActions {
   logout: () => void
   setUser: (user: IUsuario) => void
   setActiveJobId: (jobId: string | null) => void
+  setActiveJobFormData: (data: ActiveJobFormData | null) => void
 }
 
 type AuthStore = AuthState & AuthActions
@@ -26,6 +36,7 @@ export const useAuthStore = create<AuthStore>()(
       token: null,
       isAuthenticated: false,
       activeJobId: null,
+      activeJobFormData: null,
 
       // Actions
       login: (token: string, user: IUsuario) => {
@@ -46,7 +57,11 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       setActiveJobId: (jobId: string | null) => {
-        set({ activeJobId: jobId })
+        set({ activeJobId: jobId, ...(jobId === null ? { activeJobFormData: null } : {}) })
+      },
+
+      setActiveJobFormData: (data: ActiveJobFormData | null) => {
+        set({ activeJobFormData: data })
       },
     }),
     {
