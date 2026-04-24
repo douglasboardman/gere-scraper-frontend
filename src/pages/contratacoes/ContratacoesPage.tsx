@@ -13,6 +13,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { usePermission } from '@/hooks/usePermission'
+import { ENTITY } from '@/lib/entity-config'
 import type { IContratacao } from '@/types'
 import {
   Select,
@@ -174,6 +175,7 @@ export function ContratacoesPage() {
       <PageHeader
         title="Contratações"
         subtitle="Gerencie as contratações e pregões eletrônicos"
+        entity={ENTITY.contratacao}
         actions={
           can('create:contratacoes') ? (
             <Button onClick={() => navigate('/contratacoes/nova')}>

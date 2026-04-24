@@ -4,7 +4,7 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ClipboardCheck, Search } from 'lucide-react'
 import { useState } from 'react'
-import { tipoRequisicaoLabel } from '@/lib/utils'
+import { destDespesaLabel } from '@/lib/utils'
 import { requisicoesApi } from '@/api/requisicoes.api'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -98,7 +98,7 @@ function RequisicaoPendenteCard({ req, onAnalisar }: CardProps) {
           <div className="flex items-center gap-3 flex-wrap">
             <span className="font-mono text-sm font-semibold">{req.identificador}</span>
             <span className="text-xs px-2 py-0.5 rounded-full border border-amber-400 text-amber-700 bg-amber-50 font-medium">
-              {tipoRequisicaoLabel(req.tipo)}
+              {destDespesaLabel(req.destDespesa)}
             </span>
           </div>
 

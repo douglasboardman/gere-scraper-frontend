@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
-import { tipoRequisicaoLabel } from '@/lib/utils'
+import { destDespesaLabel } from '@/lib/utils'
 import { usePermission } from '@/hooks/usePermission'
 import type { IUsuario, IUnidade, IFornecimento, IItem } from '@/types'
 
@@ -133,7 +133,7 @@ export function RequisicaoViewPage() {
           </div>
           <div>
             <p className="text-xs text-muted-foreground mb-0.5">Tipo</p>
-            <p className="text-sm font-medium">{tipoRequisicaoLabel(requisicao.tipo)}</p>
+            <p className="text-sm font-medium">{destDespesaLabel(requisicao.destDespesa)}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground mb-0.5">Data de Criação</p>

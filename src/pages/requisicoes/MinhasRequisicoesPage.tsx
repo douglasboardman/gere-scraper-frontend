@@ -6,7 +6,7 @@ import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { Plus, Eye, Edit, Send, CheckCircle, XCircle, Trash2, Printer } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { tipoRequisicaoLabel } from '@/lib/utils'
+import { destDespesaLabel } from '@/lib/utils'
 import { requisicoesApi } from '@/api/requisicoes.api'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable } from '@/components/shared/DataTable'
@@ -179,10 +179,10 @@ export function MinhasRequisicoesPage() {
       ),
     },
     {
-      accessorKey: 'tipo',
+      accessorKey: 'destDespesa',
       header: 'Tipo',
       cell: ({ row }) => (
-        <span className="text-sm">{tipoRequisicaoLabel(row.original.tipo)}</span>
+        <span className="text-sm">{destDespesaLabel(row.original.destDespesa)}</span>
       ),
     },
     {

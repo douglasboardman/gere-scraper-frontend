@@ -5,7 +5,7 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Eye, Filter, X } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
-import { tipoRequisicaoLabel } from '@/lib/utils'
+import { destDespesaLabel } from '@/lib/utils'
 import { requisicoesApi } from '@/api/requisicoes.api'
 import { unidadesApi } from '@/api/unidades.api'
 import { usuariosApi } from '@/api/usuarios.api'
@@ -38,7 +38,7 @@ import type { IRequisicao, IUsuario, IUnidade } from '@/types'
 interface Filtros {
   unidadeId: string
   requisitanteId: string
-  tipo: string
+  destDespesa: string
   contratacaoId: string
   status: string
   dataInicio: string
@@ -48,7 +48,7 @@ interface Filtros {
 const FILTROS_INICIAIS: Filtros = {
   unidadeId: '',
   requisitanteId: '',
-  tipo: '',
+  destDespesa: '',
   contratacaoId: '',
   status: '',
   dataInicio: '',
@@ -98,7 +98,7 @@ export function RequisicoesUnidadePage() {
   const { data: contratacoes = [] } = useQuery({
     queryKey: ['contratacoes-filtro', uasgParaContratacoes],
     queryFn: () => contratacoesApi.listarPorUasg(uasgParaContratacoes),
-    enabled: filterModalOpen && !!pendingFilters.tipo && !!uasgParaContratacoes,
+    enabled: filterModalOpen && !!pendingFilters.destDespesa && !!uasgParaContratacoes,
   })
 
   // Usuários disponíveis para o filtro de requisitante
@@ -118,7 +118,7 @@ export function RequisicoesUnidadePage() {
   const requisicoesFiltradas = useMemo(() => {
     return requisicoes.filter((req) => {
       if (req.status === 'Rascunho') return false
-      if (appliedFilters.tipo && req.tipo !== appliedFilters.tipo) return false
+      if (appliedFilters.destDespesa && req.destDespesa !== appliedFilters.destDespesa) return false
 
       if (appliedFilters.status && req.status !== appliedFilters.status) return false
 
@@ -212,10 +212,10 @@ export function RequisicoesUnidadePage() {
       },
     },
     {
-      accessorKey: 'tipo',
+      accessorKey: 'destDespesa',
       header: 'Tipo',
       cell: ({ row }) => (
-        <span className="text-sm">{tipoRequisicaoLabel(row.original.tipo)}</span>
+        <span className="text-sm">{destDespesaLabel(row.original.destDespesa)}</span>
       ),
     },
     {
@@ -367,11 +367,11 @@ export function RequisicoesUnidadePage() {
             <div className="space-y-1.5">
               <Label>Tipo</Label>
               <Select
-                value={pendingFilters.tipo || '__all__'}
+                value={pendingFilters.destDespesa || '__all__'}
                 onValueChange={(val) =>
                   setPendingFilters((prev) => ({
                     ...prev,
-                    tipo: val === '__all__' ? '' : val,
+                    destDespesa: val === '__all__' ? '' : val,
                     contratacaoId: '',
                   }))
                 }
@@ -389,7 +389,7 @@ export function RequisicoesUnidadePage() {
 
             {/* Contratação — habilitado apenas após selecionar tipo */}
             <div className="space-y-1.5">
-              <Label className={!pendingFilters.tipo ? 'text-muted-foreground' : ''}>
+              <Label className={!pendingFilters.destDespesa ? 'text-muted-foreground' : ''}>
                 Contratação
               </Label>
               <Select
@@ -400,12 +400,12 @@ export function RequisicoesUnidadePage() {
                     contratacaoId: val === '__all__' ? '' : val,
                   }))
                 }
-                disabled={!pendingFilters.tipo}
+                disabled={!pendingFilters.destDespesa}
               >
                 <SelectTrigger>
                   <SelectValue
                     placeholder={
-                      !pendingFilters.tipo
+                      !pendingFilters.destDespesa
                         ? 'Selecione um tipo primeiro'
                         : 'Todas as contratações'
                     }
@@ -421,7 +421,7 @@ export function RequisicoesUnidadePage() {
                   ))}
                 </SelectContent>
               </Select>
-              {!pendingFilters.tipo && (
+              {!pendingFilters.destDespesa && (
                 <p className="text-xs text-muted-foreground">
                   Selecione um tipo para habilitar este filtro.
                 </p>

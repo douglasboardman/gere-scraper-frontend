@@ -13,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { contratacoesApi } from '@/api/contratacoes.api'
-import { atasApi } from '@/api/atas.api'
+import { contratosApi } from '@/api/contratos.api'
 import { fornecimentosApi } from '@/api/fornecimentos.api'
 import { requisicoesApi } from '@/api/requisicoes.api'
 import { useAuthStore } from '@/store/auth.store'
@@ -66,9 +66,9 @@ export function DashboardPage() {
     queryFn: contratacoesApi.listar,
   })
 
-  const { data: atas, isLoading: loadingAtas } = useQuery({
-    queryKey: ['atas'],
-    queryFn: () => atasApi.listar(),
+  const { data: contratos, isLoading: loadingContratos } = useQuery({
+    queryKey: ['contratos'],
+    queryFn: () => contratosApi.listar(),
   })
 
   const { data: fornecimentos, isLoading: loadingFornecimentos } = useQuery({
@@ -85,7 +85,7 @@ export function DashboardPage() {
     (c) => c.status === 'Em_Processamento' || c.status === 'Processada'
   ) ?? []
   const contratacoesDisponiveis = contratacoes?.filter((c) => c.status === 'Disponivel') ?? []
-  const atasVigentes = atas?.filter((a) => a.status === 'Disponivel') ?? []
+  const contratosVigentes = contratos?.filter((c) => c.status === 'Disponivel') ?? []
   const fornecimentosDisponiveis = fornecimentos?.filter((f) => f.status === 'Disponivel') ?? []
   const requisicoesExpedidas = requisicoes?.filter(
     (r) => r.status === 'Enviada' || r.status === 'Aprovada' || r.status === 'Empenhada'
@@ -114,11 +114,11 @@ export function DashboardPage() {
           delay={0}
         />
         <StatCard
-          title="Atas Vigentes"
-          value={loadingAtas ? '-' : atasVigentes.length}
-          description="Atas com status Disponível"
+          title="Contratos Vigentes"
+          value={loadingContratos ? '-' : contratosVigentes.length}
+          description="Contratos com status Disponível"
           icon={FileText}
-          isLoading={loadingAtas}
+          isLoading={loadingContratos}
           color="#4b8960"
           delay={50}
         />

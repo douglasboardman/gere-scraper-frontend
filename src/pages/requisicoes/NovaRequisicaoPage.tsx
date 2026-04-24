@@ -59,7 +59,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { cn, formatCurrency, tipoRequisicaoLabel } from '@/lib/utils'
+import { cn, formatCurrency, destDespesaLabel } from '@/lib/utils'
 import type { IContratacao, IFornecimento, IItem, IRequisicao, IUnidade } from '@/types'
 import { MODALIDADE_LABEL } from '@/types'
 
@@ -178,7 +178,7 @@ function StepIndicator({ current }: { current: number }) {
 // ---------------------------------------------------------------------------
 
 const step1Schema = z.object({
-  tipo: z.enum(['Material', 'Servico'], { required_error: 'Selecione o tipo da requisição' }),
+  destDespesa: z.enum(['Material', 'Servico'], { required_error: 'Selecione a destinação de despesa' }),
   justificativa: z.string().min(30, 'Justificativa deve ter pelo menos 30 caracteres'),
   observacoes: z.string().optional(),
 })
@@ -197,7 +197,7 @@ function Step1Dados({
   const form = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
     defaultValues: {
-      tipo: initialData?.tipo ?? undefined,
+      destDespesa: initialData?.destDespesa ?? undefined,
       justificativa: initialData?.justificativa ?? '',
       observacoes: initialData?.observacoes ?? '',
     },
@@ -219,7 +219,7 @@ function Step1Dados({
         <CardContent className="space-y-4">
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Tipo</p>
-            <p className="text-sm font-medium">{tipoRequisicaoLabel(initialData.tipo)}</p>
+            <p className="text-sm font-medium">{destDespesaLabel(initialData.destDespesa)}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Justificativa</p>
@@ -256,10 +256,10 @@ function Step1Dados({
           >
             <FormField
               control={form.control}
-              name="tipo"
+              name="destDespesa"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tipo *</FormLabel>
+                  <FormLabel>Destinação de Despesa *</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -1009,7 +1009,7 @@ function Step4Revisao({
           <div className="flex items-start justify-between gap-2">
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mb-0.5">
-                Requisição de {tipoRequisicaoLabel(requisicao.tipo)}
+                Requisição de {destDespesaLabel(requisicao.destDespesa)}
               </p>
               <p className="font-mono text-xs text-muted-foreground">{requisicao.identificador}</p>
             </div>
@@ -1297,7 +1297,7 @@ export function NovaRequisicaoPage() {
       {step === 2 && userUasg && step1Data && (
         <Step2Contratacao
           userUasg={userUasg}
-          tipoRequisicao={step1Data.tipo}
+          tipoRequisicao={step1Data.destDespesa}
           step1Data={step1Data}
           existingRequisicao={requisicao}
           onComplete={(req, contratacao) => {
