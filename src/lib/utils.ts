@@ -23,7 +23,8 @@ export function truncate(text: string, maxLength: number): string {
   return text.slice(0, maxLength) + '...'
 }
 
-export function tipoRequisicaoLabel(tipo?: string | null): string {
-  if (tipo === 'Servico') return 'Serviço'
-  return tipo ?? '—'
+export function destDespesaLabel(dest?: string | null): string {
+  if (dest === 'Servico') return 'Serviço'
+  if (dest === 'Outras_Obrigacoes') return 'Outras Obrigações'
+  return dest ?? '—'
 }

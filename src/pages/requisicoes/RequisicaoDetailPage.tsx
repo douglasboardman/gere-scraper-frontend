@@ -50,7 +50,7 @@ import {
 } from '@/components/ui/form'
 import { useAuthStore } from '@/store/auth.store'
 import { usePermission } from '@/hooks/usePermission'
-import { cn, formatCurrency, tipoRequisicaoLabel } from '@/lib/utils'
+import { cn, formatCurrency, destDespesaLabel } from '@/lib/utils'
 import type { IItemRequisicao, IFornecimento, IItem, IUsuario, IUnidade, IUorg, IRequisicao } from '@/types'
 
 // ---------------------------------------------------------------------------
@@ -716,7 +716,7 @@ function EditRequisicaoDialog({
             <div className="space-y-2">
               <Label className="text-sm font-medium">Tipo</Label>
               <div className="flex h-9 items-center rounded-md border bg-muted px-3 text-sm text-muted-foreground">
-                {tipoRequisicaoLabel(requisicao.tipo)}
+                {destDespesaLabel(requisicao.destDespesa)}
               </div>
               <p className="text-xs text-muted-foreground">
                 O tipo da requisição não pode ser alterado.
@@ -1002,7 +1002,7 @@ export function RequisicaoDetailPage() {
             </div>
             <div>
               <span className="text-muted-foreground">Tipo</span>
-              <p className="font-medium">{tipoRequisicaoLabel(requisicao.tipo)}</p>
+              <p className="font-medium">{destDespesaLabel(requisicao.destDespesa)}</p>
             </div>
             {requisicao.justificativa && (
               <div className="col-span-2">

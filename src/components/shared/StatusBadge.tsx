@@ -1,18 +1,14 @@
 import { Badge } from '@/components/ui/badge'
 import type {
-  StatusContratacao,
-  StatusAta,
-  StatusItem,
-  StatusFornecimento,
+  StatusElemContratacaoAlt,
+  StatusElemContratacao,
   StatusRequisicao,
   StatusJob,
 } from '@/types'
 
 type AnyStatus =
-  | StatusContratacao
-  | StatusAta
-  | StatusItem
-  | StatusFornecimento
+  | StatusElemContratacaoAlt
+  | StatusElemContratacao
   | StatusRequisicao
   | StatusJob
 

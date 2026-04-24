@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, destDespesaLabel } from '@/lib/utils'
 import { usePermission } from '@/hooks/usePermission'
 import {
   Select,
@@ -45,6 +45,7 @@ export function FornecimentoDetailPage() {
   const [editQtdUtilizada, setEditQtdUtilizada] = useState('')
   const [editSaldo, setEditSaldo] = useState('')
   const [editStatus, setEditStatus] = useState('')
+  const [editDestDespesa, setEditDestDespesa] = useState('')
 
   const { data: fornecimento, isLoading } = useQuery({
     queryKey: ['fornecimento', id],
@@ -72,6 +73,7 @@ export function FornecimentoDetailPage() {
     setEditQtdUtilizada(fornecimento?.qtdUtilizada?.toString() ?? '')
     setEditSaldo((fornecimento?.saldoDisponivel ?? fornecimento?.saldo)?.toString() ?? '')
     setEditStatus(fornecimento?.status ?? '')
+    setEditDestDespesa(fornecimento?.destDespesa ?? '')
     setEditMode(true)
   }
 
@@ -83,6 +85,7 @@ export function FornecimentoDetailPage() {
       if (editQtdUtilizada !== '') payload.qtdUtilizada = Number(editQtdUtilizada)
       if (editSaldo !== '') payload.saldoDisponivel = Number(editSaldo)
     }
+    if (editDestDespesa) (payload as any).destDespesa = editDestDespesa
     if (editStatus) payload.status = editStatus as IFornecimento['status']
     updateMutation.mutate(payload)
   }
@@ -99,6 +102,7 @@ export function FornecimentoDetailPage() {
     setEditQtdUtilizada(fornecimento?.qtdUtilizada?.toString() ?? '')
     setEditSaldo((fornecimento?.saldoDisponivel ?? fornecimento?.saldo)?.toString() ?? '')
     setEditStatus(fornecimento?.status ?? '')
+    setEditDestDespesa(fornecimento?.destDespesa ?? '')
   }
 
   const { isDialogOpen, handleNavigate, handleStay } = useEditGuard(editMode, resetEditState)
@@ -231,6 +235,22 @@ export function FornecimentoDetailPage() {
                 />
               ) : (
                 saldo ?? '—'
+              )}
+            </Field>
+            <Field label="Destinação Despesa">
+              {editMode && fornecimento.status === 'Processado' ? (
+                <Select value={editDestDespesa} onValueChange={setEditDestDespesa}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Material">Material</SelectItem>
+                    <SelectItem value="Servico">Serviço</SelectItem>
+                    <SelectItem value="Outras_Obrigacoes">Outras Obrigações</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                destDespesaLabel(fornecimento.destDespesa)
               )}
             </Field>
             <Field label="Status">

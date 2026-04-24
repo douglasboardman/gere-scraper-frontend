@@ -263,7 +263,7 @@ export function AtaDetailPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {itens.map((item) => (
+                    {[...itens].sort((a, b) => Number(a.sequencialItemPregao ?? a.numItem ?? 0) - Number(b.sequencialItemPregao ?? b.numItem ?? 0)).map((item) => (
                       <Fragment key={item.identificador}>
                         <TableRow className="hover:bg-muted/40 transition-colors duration-100">
                           <TableCell className="font-mono text-sm">

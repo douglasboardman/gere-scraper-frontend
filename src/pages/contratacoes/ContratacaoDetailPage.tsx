@@ -383,7 +383,10 @@ export function ContratacaoDetailPage() {
                   <TableBody>
                     {contratos.map((ct) => (
                       <TableRow key={ct.identificador} className="hover:bg-muted/40 transition-colors duration-100">
-                        <TableCell className="font-mono text-sm">{ct.numContrato}</TableCell>
+                        <TableCell>
+                          <p className="font-mono text-xs text-muted-foreground">{ct.tipoContrato ?? 'Contrato'}</p>
+                          <span className="font-mono text-sm">{ct.numContrato}</span>
+                        </TableCell>
                         <TableCell>
                           <p className="font-mono text-xs text-muted-foreground">{formatCNPJ(ct.fornecedor?.cnpj ?? '')}</p>
                           {ct.fornecedor?.nome && <p className="text-sm">{ct.fornecedor.nome}</p>}
@@ -436,7 +439,7 @@ export function ContratacaoDetailPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {itens.map((item) => (
+                    {[...itens].sort((a, b) => Number(a.sequencialItemPregao ?? a.numItem ?? 0) - Number(b.sequencialItemPregao ?? b.numItem ?? 0)).map((item) => (
                       <Fragment key={item.identificador}>
                         <TableRow className="hover:bg-muted/40 transition-colors duration-100">
                           <TableCell className="font-mono text-sm">

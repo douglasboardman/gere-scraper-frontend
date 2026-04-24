@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/dialog'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { StatusBadge } from '@/components/shared/StatusBadge'
-import { cn, formatCurrency, tipoRequisicaoLabel } from '@/lib/utils'
+import { cn, formatCurrency, destDespesaLabel } from '@/lib/utils'
 import type { IItemRequisicao, IFornecimento, IItem, IUsuario, IUnidade, IUorg } from '@/types'
 
 // ---------------------------------------------------------------------------
@@ -575,7 +575,7 @@ export function RequisicaoAnalisePage() {
             </div>
             <div>
               <span className="text-muted-foreground">Tipo</span>
-              <p className="font-medium">{tipoRequisicaoLabel(requisicao.tipo)}</p>
+              <p className="font-medium">{destDespesaLabel(requisicao.destDespesa)}</p>
             </div>
             {requisicao.justificativa && (
               <div className="col-span-2">

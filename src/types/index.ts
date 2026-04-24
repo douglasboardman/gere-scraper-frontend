@@ -2,11 +2,8 @@
 // Status types
 // ============================================================
 
-export type StatusContratacao = 'Em_Processamento' | 'Processada' | 'Inconsistente' | 'Disponivel' | 'Encerrada'
-export type StatusAta = 'Em_Processamento' | 'Processada' | 'Inconsistente' | 'Disponivel' | 'Encerrada'
-export type StatusItem = 'Em_Processamento' | 'Processado' | 'Inconsistente' | 'Disponivel' | 'Encerrado'
-export type StatusFornecimento = 'Em_Processamento' | 'Processado' | 'Inconsistente' | 'Disponivel' | 'Encerrado'
-export type StatusContrato = 'Em_Processamento' | 'Processado' | 'Inconsistente' | 'Disponivel' | 'Encerrado'
+export type StatusElemContratacaoAlt = 'Em_Processamento' | 'Processada' | 'Inconsistente' | 'Disponivel' | 'Encerrada'
+export type StatusElemContratacao = 'Em_Processamento' | 'Processado' | 'Inconsistente' | 'Disponivel' | 'Encerrado'
 export type StatusRequisicao = 'Rascunho' | 'Enviada' | 'Aprovada' | 'Rejeitada' | 'Empenhada'
 export type StatusJob = 'running' | 'completed' | 'failed'
 
@@ -69,7 +66,7 @@ export interface IContratacao {
   amparoLegal?: AmparoLegal
   iniVigencia?: string
   fimVigencia?: string
-  status: StatusContratacao
+  status: StatusElemContratacaoAlt
   createdAt: string
   updatedAt: string
   _count?: { atas: number; contratos: number }
@@ -85,7 +82,7 @@ export interface IAtaRegPrecos {
   nomeFornecedor?: string
   iniVigencia?: string
   fimVigencia?: string
-  status: StatusAta
+  status: StatusElemContratacaoAlt
   createdAt: string
   updatedAt: string
 }
@@ -103,10 +100,10 @@ export interface IItem {
   qtdHomologada?: number
   valUnitario?: number
   valorUnitario?: number
-  tipo?: string
+  tipo?: 'Material' | 'Servico'
   unMedida?: string
   unidadeMedida?: string
-  status: StatusItem
+  status: StatusElemContratacao
   createdAt: string
   updatedAt: string
 }
@@ -149,7 +146,8 @@ export interface IFornecimento {
   saldo?: number
   valorUnitario?: number
   valUnitHomologado?: number
-  status: StatusFornecimento
+  destDespesa?: DestinacaoDespesa
+  status: StatusElemContratacao
   createdAt: string
   updatedAt: string
 }
@@ -169,7 +167,8 @@ export interface IContrato {
   valorGlobal: number
   numParcelas?: number
   valorParcelas?: number
-  status: StatusContrato
+  tipoContrato?: 'Contrato' | 'Empenho'
+  status: StatusElemContratacao
   createdAt: string
   updatedAt: string
 }
@@ -214,7 +213,7 @@ export interface IUsuario {
   updatedAt: string
 }
 
-export type TipoRequisicao = 'Material' | 'Servico' | 'Outras_Obrigacoes'
+export type DestinacaoDespesa = 'Material' | 'Servico' | 'Outras_Obrigacoes'
 
 export interface IRequisicao {
   identificador: string
@@ -224,7 +223,7 @@ export interface IRequisicao {
   identContratacao?: string
   uorg_key?: string
   uorg?: IUorg
-  tipo: TipoRequisicao
+  destDespesa: DestinacaoDespesa
   status: StatusRequisicao
   observacao?: string
   observacoes?: string
@@ -337,7 +336,7 @@ export interface CriarContratacaoData {
 
 export interface CriarRequisicaoData {
   identUnidade?: string
-  tipo: TipoRequisicao
+  destDespesa: DestinacaoDespesa
   justificativa: string
   observacoes?: string
   identContratacao?: string

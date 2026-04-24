@@ -56,7 +56,10 @@ export function ContratosPage() {
       accessorKey: 'numContrato',
       header: 'Nº Contrato',
       cell: ({ row }) => (
-        <span className="font-mono text-sm">{row.original.numContrato}</span>
+        <div>
+          <p className="font-mono text-xs text-muted-foreground">{row.original.tipoContrato ?? 'Contrato'}</p>
+          <span className="font-mono text-sm">{row.original.numContrato}</span>
+        </div>
       ),
     },
     {

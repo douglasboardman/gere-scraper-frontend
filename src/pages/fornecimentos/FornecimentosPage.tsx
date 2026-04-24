@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, formatCNPJ } from "@/lib/utils";
 import { usePermission } from "@/hooks/usePermission";
+import { ENTITY } from "@/lib/entity-config";
 import type { IFornecimento, IItem, IAtaRegPrecos, IContratacao, IContrato } from "@/types";
 
 export function FornecimentosPage() {
@@ -124,20 +125,31 @@ export function FornecimentosPage() {
         const contrato = f.identContrato && typeof f.identContrato !== "string"
           ? f.identContrato as IContrato
           : null;
+        const hasRef = contrato || ata;
         return (
-          <div>
-            {contratacao && (
-              <p className="font-mono text-xs text-muted-foreground whitespace-nowrap">
-                {contratacao.numContratacao}/{contratacao.anoContratacao}
-              </p>
+          <div className="flex items-center gap-3">
+            {hasRef && (
+              <span className={`inline-flex items-center justify-center h-7 w-7 shrink-0 rounded-md ${contrato ? ENTITY.contrato.bg : ENTITY.ata.bg}`}>
+                {contrato
+                  ? <ENTITY.contrato.icon className="h-3.5 w-3.5 text-gray-600" />
+                  : <ENTITY.ata.icon className="h-3.5 w-3.5 text-gray-600" />
+                }
+              </span>
             )}
-            {contrato ? (
-              <p className="text-sm whitespace-nowrap">Cto {contrato.numContrato}</p>
-            ) : ata ? (
-              <p className="text-sm whitespace-nowrap">Ata {ata.numAta}</p>
-            ) : !contratacao ? (
-              <span className="text-muted-foreground">—</span>
-            ) : null}
+            <div>
+              {contratacao && (
+                <p className="font-mono text-xs text-muted-foreground whitespace-nowrap">
+                  {contratacao.numContratacao}/{contratacao.anoContratacao}
+                </p>
+              )}
+              {contrato ? (
+                <p className="text-sm whitespace-nowrap">C {contrato.numContrato}</p>
+              ) : ata ? (
+                <p className="text-sm whitespace-nowrap">A {ata.numAta}</p>
+              ) : !contratacao ? (
+                <span className="text-muted-foreground">—</span>
+              ) : null}
+            </div>
           </div>
         );
       },
@@ -242,6 +254,7 @@ export function FornecimentosPage() {
       <PageHeader
         title="Fornecimentos"
         subtitle="Quantitativos de fornecimentos por unidade participante"
+        entity={ENTITY.fornecimento}
         actions={
           can('create:fornecimentos') ? (
             <Button size="sm" onClick={() => navigate('/fornecimentos/novo')}>

@@ -9,6 +9,7 @@ import { ManageSearchIcon } from "@/components/icons/ManageSearchIcon";
 import type { ColumnDef } from "@tanstack/react-table";
 import { atasApi } from "@/api/atas.api";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { ENTITY } from "@/lib/entity-config";
 import { DataTable } from "@/components/shared/DataTable";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -139,6 +140,7 @@ export function AtasPage() {
             ? `Filtrando por contratação: ${identContratacao}`
             : "Todas as atas registradas no sistema"
         }
+        entity={ENTITY.ata}
       />
 
       <div className="relative max-w-sm w-full mb-4">
