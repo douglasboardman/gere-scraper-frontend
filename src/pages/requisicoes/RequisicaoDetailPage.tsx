@@ -8,7 +8,7 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 import {
-  ArrowLeft, Plus, Send, CheckCircle, XCircle, Trash2,
+  ArrowLeft, Plus, Send, Trash2,
   Pencil, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Loader2, Printer,
 } from 'lucide-react'
 import { requisicoesApi } from '@/api/requisicoes.api'
@@ -49,7 +49,6 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { useAuthStore } from '@/store/auth.store'
-import { usePermission } from '@/hooks/usePermission'
 import { cn, formatCurrency, destDespesaLabel } from '@/lib/utils'
 import type { IItemRequisicao, IFornecimento, IItem, IUsuario, IUnidade, IUorg, IRequisicao } from '@/types'
 
@@ -786,9 +785,8 @@ export function RequisicaoDetailPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const user = useAuthStore((s) => s.user)
-  const { isGestor } = usePermission()
 
-  const [actionDialog, setActionDialog] = useState<'enviar' | 'aprovar' | 'rejeitar' | null>(null)
+  const [actionDialog, setActionDialog] = useState<'enviar' | null>(null)
   const [conflitoPendente, setConflitoPendente] = useState<{
     conflitos: Array<{
       identFornecimento: string
@@ -852,35 +850,6 @@ export function RequisicaoDetailPage() {
     },
   })
 
-  const aprovarMutation = useMutation({
-    mutationFn: () => requisicoesApi.aprovar(id!),
-    onSuccess: () => {
-      toast.success('Requisição aprovada.')
-      queryClient.invalidateQueries({ queryKey: ['requisicao', id] })
-      setActionDialog(null)
-    },
-    onError: (error: unknown) => {
-      toast.error(
-        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-          'Erro inesperado',
-      )
-    },
-  })
-
-  const rejeitarMutation = useMutation({
-    mutationFn: () => requisicoesApi.rejeitar(id!),
-    onSuccess: () => {
-      toast.success('Requisição rejeitada.')
-      queryClient.invalidateQueries({ queryKey: ['requisicao', id] })
-      setActionDialog(null)
-    },
-    onError: (error: unknown) => {
-      toast.error(
-        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-          'Erro inesperado',
-      )
-    },
-  })
 
   const removeItemMutation = useMutation({
     mutationFn: (itemId: number) => itemRequisicaoApi.deletar(itemId),
@@ -906,7 +875,6 @@ export function RequisicaoDetailPage() {
 
   const canEdit = isOwner && (requisicao.status === 'Rascunho' || requisicao.status === 'Rejeitada')
   const canSend = isOwner && (requisicao.status === 'Rascunho' || requisicao.status === 'Rejeitada') && itensRequisicao.length > 0
-  const canApproveReject = isGestor && requisicao.status === 'Enviada'
 
   const valorTotal = itensRequisicao.reduce((sum, item) => sum + (item.valorTotal ?? 0), 0)
 
@@ -1024,44 +992,17 @@ export function RequisicaoDetailPage() {
             )}
           </div>
 
-          {/* Bottom row: Aprovar/Rejeitar (left) + Editar (right) */}
-          {(canApproveReject || canEdit) && (
-            <div className="flex items-center justify-between mt-4 pt-3 border-t">
-              <div className="flex gap-2">
-                {canApproveReject && (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1 border-green-300 text-green-700 hover:bg-green-50"
-                      onClick={() => setActionDialog('aprovar')}
-                    >
-                      <CheckCircle className="h-4 w-4" />
-                      Aprovar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1 border-destructive text-destructive hover:bg-destructive/10"
-                      onClick={() => setActionDialog('rejeitar')}
-                    >
-                      <XCircle className="h-4 w-4" />
-                      Rejeitar
-                    </Button>
-                  </>
-                )}
-              </div>
-              {canEdit && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1 ml-auto"
-                  onClick={() => setEditReqOpen(true)}
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                  Editar
-                </Button>
-              )}
+          {canEdit && (
+            <div className="flex items-center justify-end mt-4 pt-3 border-t">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1"
+                onClick={() => setEditReqOpen(true)}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Editar
+              </Button>
             </div>
           )}
         </CardContent>
@@ -1176,30 +1117,6 @@ export function RequisicaoDetailPage() {
           variant="default"
           isLoading={enviarMutation.isPending}
           onConfirm={() => enviarMutation.mutate()}
-          onCancel={() => setActionDialog(null)}
-        />
-      )}
-      {actionDialog === 'aprovar' && (
-        <ConfirmDialog
-          open
-          title="Aprovar Requisição"
-          description="Deseja aprovar esta requisição?"
-          confirmLabel="Aprovar"
-          variant="default"
-          isLoading={aprovarMutation.isPending}
-          onConfirm={() => aprovarMutation.mutate()}
-          onCancel={() => setActionDialog(null)}
-        />
-      )}
-      {actionDialog === 'rejeitar' && (
-        <ConfirmDialog
-          open
-          title="Rejeitar Requisição"
-          description="Deseja rejeitar esta requisição?"
-          confirmLabel="Rejeitar"
-          variant="destructive"
-          isLoading={rejeitarMutation.isPending}
-          onConfirm={() => rejeitarMutation.mutate()}
           onCancel={() => setActionDialog(null)}
         />
       )}

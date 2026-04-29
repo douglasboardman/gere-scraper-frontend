@@ -13,7 +13,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { usePermission } from '@/hooks/usePermission'
-import { ENTITY } from '@/lib/entity-config'
+import { ENTITY } from '@/lib/utils'
 import type { IContratacao } from '@/types'
 import {
   Select,

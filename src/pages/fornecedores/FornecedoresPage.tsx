@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable } from '@/components/shared/DataTable'
 import { SancoesDialog, useSancoesDialog } from '@/components/shared/SancoesDialog'
 import { Button } from '@/components/ui/button'
-import { formatCNPJ } from '@/lib/utils'
+import { formatCNPJ, ENTITY } from '@/lib/utils'
 
 function formatTelefone(tel: string | null | undefined): string {
   if (!tel) return '—'
@@ -108,6 +108,7 @@ export function FornecedoresPage() {
       <PageHeader
         title="Fornecedores"
         subtitle="Fornecedores registrados nas atas de registro de preços"
+        entity={ENTITY.fornecedor}
       />
 
       <DataTable

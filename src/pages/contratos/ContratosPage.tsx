@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { Eye, PlusCircle, Search } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Eye, PlusCircle, Search, Trash2, TriangleAlert } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
+import { toast } from 'sonner'
 import { contratosApi } from '@/api/contratos.api'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { formatCurrency, formatCNPJ } from '@/lib/utils'
+import { formatCurrency, formatCNPJ, ENTITY } from '@/lib/utils'
 import { usePermission } from '@/hooks/usePermission'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -18,17 +20,38 @@ import type { IContrato } from '@/types'
 export function ContratosPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { can } = usePermission()
+  const { can, isAdmin, isGestorUnidade } = usePermission()
+  const queryClient = useQueryClient()
   const identContratacao = searchParams.get('identContratacao') ?? undefined
   const [uasgFilter, setUasgFilter] = useState('')
   const [cnpjFilter, setCnpjFilter] = useState('')
   const [objetoFilter, setObjetoFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [deleteId, setDeleteId] = useState<string | null>(null)
 
   const { data: contratos = [], isLoading } = useQuery({
     queryKey: ['contratos', identContratacao],
     queryFn: () => contratosApi.listar({ identContratacao }),
   })
+
+  const deleteMutation = useMutation({
+    mutationFn: (identificador: string) => contratosApi.deletar(identificador),
+    onSuccess: () => {
+      toast.success('Contrato excluído com sucesso.')
+      queryClient.invalidateQueries({ queryKey: ['contratos'] })
+      setDeleteId(null)
+    },
+    onError: (error: unknown) => {
+      const msg =
+        (error as { response?: { data?: { error?: string; message?: string } } })?.response?.data?.message ??
+        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+        'Erro ao excluir contrato.'
+      toast.error(msg)
+      setDeleteId(null)
+    },
+  })
+
+  const podeExcluir = isAdmin || isGestorUnidade
 
   const contratosFiltrados = contratos.filter((c) => {
     if (uasgFilter.trim() && !c.uasgContratante.includes(uasgFilter.trim())) return false
@@ -116,17 +139,30 @@ export function ContratosPage() {
     },
     {
       id: 'acoes',
-      header: 'Ações',
+      header: () => <div className="text-right">Ações</div>,
       cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0"
-          title="Ver detalhes"
-          onClick={() => navigate(`/contratos/${row.original.identificador}`)}
-        >
-          <Eye className="h-3.5 w-3.5" />
-        </Button>
+        <div className="flex items-center justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            title="Ver detalhes"
+            onClick={() => navigate(`/contratos/${row.original.identificador}`)}
+          >
+            <Eye className="h-3.5 w-3.5" />
+          </Button>
+          {podeExcluir && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+              title="Excluir contrato"
+              onClick={() => setDeleteId(row.original.identificador)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
       ),
     },
   ]
@@ -138,6 +174,7 @@ export function ContratosPage() {
       <PageHeader
         title="Contratos"
         subtitle={identContratacao ? `Filtrando por Contratação: ${identContratacao}` : "Contratos administrativos vinculados às contratações"}
+        entity={ENTITY.contrato}
         actions={
           can('create:contratos') ? (
             <Button size="sm" onClick={() => navigate('/contratos/novo')}>
@@ -192,6 +229,29 @@ export function ContratosPage() {
         searchable={false}
         emptyMessage="Nenhum contrato encontrado."
       />
+
+      <ConfirmDialog
+        open={!!deleteId}
+        title="Excluir Contrato"
+        description={`Confirma a exclusão do contrato "${deleteId}"?`}
+        confirmLabel="Excluir"
+        variant="destructive"
+        isLoading={deleteMutation.isPending}
+        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+        onCancel={() => setDeleteId(null)}
+      >
+        <div className="flex items-start gap-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-800">
+          <TriangleAlert className="mt-0.5 h-10 w-10 shrink-0 text-amber-500" />
+          <p className="text-sm leading-relaxed">
+            <strong>Atenção:</strong> Esta operação excluirá permanentemente o contrato e todos os seus
+            fornecimentos vinculados. Requisições em rascunho que referenciem esses fornecimentos também
+            serão removidas.<br /><br />
+            A exclusão será <strong>bloqueada</strong> caso existam requisições com status
+            <em> Enviada, Aprovada, Rejeitada</em> ou <em>Empenhada</em> vinculadas a este contrato.<br /><br />
+            <strong>Esta ação não pode ser desfeita.</strong>
+          </p>
+        </div>
+      </ConfirmDialog>
     </div>
   )
 }
