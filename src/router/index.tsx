@@ -24,6 +24,9 @@ import { NovoFornecimentoPage } from '@/pages/fornecimentos/NovoFornecimentoPage
 import { ContratosPage } from '@/pages/contratos/ContratosPage'
 import { ContratoDetailPage } from '@/pages/contratos/ContratoDetailPage'
 import { NovoContratoPage } from '@/pages/contratos/NovoContratoPage'
+import { ImportarContratoPage } from '@/pages/contratos/ImportarContratoPage'
+import { ImportarItensPage } from '@/pages/contratos/ImportarItensPage'
+import { CarregarRenovacaoPage } from '@/pages/contratos/CarregarRenovacaoPage'
 import { RequisicoesPage } from '@/pages/requisicoes/RequisicoesPage'
 import { RequisicoesUnidadePage } from '@/pages/requisicoes/RequisicoesUnidadePage'
 import { MinhasRequisicoesPage } from '@/pages/requisicoes/MinhasRequisicoesPage'
@@ -183,6 +186,19 @@ export const router = createBrowserRouter([
             path: 'contratos/novo',
             element: <PrivateRoute requireGestorOrAdmin />,
             children: [{ index: true, element: <NovoContratoPage /> }],
+          },
+          {
+            path: 'contratos/importar',
+            element: <PrivateRoute requireGestorOrAdmin />,
+            children: [{ index: true, element: <ImportarContratoPage /> }],
+          },
+          {
+            path: 'contratos/importar-itens',
+            element: <ImportarItensPage />,
+          },
+          {
+            path: 'contratos/carregar-renovacao',
+            element: <CarregarRenovacaoPage />,
           },
           {
             path: 'contratos/:id',

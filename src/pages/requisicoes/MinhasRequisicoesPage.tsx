@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { Plus, Eye, Edit, Send, CheckCircle, XCircle, Trash2, Printer } from 'lucide-react'
+import { Plus, Eye, Edit, Send, Trash2, Printer } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { destDespesaLabel } from '@/lib/utils'
 import { requisicoesApi } from '@/api/requisicoes.api'
@@ -71,9 +71,9 @@ export function MinhasRequisicoesPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const user = useAuthStore((s) => s.user)
-  const { isAdmin, isGestor } = usePermission()
+  const { isAdmin } = usePermission()
   const [actionDialog, setActionDialog] = useState<{
-    type: 'enviar' | 'aprovar' | 'rejeitar' | 'deletar'
+    type: 'enviar' | 'deletar'
     id: string
     label: string
     observacoes?: string
@@ -125,29 +125,6 @@ export function MinhasRequisicoesPage() {
     },
   })
 
-  const aprovarMutation = useMutation({
-    mutationFn: (id: string) => requisicoesApi.aprovar(id),
-    onSuccess: () => {
-      toast.success('Requisição aprovada.')
-      queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
-      setActionDialog(null)
-    },
-    onError: (error: unknown) => {
-      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Erro inesperado')
-    },
-  })
-
-  const rejeitarMutation = useMutation({
-    mutationFn: (id: string) => requisicoesApi.rejeitar(id),
-    onSuccess: () => {
-      toast.success('Requisição rejeitada.')
-      queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
-      setActionDialog(null)
-    },
-    onError: (error: unknown) => {
-      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Erro inesperado')
-    },
-  })
 
   const deletarMutation = useMutation({
     mutationFn: (id: string) => requisicoesApi.deletar(id),
@@ -165,8 +142,6 @@ export function MinhasRequisicoesPage() {
     if (!actionDialog) return
     const { type, id } = actionDialog
     if (type === 'enviar') enviarMutation.mutate(id)
-    else if (type === 'aprovar') aprovarMutation.mutate(id)
-    else if (type === 'rejeitar') rejeitarMutation.mutate(id)
     else if (type === 'deletar') deletarMutation.mutate(id)
   }
 
@@ -256,33 +231,6 @@ export function MinhasRequisicoesPage() {
               </>
             )}
 
-            {isGestor && req.status === 'Enviada' && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs text-green-700"
-                  title="Aprovar"
-                  onClick={() =>
-                    setActionDialog({ type: 'aprovar', id: req.identificador, label: req.identificador })
-                  }
-                >
-                  <CheckCircle className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 text-xs text-destructive"
-                  title="Rejeitar"
-                  onClick={() =>
-                    setActionDialog({ type: 'rejeitar', id: req.identificador, label: req.identificador })
-                  }
-                >
-                  <XCircle className="h-3.5 w-3.5" />
-                </Button>
-              </>
-            )}
-
             {(req.status === 'Aprovada' || req.status === 'Empenhada') && (
               <Button
                 variant="ghost"
@@ -307,18 +255,6 @@ export function MinhasRequisicoesPage() {
       confirmLabel: 'Enviar',
       variant: 'default' as const,
     },
-    aprovar: {
-      title: 'Aprovar Requisição',
-      description: `Deseja aprovar a requisição "${actionDialog?.label}"?`,
-      confirmLabel: 'Aprovar',
-      variant: 'default' as const,
-    },
-    rejeitar: {
-      title: 'Rejeitar Requisição',
-      description: `Deseja rejeitar a requisição "${actionDialog?.label}"?`,
-      confirmLabel: 'Rejeitar',
-      variant: 'destructive' as const,
-    },
     deletar: {
       title: 'Excluir Requisição',
       description: `Tem certeza que deseja excluir a requisição "${actionDialog?.label}"? Todos os seus itens também serão excluídos. Esta ação não pode ser desfeita.`,
@@ -330,8 +266,6 @@ export function MinhasRequisicoesPage() {
   const currentDialog = actionDialog ? dialogConfig[actionDialog.type] : null
   const isMutating =
     enviarMutation.isPending ||
-    aprovarMutation.isPending ||
-    rejeitarMutation.isPending ||
     deletarMutation.isPending
 
   return (

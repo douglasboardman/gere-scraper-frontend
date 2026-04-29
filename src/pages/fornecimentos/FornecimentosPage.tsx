@@ -9,9 +9,8 @@ import { DataTable } from "@/components/shared/DataTable";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { formatCurrency, formatCNPJ } from "@/lib/utils";
+import { formatCurrency, formatCNPJ, ENTITY } from "@/lib/utils";
 import { usePermission } from "@/hooks/usePermission";
-import { ENTITY } from "@/lib/entity-config";
 import type { IFornecimento, IItem, IAtaRegPrecos, IContratacao, IContrato } from "@/types";
 
 export function FornecimentosPage() {
@@ -129,7 +128,7 @@ export function FornecimentosPage() {
         return (
           <div className="flex items-center gap-3">
             {hasRef && (
-              <span className={`inline-flex items-center justify-center h-7 w-7 shrink-0 rounded-md ${contrato ? ENTITY.contrato.bg : ENTITY.ata.bg}`}>
+              <span className={`inline-flex items-center justify-center h-7 w-7 shrink-0 rounded-md ${contrato ? ENTITY.contrato.bg : ENTITY.ata.bgAlt}`}>
                 {contrato
                   ? <ENTITY.contrato.icon className="h-3.5 w-3.5 text-gray-600" />
                   : <ENTITY.ata.icon className="h-3.5 w-3.5 text-gray-600" />

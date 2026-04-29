@@ -28,6 +28,7 @@ import { itemRequisicaoApi } from '@/api/itemRequisicao.api'
 import { fornecimentosApi } from '@/api/fornecimentos.api'
 import { itensApi } from '@/api/itens.api'
 import { contratacoesApi } from '@/api/contratacoes.api'
+import { uorgsApi } from '@/api/uorgs.api'
 import { useAuthStore } from '@/store/auth.store'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -178,7 +179,7 @@ function StepIndicator({ current }: { current: number }) {
 // ---------------------------------------------------------------------------
 
 const step1Schema = z.object({
-  destDespesa: z.enum(['Material', 'Servico'], { required_error: 'Selecione a destinação de despesa' }),
+  destDespesa: z.enum(['Material', 'Servico', 'Outras_Obrigacoes'], { required_error: 'Selecione a destinação de despesa' }),
   justificativa: z.string().min(30, 'Justificativa deve ter pelo menos 30 caracteres'),
   observacoes: z.string().optional(),
 })
@@ -269,6 +270,7 @@ function Step1Dados({
                     <SelectContent>
                       <SelectItem value="Material">Material</SelectItem>
                       <SelectItem value="Servico">Serviço</SelectItem>
+                      <SelectItem value="Outras_Obrigacoes">Outras Obrigações</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -356,7 +358,7 @@ function Step2Contratacao({
   onBack,
 }: {
   userUasg: string
-  tipoRequisicao: 'Material' | 'Servico'
+  tipoRequisicao: 'Material' | 'Servico' | 'Outras_Obrigacoes'
   step1Data: Step1Data
   existingRequisicao: IRequisicao | null
   onComplete: (req: IRequisicao, contratacao: IContratacao) => void
@@ -393,10 +395,14 @@ function Step2Contratacao({
     enabled: !!userUasg,
   })
 
-  // 2) Extrai compra IDs únicos dos identificadores dos fornecimentos
+  // 2) Filtra fornecimentos pela destinação de despesa e extrai compra IDs únicos
+  const fornecimentosDestDespesa = fornecimentos.filter(
+    (f) => f.destDespesa === tipoRequisicao,
+  )
+
   const uniqueContratacaoIds = Array.from(
     new Set(
-      fornecimentos
+      fornecimentosDestDespesa
         .map((f) => extrairIdContratacao(f.identificador))
         .filter((id): id is string => id !== null),
     ),
@@ -417,34 +423,9 @@ function Step2Contratacao({
     enabled: uniqueContratacaoIds.length > 0,
   })
 
-  // 4) Busca itens de cada compra para filtrar pelo tipo da requisição
-  const { data: itensPorContratacao = {}, isLoading: loadingItens } = useQuery({
-    queryKey: ['itens-tipo-wizard', uniqueContratacaoIds, tipoRequisicao],
-    queryFn: async () => {
-      const results = await Promise.allSettled(
-        uniqueContratacaoIds.map(async (id) => {
-          const itens = await itensApi.listar({ identContratacao: id })
-          return { id, itens }
-        }),
-      )
-      const map: Record<string, IItem[]> = {}
-      for (const r of results) {
-        if (r.status === 'fulfilled') map[r.value.id] = r.value.itens
-      }
-      return map
-    },
-    enabled: uniqueContratacaoIds.length > 0,
-  })
+  const isLoading = loadingForn || loadingContratacoes
 
-  const isLoading = loadingForn || loadingContratacoes || loadingItens
-
-  // Filtra compras disponíveis que possuem pelo menos um item do tipo da requisição
-  const contratacoesFiltradas = contratacoes.filter((c) => {
-    if (c.status !== 'Disponivel') return false
-    const itens = itensPorContratacao[c.identificador]
-    if (!itens) return true // enquanto carrega, não oculta
-    return itens.some((it) => (it.tipo ?? 'Material') === tipoRequisicao)
-  })
+  const contratacoesFiltradas = contratacoes.filter((c) => c.status === 'Disponivel')
 
   const filtered = contratacoesFiltradas.filter((c) => {
     if (!search) return true
@@ -478,6 +459,12 @@ function Step2Contratacao({
             Sua unidade (UASG {userUasg}) não possui fornecimentos registrados como participante.
           </CardContent>
         </Card>
+      ) : fornecimentosDestDespesa.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 text-center text-muted-foreground text-sm">
+            Sua unidade possui fornecimentos, mas nenhum com destinação de despesa <strong>{destDespesaLabel(tipoRequisicao)}</strong>.
+          </CardContent>
+        </Card>
       ) : contratacoes.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center text-muted-foreground text-sm">
@@ -487,7 +474,7 @@ function Step2Contratacao({
       ) : contratacoesFiltradas.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center text-muted-foreground text-sm">
-            Nenhuma contratação com itens do tipo <strong>{tipoRequisicao}</strong> disponível para criação de requisição de empenho em sua unidade.
+            Nenhuma contratação disponível com fornecimentos de <strong>{destDespesaLabel(tipoRequisicao)}</strong> para sua unidade.
           </CardContent>
         </Card>
       ) : filtered.length === 0 ? (
@@ -557,12 +544,14 @@ function Step2Contratacao({
 function Step3Itens({
   selectedCompra,
   userUasg,
+  destDespesa,
   initialItems,
   onComplete,
   onBack,
 }: {
   selectedCompra: IContratacao
   userUasg: string
+  destDespesa: 'Material' | 'Servico' | 'Outras_Obrigacoes'
   initialItems: Map<string, SelectedItemEntry>
   onComplete: (items: Map<string, SelectedItemEntry>) => void
   onBack: () => void
@@ -583,6 +572,7 @@ function Step3Itens({
     queryFn: () => itensApi.listar({ identContratacao: selectedCompra.identificador }),
   })
 
+  const fornecimentosFiltrados = fornecimentos.filter((f) => f.destDespesa === destDespesa)
   const itemMap = new Map<string, IItem>(itens.map((it) => [it.identificador, it]))
   const isLoading = loadingForn || loadingItens
 
@@ -593,7 +583,7 @@ function Step3Itens({
 
   const CATALOG_PAGE_SIZE = 10
   const filteredFornecimentos = catalogSearch.trim()
-    ? fornecimentos.filter((f) => {
+    ? fornecimentosFiltrados.filter((f) => {
         const item = resolveItem(f)
         if (!item) return false
         const q = catalogSearch.toLowerCase()
@@ -602,7 +592,7 @@ function Step3Itens({
           descDetalhada(item).toLowerCase().includes(q)
         )
       })
-    : fornecimentos
+    : fornecimentosFiltrados
   const totalCatalogPages = Math.max(1, Math.ceil(filteredFornecimentos.length / CATALOG_PAGE_SIZE))
   const paginatedFornecimentos = filteredFornecimentos.slice(
     (catalogPage - 1) * CATALOG_PAGE_SIZE,
@@ -679,7 +669,7 @@ function Step3Itens({
               <p className="text-sm font-semibold">
                 Itens disponíveis{' '}
                 <span className="text-muted-foreground font-normal">
-                  ({catalogSearch.trim() ? `${filteredFornecimentos.length} de ${fornecimentos.length}` : fornecimentos.length})
+                  ({catalogSearch.trim() ? `${filteredFornecimentos.length} de ${fornecimentosFiltrados.length}` : fornecimentosFiltrados.length})
                 </span>
               </p>
               <div className="relative">
@@ -697,7 +687,7 @@ function Step3Itens({
             </div>
 
             <div className="flex-1 overflow-y-auto divide-y">
-              {fornecimentos.length === 0 ? (
+              {fornecimentosFiltrados.length === 0 ? (
                 <div className="flex items-center justify-center h-40 text-muted-foreground text-sm text-center px-6">
                   Nenhum fornecimento encontrado para sua unidade nesta contratação.
                 </div>
@@ -945,6 +935,15 @@ function Step4Revisao({
   const userUnidade = typeof user?.unidade === 'object' ? (user.unidade as IUnidade) : null
   const unidadeNome = userUnidade?.nomeAbrev ?? userUnidade?.nome ?? '—'
 
+  const { data: uorg } = useQuery({
+    queryKey: ['uorg', user?.uorg_key],
+    queryFn: () => uorgsApi.obter(user!.uorg_key!),
+    enabled: !!user?.uorg_key,
+  })
+  const uorgLabel = uorg
+    ? `${uorg.uorg_sg ? uorg.uorg_sg + ' — ' : ''}${uorg.uorg_no}`
+    : (user?.uorg_key ?? '—')
+
   type ConflitosItem = {
     identFornecimento: string
     descricaoItem: string
@@ -1030,7 +1029,7 @@ function Step4Revisao({
                 Unidade / Setor
               </p>
               <p className="font-medium">{unidadeNome}</p>
-              <p className="text-xs text-muted-foreground font-mono">{user?.uorg_key ?? '—'}</p>
+              <p className="text-xs text-muted-foreground">{uorgLabel}</p>
             </div>
           </div>
 
@@ -1288,6 +1287,11 @@ export function NovaRequisicaoPage() {
         <Step1Dados
           initialData={step1Data ?? undefined}
           onComplete={(data) => {
+            if (step1Data?.destDespesa !== data.destDespesa) {
+              setSelectedCompra(null)
+              setSelectedItems(new Map())
+              setRequisicao(null)
+            }
             setStep1Data(data)
             setStep(2)
           }}
@@ -1321,6 +1325,7 @@ export function NovaRequisicaoPage() {
         <Step3Itens
           selectedCompra={selectedCompra}
           userUasg={userUasg}
+          destDespesa={step1Data!.destDespesa}
           initialItems={selectedItems}
           onComplete={(items) => {
             setSelectedItems(items)

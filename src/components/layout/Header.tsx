@@ -84,7 +84,7 @@ export function Header() {
       {/* Right: user menu */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="flex items-center gap-2 h-9 px-2 hover:bg-muted/60 transition-colors duration-150">
+          <Button variant="ghost" className="flex items-center gap-2 h-9 px-2 hover:bg-muted/60 hover:text-foreground transition-colors duration-150">
             <Avatar className="h-7 w-7 ring-1 ring-border">
               <AvatarFallback className="text-xs bg-primary text-primary-foreground">
                 {user?.nome?.charAt(0).toUpperCase() ?? 'U'}
@@ -108,7 +108,7 @@ export function Header() {
             Meu Perfil
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+          <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
             <LogOut className="mr-2 h-4 w-4" />
             Sair
           </DropdownMenuItem>

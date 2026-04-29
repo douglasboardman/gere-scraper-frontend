@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { EntityConfig } from '@/lib/entity-config'
+import type { EntityConfig } from '@/lib/utils'
 
 interface PageHeaderProps {
   title: string

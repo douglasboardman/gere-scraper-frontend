@@ -14,6 +14,9 @@ import {
   LogOut,
   Layers,
   ScrollText,
+  Upload,
+  PackagePlus,
+  RefreshCw,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
@@ -31,7 +34,7 @@ interface NavItem {
 interface NavGroup {
   title: string
   items: NavItem[]
-  requiresRole?: 'admin' | 'admin_or_gestor_unidade' | 'can_approve'
+  requiresRole?: 'admin' | 'admin_or_gestor_unidade' | 'can_approve' | 'gestao_contratos'
 }
 
 function GereLogo() {
@@ -51,7 +54,8 @@ const roleLabels: Record<string, string> = {
 
 export function Sidebar() {
   const { user, logout } = useAuthStore()
-  const { isAdmin, isGestorUnidade, can } = usePermission()
+  const { isAdmin, isGestorUnidade, isGestorContratacoes, isGestorContratos, can } = usePermission()
+  const isGestaoContratos = isGestorUnidade || isGestorContratacoes || isGestorContratos
   const navigate = useNavigate()
 
   const canApprove = can('approve:requisicoes')
@@ -73,7 +77,17 @@ export function Sidebar() {
         { label: 'Itens', to: '/itens', icon: Package },
         { label: 'Fornecedores', to: '/fornecedores', icon: Truck },
         { label: 'Fornecimentos', to: '/fornecimentos', icon: ArrowLeftRight },
-        { label: 'Contratos', to: '/contratos', icon: ScrollText },
+        ...(!isGestaoContratos ? [{ label: 'Contratos', to: '/contratos', icon: ScrollText, end: true }] : []),
+      ],
+    },
+    {
+      title: 'Gestão de Contratos',
+      requiresRole: 'gestao_contratos',
+      items: [
+        { label: 'Consultar Contratos', to: '/contratos', icon: ScrollText, end: true },
+        { label: 'Importar Contrato', to: '/contratos/importar', icon: Upload },
+        { label: 'Importar Itens', to: '/contratos/importar-itens', icon: PackagePlus },
+        { label: 'Carregar Renovação', to: '/contratos/carregar-renovacao', icon: RefreshCw },
       ],
     },
     {
@@ -107,6 +121,7 @@ export function Sidebar() {
     if (g.requiresRole === 'admin_or_gestor_unidade') return (isAdmin || isGestorUnidade) && g.items.length > 0
     if (g.requiresRole === 'admin') return isAdmin
     if (g.requiresRole === 'can_approve') return canApprove
+    if (g.requiresRole === 'gestao_contratos') return isGestaoContratos
     return true
   })
 

@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { ArrowLeft, Pencil, X, Check, RefreshCw, Eye } from 'lucide-react'
+import { ArrowLeft, Pencil, X, Check, Eye } from 'lucide-react'
 import { contratosApi } from '@/api/contratos.api'
 import { useEditGuard } from '@/hooks/useEditGuard'
 import { UnsavedChangesDialog } from '@/components/shared/UnsavedChangesDialog'
@@ -175,16 +175,6 @@ export function ContratoDetailPage() {
               </>
             ) : (
               <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate('/contratos/renovacao', { state: { contrato } })}
-                  title="Funcionalidade em desenvolvimento"
-                  disabled
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  Renovar
-                </Button>
                 <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
                   <ArrowLeft className="h-4 w-4" />
                   Voltar

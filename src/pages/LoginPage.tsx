@@ -68,18 +68,9 @@ export function LoginPage() {
     <div className="min-h-screen flex">
       {/* Left panel */}
       <div
-        className="hidden lg:flex flex-col items-center justify-center w-2/5 p-12 relative overflow-hidden"
+        className="hidden lg:flex flex-col items-center justify-center w-2/5 p-12"
         style={{ backgroundColor: '#272626' }}
       >
-        {/* Gradient orb */}
-        <div
-          className="absolute -top-24 -right-24 w-64 h-64 rounded-full opacity-20 pointer-events-none"
-          style={{ background: 'radial-gradient(circle, #4b8960 0%, transparent 70%)' }}
-        />
-        <div
-          className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full opacity-10 pointer-events-none"
-          style={{ background: 'radial-gradient(circle, #82ab90 0%, transparent 70%)' }}
-        />
         <div className="flex flex-col items-center text-center space-y-6 max-w-xs">
           <img src="/logo-branco.svg" alt="GERE" width="80" height="80" />
 
@@ -120,7 +111,7 @@ export function LoginPage() {
       </div>
 
       {/* Right panel — form */}
-      <div className="flex-1 flex items-center justify-center p-8" style={{ background: 'linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted)) 100%)' }}>
+      <div className="flex-1 flex items-center justify-center bg-background p-8">
         <div className="w-full max-w-sm space-y-8 animate-slide-up">
           {/* Mobile logo */}
           <div className="flex flex-col items-center lg:hidden mb-6">

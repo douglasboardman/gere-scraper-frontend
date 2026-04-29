@@ -1,5 +1,32 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import {
+  Gavel,
+  FileText,
+  Package,
+  Truck,
+  ArrowLeftRight,
+  ScrollText,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+
+export interface EntityConfig {
+  icon: LucideIcon
+  bg: string
+  bgAlt: string
+}
+
+export const ENTITY_BG = 'bg-[rgba(75,137,96,0.17)]'
+export const ENTITY_BG_ALT = 'bg-secondary'
+
+export const ENTITY: Record<string, EntityConfig> = {
+  contratacao:  { icon: Gavel,          bg: ENTITY_BG, bgAlt: ENTITY_BG_ALT },
+  ata:          { icon: FileText,       bg: ENTITY_BG, bgAlt: ENTITY_BG_ALT },
+  item:         { icon: Package,        bg: ENTITY_BG, bgAlt: ENTITY_BG_ALT },
+  fornecedor:   { icon: Truck,          bg: ENTITY_BG, bgAlt: ENTITY_BG_ALT },
+  fornecimento: { icon: ArrowLeftRight, bg: ENTITY_BG, bgAlt: ENTITY_BG_ALT },
+  contrato:     { icon: ScrollText,     bg: ENTITY_BG, bgAlt: ENTITY_BG_ALT },
+}
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

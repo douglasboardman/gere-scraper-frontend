@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, ENTITY } from "@/lib/utils";
 import type { IItem, IAtaRegPrecos, IContratacao } from "@/types";
 
 export function ItensPage() {
@@ -227,7 +227,7 @@ export function ItensPage() {
 
   return (
     <div>
-      <PageHeader title="Itens" subtitle={subtitle} />
+      <PageHeader title="Itens" subtitle={subtitle} entity={ENTITY.item} />
 
       <div className="mb-4 rounded-lg border bg-muted/40 p-4">
         <p className="mb-3 text-sm font-medium text-muted-foreground">Filtrar por:</p>

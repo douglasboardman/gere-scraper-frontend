@@ -173,6 +173,50 @@ export interface IContrato {
   updatedAt: string
 }
 
+export interface IContratoExterno {
+  numeroContrato: string
+  codigoUnidadeGestora: string
+  niFornecedor: string
+  nomeRazaoSocialFornecedor: string
+  objeto: string
+  codigoUnidadeGestoraOrigemContrato?: string | null
+  dataVigenciaInicial: string
+  dataVigenciaFinal?: string | null
+  valorGlobal: number
+  numeroParcelas?: number | null
+  valorParcela?: number | null
+  idCompra: string
+  numeroControlePncpContrato?: string | null
+}
+
+export interface IItemContratoExterno {
+  numeroItem: string
+  descricaoIitem: string
+  tipoItem: string
+  codigoItem: number
+  quantidadeItem: number
+  valorUnitarioItem: number
+  niFornecedor: string
+  nomeRazaoSocialFornecedor: string
+}
+
+export interface ImportarContratoPayload {
+  identContratacao: string
+  contratoExterno: IContratoExterno
+  itens: Array<{
+    numeroItem: string
+    quantidadeItem: number
+    qtdUtilizada: number
+    valorUnitarioItem: number
+  }>
+}
+
+export interface ImportarContratoResponse {
+  contrato: IContrato
+  fornecimentosCriados: number
+  itensIgnorados: string[]
+}
+
 export interface IUnidade {
   identificador: string
   idContratos: string
