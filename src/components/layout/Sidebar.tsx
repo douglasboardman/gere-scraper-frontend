@@ -14,9 +14,6 @@ import {
   LogOut,
   Layers,
   ScrollText,
-  Upload,
-  PackagePlus,
-  RefreshCw,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
@@ -70,24 +67,25 @@ export function Sidebar() {
       ],
     },
     {
-      title: 'Gestão de Contratações',
+      title: 'Contratações',
       items: [
         { label: 'Contratações', to: '/contratacoes', icon: Gavel },
         { label: 'Atas', to: '/atas', icon: FileText },
         { label: 'Itens', to: '/itens', icon: Package },
-        { label: 'Fornecedores', to: '/fornecedores', icon: Truck },
-        { label: 'Fornecimentos', to: '/fornecimentos', icon: ArrowLeftRight },
-        ...(!isGestaoContratos ? [{ label: 'Contratos', to: '/contratos', icon: ScrollText, end: true }] : []),
       ],
     },
     {
-      title: 'Gestão de Contratos',
-      requiresRole: 'gestao_contratos',
+      title: 'Fornecimento',
       items: [
-        { label: 'Consultar Contratos', to: '/contratos', icon: ScrollText, end: true },
-        { label: 'Importar Contrato', to: '/contratos/importar', icon: Upload },
-        { label: 'Importar Itens', to: '/contratos/importar-itens', icon: PackagePlus },
-        { label: 'Carregar Renovação', to: '/contratos/carregar-renovacao', icon: RefreshCw },
+        { label: 'Fornecedores', to: '/fornecedores', icon: Truck },
+        { label: 'Fornecimentos', to: '/fornecimentos', icon: ArrowLeftRight },
+      ],
+    },
+    {
+      title: 'Contratos',
+      items: [
+        ...((isAdmin || isGestaoContratos) ? [{ label: 'Painel Contratos', to: '/contratos/dashboard', icon: LayoutDashboard }] : []),
+        { label: 'Consultar', to: '/contratos', icon: ScrollText, end: true },
       ],
     },
     {

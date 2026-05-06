@@ -173,6 +173,29 @@ export interface IContrato {
   updatedAt: string
 }
 
+export interface IContratoDashboardVigencia {
+  identificador: string
+  numContrato: string
+  nomeFornecedor: string
+  fimVigencia: string | null
+}
+
+export interface IContratoDashboardFornecedor {
+  identFornecedor: string
+  nomeFornecedor: string
+  totalEmpenho: number
+  numRequisicoes: number
+}
+
+export interface IContratoDashboard {
+  contratosDisponiveis: number
+  itensDisponiveis: number
+  totalEmpenhado12m: number
+  contratosVigencia: IContratoDashboardVigencia[]
+  topFornecedores: IContratoDashboardFornecedor[]
+  ultimaSyncCache: string | null
+}
+
 export interface IContratoExterno {
   numeroContrato: string
   codigoUnidadeGestora: string

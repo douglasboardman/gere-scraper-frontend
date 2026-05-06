@@ -21,6 +21,7 @@ import { FornecedorDetailPage } from '@/pages/fornecedores/FornecedorDetailPage'
 import { FornecimentosPage } from '@/pages/fornecimentos/FornecimentosPage'
 import { FornecimentoDetailPage } from '@/pages/fornecimentos/FornecimentoDetailPage'
 import { NovoFornecimentoPage } from '@/pages/fornecimentos/NovoFornecimentoPage'
+import { ContratoDashboardPage } from '@/pages/contratos/ContratoDashboardPage'
 import { ContratosPage } from '@/pages/contratos/ContratosPage'
 import { ContratoDetailPage } from '@/pages/contratos/ContratoDetailPage'
 import { NovoContratoPage } from '@/pages/contratos/NovoContratoPage'
@@ -181,6 +182,10 @@ export const router = createBrowserRouter([
           {
             path: 'contratos',
             element: <ContratosPage />,
+          },
+          {
+            path: 'contratos/dashboard',
+            element: <ContratoDashboardPage />,
           },
           {
             path: 'contratos/novo',

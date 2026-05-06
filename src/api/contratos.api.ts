@@ -4,6 +4,7 @@ import type {
   IContratacao,
   IContratoExterno,
   IItemContratoExterno,
+  IContratoDashboard,
   ImportarContratoPayload,
   ImportarContratoResponse,
   CriarContratoData,
@@ -70,6 +71,16 @@ export const contratosApi = {
 
   async deletar(identificador: string): Promise<{ message: string }> {
     const { data } = await apiClient.delete<{ message: string }>(`/contratos/${identificador}`)
+    return data
+  },
+
+  async dashboard(params?: { uasg: string; identUnidade: string; codGestao: string }): Promise<IContratoDashboard> {
+    const { data } = await apiClient.get<IContratoDashboard>('/contratos/dashboard', { params })
+    return data
+  },
+
+  async sincronizarCache(body: { codGestao: string }): Promise<{ inseridos: number; atualizados: number; ignorados: number }> {
+    const { data } = await apiClient.post('/contratos/cache/sincronizar', body)
     return data
   },
 }
