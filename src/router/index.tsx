@@ -139,7 +139,7 @@ export const router = createBrowserRouter([
             ],
           },
           {
-            path: 'contratacoes/:identificador',
+            path: 'contratacoes/detalhe',
             element: <ContratacaoDetailPage />,
           },
           {
@@ -147,7 +147,7 @@ export const router = createBrowserRouter([
             element: <AtasPage />,
           },
           {
-            path: 'atas/:id',
+            path: 'atas/detalhe',
             element: <AtaDetailPage />,
           },
           {
@@ -155,7 +155,7 @@ export const router = createBrowserRouter([
             element: <ItensPage />,
           },
           {
-            path: 'itens/:id',
+            path: 'itens/detalhe',
             element: <ItemDetailPage />,
           },
           {
@@ -176,7 +176,7 @@ export const router = createBrowserRouter([
             children: [{ index: true, element: <NovoFornecimentoPage /> }],
           },
           {
-            path: 'fornecimentos/:id',
+            path: 'fornecimentos/detalhe',
             element: <FornecimentoDetailPage />,
           },
           {
@@ -206,7 +206,7 @@ export const router = createBrowserRouter([
             element: <CarregarRenovacaoPage />,
           },
           {
-            path: 'contratos/:id',
+            path: 'contratos/detalhe',
             element: <ContratoDetailPage />,
           },
           {
@@ -234,7 +234,7 @@ export const router = createBrowserRouter([
             ],
           },
           {
-            path: 'requisicoes/analise/:id',
+            path: 'requisicoes/analise',
             element: <PrivateRoute requireGestorOnly />,
             children: [
               {
@@ -244,11 +244,11 @@ export const router = createBrowserRouter([
             ],
           },
           {
-            path: 'requisicoes/:id/visualizar',
+            path: 'requisicoes/visualizar',
             element: <RequisicaoViewPage />,
           },
           {
-            path: 'requisicoes/:id',
+            path: 'requisicoes/detalhe',
             element: <RequisicaoDetailPage />,
           },
           // Mantido para compatibilidade com links existentes
@@ -294,7 +294,7 @@ export const router = createBrowserRouter([
       },
       // Rota de impressão fora do AppLayout — renderiza sem sidebar/header
       {
-        path: 'requisicoes/:id/imprimir',
+        path: 'requisicoes/imprimir',
         element: <RequisicaoImprimirPage />,
       },
     ],

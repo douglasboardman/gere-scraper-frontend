@@ -61,6 +61,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { cn, formatCurrency, destDespesaLabel } from '@/lib/utils'
+import { extractCnpj } from '@/lib/identifier-utils'
 import type { IContratacao, IFornecimento, IItem, IRequisicao, IUnidade } from '@/types'
 import { MODALIDADE_LABEL } from '@/types'
 
@@ -85,9 +86,7 @@ function formatCNPJ(digits: string): string {
 }
 
 function cnpjFromFornecedorId(identFornecedor: string): string {
-  // identFornecedor format: "F44971159000129" → cnpj "44971159000129"
-  const raw = identFornecedor.startsWith('F') ? identFornecedor.slice(1) : identFornecedor
-  return formatCNPJ(raw)
+  return formatCNPJ(extractCnpj(identFornecedor))
 }
 
 
@@ -986,7 +985,7 @@ function Step4Revisao({
       toast.success(
         enviar ? 'Requisição enviada para análise.' : 'Requisição salva como rascunho.',
       )
-      navigate(`/requisicoes/${requisicao.identificador}`)
+      navigate(`/requisicoes/detalhe?id=${encodeURIComponent(requisicao.identificador)}`)
     },
     onError: (err: unknown) => {
       const axiosErr = err as { response?: { status?: number; data?: { error?: string; conflitos?: ConflitosItem[] } } }

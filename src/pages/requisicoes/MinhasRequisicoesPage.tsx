@@ -188,7 +188,7 @@ export function MinhasRequisicoesPage() {
               size="sm"
               className="h-7 px-2 text-xs"
               title="Visualizar"
-              onClick={() => navigate(`/requisicoes/${req.identificador}`)}
+              onClick={() => navigate(`/requisicoes/detalhe?id=${encodeURIComponent(req.identificador)}`)}
             >
               <Eye className="h-3.5 w-3.5" />
             </Button>
@@ -200,7 +200,7 @@ export function MinhasRequisicoesPage() {
                   size="sm"
                   className="h-7 px-2 text-xs"
                   title="Editar"
-                  onClick={() => navigate(`/requisicoes/${req.identificador}`)}
+                  onClick={() => navigate(`/requisicoes/detalhe?id=${encodeURIComponent(req.identificador)}`)}
                 >
                   <Edit className="h-3.5 w-3.5" />
                 </Button>
@@ -237,7 +237,7 @@ export function MinhasRequisicoesPage() {
                 size="sm"
                 className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
                 title="Imprimir PDF"
-                onClick={() => navigate(`/requisicoes/${req.identificador}/imprimir`)}
+                onClick={() => navigate(`/requisicoes/imprimir?id=${encodeURIComponent(req.identificador)}`)}
               >
                 <Printer className="h-3.5 w-3.5" />
               </Button>

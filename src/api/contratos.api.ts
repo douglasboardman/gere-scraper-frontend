@@ -19,12 +19,12 @@ export const contratosApi = {
   },
 
   async listarPorContratacao(identContratacao: string): Promise<IContrato[]> {
-    const { data } = await apiClient.get<IContrato[]>(`/contratos/contratacao/${identContratacao}`)
+    const { data } = await apiClient.get<IContrato[]>(`/contratos/contratacao/${encodeURIComponent(identContratacao)}`)
     return data
   },
 
   async obter(id: string): Promise<IContrato> {
-    const { data } = await apiClient.get<IContrato>(`/contratos/${id}`)
+    const { data } = await apiClient.get<IContrato>(`/contratos/${encodeURIComponent(id)}`)
     return data
   },
 
@@ -34,7 +34,7 @@ export const contratosApi = {
   },
 
   async atualizar(id: string, body: Partial<IContrato>): Promise<IContrato> {
-    const { data } = await apiClient.patch<IContrato>(`/contratos/${id}`, body)
+    const { data } = await apiClient.patch<IContrato>(`/contratos/${encodeURIComponent(id)}`, body)
     return data
   },
 
@@ -70,7 +70,7 @@ export const contratosApi = {
   },
 
   async deletar(identificador: string): Promise<{ message: string }> {
-    const { data } = await apiClient.delete<{ message: string }>(`/contratos/${identificador}`)
+    const { data } = await apiClient.delete<{ message: string }>(`/contratos/${encodeURIComponent(identificador)}`)
     return data
   },
 

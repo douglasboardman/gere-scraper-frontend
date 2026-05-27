@@ -503,7 +503,7 @@ export function ImportarContratoPage() {
         ? ` (${res.itensIgnorados.length} item(s) ignorado(s) por não existirem localmente)`
         : ''
       toast.success(`Contrato importado com sucesso! ${res.fornecimentosCriados} fornecimento(s) criado(s).${aviso}`)
-      navigate(`/contratos/${res.contrato.identificador}`)
+      navigate(`/contratos/detalhe?id=${encodeURIComponent(res.contrato.identificador)}`)
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message ?? 'Erro ao importar contrato.')

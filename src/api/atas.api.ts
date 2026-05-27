@@ -9,12 +9,12 @@ export const atasApi = {
   },
 
   async obter(id: string): Promise<IAtaRegPrecos> {
-    const { data } = await apiClient.get<IAtaRegPrecos>(`/atas/${id}`)
+    const { data } = await apiClient.get<IAtaRegPrecos>(`/atas/${encodeURIComponent(id)}`)
     return data
   },
 
   async atualizar(id: string, data: Partial<IAtaRegPrecos>): Promise<IAtaRegPrecos> {
-    const { data: result } = await apiClient.patch<IAtaRegPrecos>(`/atas/${id}`, data)
+    const { data: result } = await apiClient.patch<IAtaRegPrecos>(`/atas/${encodeURIComponent(id)}`, data)
     return result
   },
 }

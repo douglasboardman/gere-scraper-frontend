@@ -51,7 +51,7 @@ export function NovoFornecimentoPage() {
       }),
     onSuccess: (fornecimento) => {
       toast.success('Fornecimento criado com sucesso.')
-      navigate(`/fornecimentos/${fornecimento.identificador}`)
+      navigate(`/fornecimentos/detalhe?id=${encodeURIComponent(fornecimento.identificador)}`)
     },
     onError: (error: unknown) => {
       const d = (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data

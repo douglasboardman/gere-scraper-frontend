@@ -1,5 +1,7 @@
 import { useState, Fragment } from 'react'
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { useIdParam } from "@/hooks/useIdParam";
+import { extractAnoContratacao, displayContratacaoFull } from "@/lib/identifier-utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -43,7 +45,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 export function AtaDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const id = useIdParam();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { can } = usePermission();
@@ -99,7 +101,7 @@ export function AtaDetailPage() {
 
   const anoAta = () => {
     if (ata?.identContratacao) {
-      return (ata?.identContratacao as string).slice(12, 16);
+      return extractAnoContratacao(ata.identContratacao as string);
     }
   };
 
@@ -130,10 +132,7 @@ export function AtaDetailPage() {
   const identContStr = typeof ata.identContratacao === 'string'
     ? ata.identContratacao
     : (ata.identContratacao as { identificador: string }).identificador
-  const identBody = identContStr.startsWith('C') ? identContStr.slice(1) : ''
-  const subtitleAta = identBody.length >= 11
-    ? `Contratação: ${identBody.slice(6, -4)}/${identBody.slice(-4)} | UASG Gestora: ${identBody.slice(0, 6)}`
-    : `Contratação: ${identContStr}`
+  const subtitleAta = displayContratacaoFull(identContStr)
 
   return (
     <div>
@@ -298,7 +297,7 @@ export function AtaDetailPage() {
                               size="sm"
                               className="h-8 w-8 p-0"
                               title="Ver detalhes"
-                              onClick={() => navigate(`/itens/${item.identificador}`)}
+                              onClick={() => navigate(`/itens/detalhe?id=${encodeURIComponent(item.identificador)}`)}
                             >
                               <Eye className="h-3.5 w-3.5" />
                             </Button>

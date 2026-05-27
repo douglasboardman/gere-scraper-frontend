@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { useIdParam } from '@/hooks/useIdParam'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -781,7 +782,7 @@ function EditRequisicaoDialog({
 // ---------------------------------------------------------------------------
 
 export function RequisicaoDetailPage() {
-  const { id } = useParams<{ id: string }>()
+  const id = useIdParam()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const user = useAuthStore((s) => s.user)
@@ -920,7 +921,7 @@ export function RequisicaoDetailPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate(`/requisicoes/${requisicao.identificador}/imprimir`)}
+                onClick={() => navigate(`/requisicoes/imprimir?id=${encodeURIComponent(requisicao.identificador)}`)}
                 title="Imprimir PDF"
               >
                 <Printer className="h-4 w-4" />

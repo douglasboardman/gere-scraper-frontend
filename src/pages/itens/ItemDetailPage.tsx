@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { ArrowLeft, Pencil, X, Check, Eye } from 'lucide-react'
+import { useIdParam } from '@/hooks/useIdParam'
+import { displayContratacaoFull } from '@/lib/identifier-utils'
 import { itensApi } from '@/api/itens.api'
 import { useEditGuard } from '@/hooks/useEditGuard'
 import { UnsavedChangesDialog } from '@/components/shared/UnsavedChangesDialog'
@@ -45,7 +47,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 export function ItemDetailPage() {
-  const { id } = useParams<{ id: string }>()
+  const id = useIdParam()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { can } = usePermission()
@@ -139,10 +141,7 @@ export function ItemDetailPage() {
       (typeof ataObj?.identContratacao === 'string' ? ataObj.identContratacao : null) ??
       (typeof item.identContratacao === 'string' ? item.identContratacao :
         item.identContratacao ? (item.identContratacao as IContratacao).identificador : null)
-    if (identStr?.startsWith('C')) {
-      const body = identStr.slice(1)
-      if (body.length >= 11) return `Contratação: ${body.slice(6, -4)}/${body.slice(-4)} | UASG Gestora: ${body.slice(0, 6)}`
-    }
+    if (identStr) return displayContratacaoFull(identStr)
     return null
   })()
 
@@ -330,7 +329,7 @@ export function ItemDetailPage() {
                             size="sm"
                             className="h-8 w-8 p-0"
                             title="Ver detalhes"
-                            onClick={() => navigate(`/fornecimentos/${f.identificador}`)}
+                            onClick={() => navigate(`/fornecimentos/detalhe?id=${encodeURIComponent(f.identificador)}`)}
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </Button>

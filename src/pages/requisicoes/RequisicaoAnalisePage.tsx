@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { useIdParam } from '@/hooks/useIdParam'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -354,7 +355,7 @@ function AddItemsDialog({
 // Main Page
 // ---------------------------------------------------------------------------
 export function RequisicaoAnalisePage() {
-  const { id } = useParams<{ id: string }>()
+  const id = useIdParam()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 

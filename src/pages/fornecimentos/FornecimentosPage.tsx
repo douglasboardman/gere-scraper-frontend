@@ -239,7 +239,7 @@ export function FornecimentosPage() {
           className="h-8 w-8 p-0"
           title="Ver detalhes"
           onClick={() =>
-            navigate(`/fornecimentos/${row.original.identificador}`)
+            navigate(`/fornecimentos/detalhe?id=${encodeURIComponent(row.original.identificador)}`)
           }
         >
           <Eye className="h-3.5 w-3.5" />

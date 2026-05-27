@@ -8,12 +8,12 @@ export const itensApi = {
   },
 
   async obter(id: string): Promise<IItem> {
-    const { data } = await apiClient.get<IItem>(`/itens/${id}`)
+    const { data } = await apiClient.get<IItem>(`/itens/${encodeURIComponent(id)}`)
     return data
   },
 
   async atualizar(id: string, data: Partial<IItem>): Promise<IItem> {
-    const { data: result } = await apiClient.put<IItem>(`/itens/${id}`, data)
+    const { data: result } = await apiClient.put<IItem>(`/itens/${encodeURIComponent(id)}`, data)
     return result
   },
 }

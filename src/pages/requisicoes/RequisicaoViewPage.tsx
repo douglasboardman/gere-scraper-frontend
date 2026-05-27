@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { useIdParam } from '@/hooks/useIdParam'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -16,7 +17,7 @@ import { usePermission } from '@/hooks/usePermission'
 import type { IUsuario, IUnidade, IFornecimento, IItem } from '@/types'
 
 export function RequisicaoViewPage() {
-  const { id } = useParams<{ id: string }>()
+  const id = useIdParam()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { isAdmin } = usePermission()
@@ -98,7 +99,7 @@ export function RequisicaoViewPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/requisicoes/${requisicao.identificador}/imprimir`)}
+              onClick={() => navigate(`/requisicoes/imprimir?id=${encodeURIComponent(requisicao.identificador)}`)}
             >
               <Printer className="h-4 w-4 mr-1" />
               Imprimir

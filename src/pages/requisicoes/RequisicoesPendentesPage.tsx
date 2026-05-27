@@ -75,7 +75,7 @@ export function RequisicoesPendentesPage() {
             <RequisicaoPendenteCard
               key={req.identificador}
               req={req}
-              onAnalisar={() => navigate(`/requisicoes/analise/${req.identificador}`)}
+              onAnalisar={() => navigate(`/requisicoes/analise?id=${encodeURIComponent(req.identificador)}`)}
             />
           ))}
         </div>

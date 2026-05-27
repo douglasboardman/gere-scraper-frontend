@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { format } from "date-fns";
 import { formatCNPJ, ENTITY } from "@/lib/utils";
+import { displayNumEdital } from "@/lib/identifier-utils";
 import { ptBR } from "date-fns/locale";
 import { Eye, Search } from "lucide-react";
 import { ManageSearchIcon } from "@/components/icons/ManageSearchIcon";
@@ -48,12 +49,7 @@ export function AtasPage() {
       cell: ({ row }) => {
         const ic = row.original.identContratacao;
         const identificador = typeof ic === "string" ? ic : ic?.identificador;
-        const numCompra = (() => {
-          if (!identificador?.startsWith("C")) return null;
-          const body = identificador.slice(1);
-          if (body.length < 11) return null;
-          return `${body.slice(6, -4)}/${body.slice(-4)}`;
-        })();
+        const numCompra = identificador ? displayNumEdital(identificador) : null;
         return (
           <div>
             {identificador && (
@@ -110,7 +106,7 @@ export function AtasPage() {
             size="sm"
             className="h-8 w-8 p-0"
             title="Ver detalhes"
-            onClick={() => navigate(`/atas/${row.original.identificador}`)}
+            onClick={() => navigate(`/atas/detalhe?id=${encodeURIComponent(row.original.identificador)}`)}
           >
             <Eye className="h-3.5 w-3.5" />
           </Button>

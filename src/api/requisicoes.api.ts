@@ -10,7 +10,7 @@ export const requisicoesApi = {
   },
 
   async obter(identificador: string): Promise<IRequisicao> {
-    const { data } = await apiClient.get<IRequisicao>(`/requisicoes/${identificador}`)
+    const { data } = await apiClient.get<IRequisicao>(`/requisicoes/${encodeURIComponent(identificador)}`)
     return data
   },
 
@@ -20,31 +20,31 @@ export const requisicoesApi = {
   },
 
   async atualizar(identificador: string, reqData: Partial<CriarRequisicaoData>): Promise<IRequisicao> {
-    const { data } = await apiClient.put<IRequisicao>(`/requisicoes/${identificador}`, reqData)
+    const { data } = await apiClient.put<IRequisicao>(`/requisicoes/${encodeURIComponent(identificador)}`, reqData)
     return data
   },
 
   async deletar(identificador: string): Promise<void> {
-    await apiClient.delete(`/requisicoes/${identificador}`)
+    await apiClient.delete(`/requisicoes/${encodeURIComponent(identificador)}`)
   },
 
   async enviar(identificador: string): Promise<IRequisicao> {
-    const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${identificador}/enviar`)
+    const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${encodeURIComponent(identificador)}/enviar`)
     return data
   },
 
   async aprovar(identificador: string): Promise<IRequisicao> {
-    const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${identificador}/aprovar`)
+    const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${encodeURIComponent(identificador)}/aprovar`)
     return data
   },
 
   async rejeitar(identificador: string, motivo?: string): Promise<IRequisicao> {
-    const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${identificador}/rejeitar`, { motivo })
+    const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${encodeURIComponent(identificador)}/rejeitar`, { motivo })
     return data
   },
 
   async imprimir(identificador: string): Promise<{ requisicao: IRequisicao; itens: unknown[] }> {
-    const { data } = await apiClient.get<{ requisicao: IRequisicao; itens: unknown[] }>(`/requisicoes/${identificador}/imprimir`)
+    const { data } = await apiClient.get<{ requisicao: IRequisicao; itens: unknown[] }>(`/requisicoes/${encodeURIComponent(identificador)}/imprimir`)
     return data
   },
 }

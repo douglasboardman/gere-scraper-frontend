@@ -13,7 +13,7 @@ export const contratacoesApi = {
   },
 
   async obter(identificador: string): Promise<IContratacao> {
-    const { data } = await apiClient.get<IContratacao>(`/contratacoes/${identificador}`)
+    const { data } = await apiClient.get<IContratacao>(`/contratacoes/${encodeURIComponent(identificador)}`)
     return data
   },
 
@@ -23,11 +23,11 @@ export const contratacoesApi = {
   },
 
   async atualizar(identificador: string, data: Partial<IContratacao>): Promise<IContratacao> {
-    const { data: result } = await apiClient.patch<IContratacao>(`/contratacoes/${identificador}`, data)
+    const { data: result } = await apiClient.patch<IContratacao>(`/contratacoes/${encodeURIComponent(identificador)}`, data)
     return result
   },
 
   async deletar(identificador: string): Promise<void> {
-    await apiClient.delete(`/contratacoes/${identificador}`)
+    await apiClient.delete(`/contratacoes/${encodeURIComponent(identificador)}`)
   },
 }

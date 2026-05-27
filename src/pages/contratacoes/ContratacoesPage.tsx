@@ -14,6 +14,7 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { usePermission } from '@/hooks/usePermission'
 import { ENTITY } from '@/lib/utils'
+import { displayNumEdital } from '@/lib/identifier-utils'
 import type { IContratacao } from '@/types'
 import {
   Select,
@@ -65,13 +66,9 @@ export function ContratacoesPage() {
     {
       id: 'numContratacao',
       header: 'Núm. Contratação',
-      cell: ({ row }) => {
-        const id = row.original.identificador;
-        const raw = id.slice(-9);
-        return (
-          <span className="font-mono text-sm">{raw.slice(0, 5)}/{raw.slice(5)}</span>
-        );
-      },
+      cell: ({ row }) => (
+        <span className="font-mono text-sm">{displayNumEdital(row.original.identificador)}</span>
+      ),
     },
     {
       accessorKey: 'objeto',
@@ -119,7 +116,7 @@ export function ContratacoesPage() {
               size="sm"
               className="h-8 w-8 p-0"
               title="Ver detalhes"
-              onClick={() => navigate(`/contratacoes/${c.identificador}`)}
+              onClick={() => navigate(`/contratacoes/detalhe?id=${encodeURIComponent(c.identificador)}`)}
             >
               <Eye className="h-3.5 w-3.5" />
             </Button>

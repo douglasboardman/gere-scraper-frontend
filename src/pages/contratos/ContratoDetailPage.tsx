@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { ArrowLeft, Pencil, X, Check, Eye } from 'lucide-react'
+import { useIdParam } from '@/hooks/useIdParam'
+import { displayNumEdital } from '@/lib/identifier-utils'
 import { contratosApi } from '@/api/contratos.api'
 import { useEditGuard } from '@/hooks/useEditGuard'
 import { UnsavedChangesDialog } from '@/components/shared/UnsavedChangesDialog'
@@ -45,7 +47,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 export function ContratoDetailPage() {
-  const { id } = useParams<{ id: string }>()
+  const id = useIdParam()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { can } = usePermission()
@@ -114,8 +116,7 @@ export function ContratoDetailPage() {
 
   const getContratacaoLink = (identContratacao: string | IContratacao) => {
     if (typeof identContratacao === 'string') {
-      const body = identContratacao.startsWith('C') ? identContratacao.slice(1) : ''
-      const label = body.length >= 11 ? `${body.slice(6, -4)}/${body.slice(-4)}` : identContratacao
+      const label = displayNumEdital(identContratacao) || identContratacao
       return { id: identContratacao, label }
     }
     return {
@@ -332,7 +333,7 @@ export function ContratoDetailPage() {
                             size="sm"
                             className="h-8 w-8 p-0"
                             title="Ver detalhes"
-                            onClick={() => navigate(`/fornecimentos/${f.identificador}`)}
+                            onClick={() => navigate(`/fornecimentos/detalhe?id=${encodeURIComponent(f.identificador)}`)}
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </Button>

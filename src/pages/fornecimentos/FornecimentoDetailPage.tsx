@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { ArrowLeft, Pencil, X, Check } from 'lucide-react'
+import { useIdParam } from '@/hooks/useIdParam'
+import { displayNumEdital } from '@/lib/identifier-utils'
 import { fornecimentosApi } from '@/api/fornecimentos.api'
 import { useEditGuard } from '@/hooks/useEditGuard'
 import { UnsavedChangesDialog } from '@/components/shared/UnsavedChangesDialog'
@@ -35,7 +37,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 export function FornecimentoDetailPage() {
-  const { id } = useParams<{ id: string }>()
+  const id = useIdParam()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { can } = usePermission()
@@ -131,8 +133,8 @@ export function FornecimentoDetailPage() {
       const c = ic as IContratacao
       return ` | C ${c.numContratacao}/${c.anoContratacao}`
     }
-    const body = ic.startsWith('C') ? ic.slice(1) : ''
-    return body.length >= 11 ? ` | C ${body.slice(6, -4)}/${body.slice(-4)}` : ''
+    const numEdital = displayNumEdital(ic)
+    return numEdital ? ` | C ${numEdital}` : ''
   })()
 
   return (

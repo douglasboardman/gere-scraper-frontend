@@ -147,7 +147,7 @@ export function ContratosPage() {
             size="sm"
             className="h-8 w-8 p-0"
             title="Ver detalhes"
-            onClick={() => navigate(`/contratos/${row.original.identificador}`)}
+            onClick={() => navigate(`/contratos/detalhe?id=${encodeURIComponent(row.original.identificador)}`)}
           >
             <Eye className="h-3.5 w-3.5" />
           </Button>

@@ -9,12 +9,12 @@ export const fornecedoresApi = {
   },
 
   async obter(id: string): Promise<IFornecedor> {
-    const { data } = await apiClient.get<IFornecedor>(`/fornecedores/${id}`)
+    const { data } = await apiClient.get<IFornecedor>(`/fornecedores/${encodeURIComponent(id)}`)
     return data
   },
 
   async atualizar(id: string, data: Partial<IFornecedor>): Promise<IFornecedor> {
-    const { data: result } = await apiClient.put<IFornecedor>(`/fornecedores/${id}`, data)
+    const { data: result } = await apiClient.put<IFornecedor>(`/fornecedores/${encodeURIComponent(id)}`, data)
     return result
   },
 

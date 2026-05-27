@@ -1,4 +1,5 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { useIdParam } from '@/hooks/useIdParam'
 import { useQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -81,7 +82,7 @@ function InfoCard({ requisitante, unidade, uorg, tipo, justificativa, observacoe
 }
 
 export function RequisicaoImprimirPage() {
-  const { id } = useParams<{ id: string }>()
+  const id = useIdParam()
   const navigate = useNavigate()
 
   const { data: requisicao, isLoading } = useQuery({

@@ -72,7 +72,7 @@ export function NovoContratoPage() {
       }),
     onSuccess: (contrato) => {
       toast.success('Contrato criado com sucesso.')
-      navigate(`/contratos/${contrato.identificador}`)
+      navigate(`/contratos/detalhe?id=${encodeURIComponent(contrato.identificador)}`)
     },
     onError: (error: unknown) => {
       const d = (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data

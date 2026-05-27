@@ -1,5 +1,6 @@
 import { useState, Fragment } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useIdParam } from "@/hooks/useIdParam";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -49,7 +50,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 export function ContratacaoDetailPage() {
-  const { identificador } = useParams<{ identificador: string }>();
+  const identificador = useIdParam();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { can, isAdmin } = usePermission();
@@ -345,7 +346,7 @@ export function ContratacaoDetailPage() {
                             size="sm"
                             className="h-8 w-8 p-0"
                             title="Ver detalhes"
-                            onClick={() => navigate(`/atas/${ata.identificador}`)}
+                            onClick={() => navigate(`/atas/detalhe?id=${encodeURIComponent(ata.identificador)}`)}
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
@@ -405,7 +406,7 @@ export function ContratacaoDetailPage() {
                             size="sm"
                             className="h-8 w-8 p-0"
                             title="Ver detalhes"
-                            onClick={() => navigate(`/contratos/${ct.identificador}`)}
+                            onClick={() => navigate(`/contratos/detalhe?id=${encodeURIComponent(ct.identificador)}`)}
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
@@ -474,7 +475,7 @@ export function ContratacaoDetailPage() {
                               size="sm"
                               className="h-8 w-8 p-0"
                               title="Ver detalhes"
-                              onClick={() => navigate(`/itens/${item.identificador}`)}
+                              onClick={() => navigate(`/itens/detalhe?id=${encodeURIComponent(item.identificador)}`)}
                             >
                               <Eye className="h-3.5 w-3.5" />
                             </Button>

@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatCurrency, ENTITY } from "@/lib/utils";
+import { displayNumEdital } from "@/lib/identifier-utils";
 import type { IItem, IAtaRegPrecos, IContratacao } from "@/types";
 
 export function ItensPage() {
@@ -118,12 +119,7 @@ export function ItensPage() {
       header: "Contratação",
       cell: ({ row }) => {
         const identificador = getContratacaoIdent(row.original);
-        const numCompra = (() => {
-          if (!identificador?.startsWith("C")) return null;
-          const body = identificador.slice(1);
-          if (body.length < 11) return null;
-          return `${body.slice(6, -4)}/${body.slice(-4)}`;
-        })();
+        const numCompra = identificador ? displayNumEdital(identificador) : null;
         if (!identificador) return <span className="text-muted-foreground">—</span>;
         return (
           <div>
@@ -201,7 +197,7 @@ export function ItensPage() {
             size="sm"
             className="h-8 w-8 p-0"
             title="Ver detalhes"
-            onClick={() => navigate(`/itens/${row.original.identificador}`)}
+            onClick={() => navigate(`/itens/detalhe?id=${encodeURIComponent(row.original.identificador)}`)}
           >
             <Eye className="h-3.5 w-3.5" />
           </Button>
