@@ -339,13 +339,13 @@ function Step1Dados({
 // Step 2 — Escolha da Contratação
 // ---------------------------------------------------------------------------
 
-/** Extrai o identificador da compra do identificador do fornecimento.
- *  Formato: U{uasg}I{itemSeq}C{compraId}  ex. U157363I00095C158127900102025
- *  O compra ID é tudo a partir do último 'C'.
- */
 function extrairIdContratacao(identFornecimento: string): string | null {
-  const idx = identFornecimento.indexOf('C')
-  return idx !== -1 ? identFornecimento.slice(idx) : null
+  const iteIdx = identFornecimento.indexOf('ITE-')
+  if (iteIdx === -1) return null
+  const afterIte = identFornecimento.slice(iteIdx + 4)
+  const lastDot = afterIte.lastIndexOf('.')
+  if (lastDot === -1) return null
+  return `CON-${afterIte.slice(0, lastDot)}`
 }
 
 function Step2Contratacao({

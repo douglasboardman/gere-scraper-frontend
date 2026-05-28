@@ -46,8 +46,12 @@ function saldoDisp(f: IFornecimento): number {
   return f.saldoDisponivel ?? f.saldo ?? 0
 }
 function extrairIdContratacao(identFornecimento: string): string | null {
-  const idx = identFornecimento.lastIndexOf('C')
-  return idx !== -1 ? identFornecimento.slice(idx) : null
+  const iteIdx = identFornecimento.indexOf('ITE-')
+  if (iteIdx === -1) return null
+  const afterIte = identFornecimento.slice(iteIdx + 4)
+  const lastDot = afterIte.lastIndexOf('.')
+  if (lastDot === -1) return null
+  return `CON-${afterIte.slice(0, lastDot)}`
 }
 function getItemName(item: IItemRequisicao): string {
   const f = item.identFornecimento as IFornecimento

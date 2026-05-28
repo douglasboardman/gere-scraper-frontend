@@ -1,5 +1,5 @@
 export function parseIdentContratacao(ident: string): { uasg: string; codMod: string; numContratacao: string; ano: string } | null {
-  const match = ident.match(/^CON(\d+)\.(\d+)\.(\d+)\/(\d+)$/)
+  const match = ident.match(/^CON-(\d+)\.(\d+)\.(\d+)\.(\d+)$/)
   if (!match) return null
   return { uasg: match[1], codMod: match[2], numContratacao: match[3], ano: match[4] }
 }
@@ -20,7 +20,7 @@ export function extractAnoContratacao(ident: string): string {
 }
 
 export function extractCnpj(identFornecedor: string): string {
-  return identFornecedor.startsWith('FOR') ? identFornecedor.slice(3) : identFornecedor
+  return identFornecedor.startsWith('FOR-') ? identFornecedor.slice(4) : identFornecedor
 }
 
 export function buildDetailUrl(basePath: string, id: string): string {
