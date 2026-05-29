@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
-import { destDespesaLabel } from '@/lib/utils'
+import { destDespesaLabel, formatQtd } from '@/lib/utils'
 import { usePermission } from '@/hooks/usePermission'
 import type { IUsuario, IUnidade, IFornecimento, IItem } from '@/types'
 
@@ -269,7 +269,7 @@ export function RequisicaoViewPage() {
                         )}
                       </td>
                       <td className="text-right py-3 pr-4 font-mono">
-                        {item.qtdSolicitada}
+                        {formatQtd(item.qtdSolicitada)}
                       </td>
                       <td className="text-right py-3 pr-4 font-mono">
                         {valUnit > 0

@@ -50,7 +50,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { useAuthStore } from '@/store/auth.store'
-import { cn, formatCurrency, destDespesaLabel } from '@/lib/utils'
+import { cn, formatCurrency, formatQtd, destDespesaLabel } from '@/lib/utils'
 import type { IItemRequisicao, IFornecimento, IItem, IUsuario, IUnidade, IUorg, IRequisicao } from '@/types'
 
 // ---------------------------------------------------------------------------
@@ -190,7 +190,7 @@ function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogPro
               type="number"
               min={1}
               max={saldoMax ?? undefined}
-              step={1}
+              step={0.00001}
               value={qty}
               onChange={(e) => {
                 const v = Number(e.target.value)
@@ -431,7 +431,7 @@ function AddItemsDialog({
                               {item ? descBreve(item) : (f.identItem as string)}
                             </p>
                             <div className="flex flex-wrap gap-x-3 mt-0.5 text-xs text-muted-foreground">
-                              <span>Saldo: {saldo} {item ? unMedida(item) : ''}</span>
+                              <span>Saldo: {formatQtd(saldo)} {item ? unMedida(item) : ''}</span>
                               <span className="text-foreground font-medium">
                                 {formatCurrency(valUnitario(f))}
                               </span>
@@ -484,12 +484,12 @@ function AddItemsDialog({
                               <div>
                                 <p className="text-xs text-muted-foreground">Qtd Homologada</p>
                                 <p className="font-medium">
-                                  {item.qtdHomologada ?? '—'} {unMedida(item)}
+                                  {item.qtdHomologada != null ? formatQtd(item.qtdHomologada) : '—'} {unMedida(item)}
                                 </p>
                               </div>
                               <div>
                                 <p className="text-xs text-muted-foreground">Saldo Disponível</p>
-                                <p className="font-medium">{saldo} {unMedida(item)}</p>
+                                <p className="font-medium">{formatQtd(saldo)} {unMedida(item)}</p>
                               </div>
                               <div>
                                 <p className="text-xs text-muted-foreground">Valor Unitário</p>
@@ -571,7 +571,7 @@ function AddItemsDialog({
                           {getItemName(ei)}
                         </p>
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>Qtd: {ei.qtdSolicitada}</span>
+                          <span>Qtd: {formatQtd(ei.qtdSolicitada)}</span>
                           <span className="font-medium">
                             {ei.valTotal != null ? formatCurrency(ei.valTotal) : '—'}
                           </span>
@@ -615,7 +615,7 @@ function AddItemsDialog({
                               type="number"
                               min={0}
                               max={saldoMax}
-                              step={1}
+                              step={0.00001}
                               value={entry.quantidade}
                               onChange={(e) => handleQtd(idForn, Number(e.target.value))}
                               className="h-7 w-20 text-xs"
@@ -1058,7 +1058,7 @@ export function RequisicaoDetailPage() {
                         {getFornecedorName(item)}
                       </TableCell>
                       <TableCell className="text-right text-sm">
-                        {item.qtdSolicitada}
+                        {formatQtd(item.qtdSolicitada)}
                       </TableCell>
                       <TableCell className="text-right text-sm">
                         {item.valUnitario != null ? formatCurrency(item.valUnitario) : '—'}
@@ -1142,9 +1142,9 @@ export function RequisicaoDetailPage() {
                   <p className="font-medium">{c.descricaoItem}</p>
                   <p className="text-muted-foreground text-xs">Fornecimento: {c.identFornecimento}</p>
                   <div className="grid grid-cols-3 gap-1 text-xs mt-1">
-                    <div><span className="text-muted-foreground">Saldo disponível</span><br />{c.saldoDisponivel}</div>
-                    <div><span className="text-muted-foreground">Comprometido</span><br />{c.qtdComprometida}</div>
-                    <div><span className="text-muted-foreground">Solicitado aqui</span><br />{c.qtdSolicitadaAtual}</div>
+                    <div><span className="text-muted-foreground">Saldo disponível</span><br />{formatQtd(c.saldoDisponivel)}</div>
+                    <div><span className="text-muted-foreground">Comprometido</span><br />{formatQtd(c.qtdComprometida)}</div>
+                    <div><span className="text-muted-foreground">Solicitado aqui</span><br />{formatQtd(c.qtdSolicitadaAtual)}</div>
                   </div>
                   <div className="text-xs text-muted-foreground space-y-0.5">
                     <p className="font-medium">Requisições concorrentes:</p>

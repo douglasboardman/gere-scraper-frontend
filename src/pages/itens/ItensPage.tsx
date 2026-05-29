@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatCurrency, ENTITY } from "@/lib/utils";
+import { formatCurrency, formatQtd, ENTITY } from "@/lib/utils";
 import { displayNumEdital } from "@/lib/identifier-utils";
 import type { IItem, IAtaRegPrecos, IContratacao } from "@/types";
 
@@ -157,7 +157,7 @@ export function ItensPage() {
         return (
           <span className="text-sm">
             {row.original.qtdHomologada != null
-              ? `${row.original.qtdHomologada} ${unidade ?? ""}`
+              ? `${formatQtd(row.original.qtdHomologada)} ${unidade ?? ""}`
               : "—"}
           </span>
         );

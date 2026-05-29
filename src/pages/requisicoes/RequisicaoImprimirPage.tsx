@@ -8,7 +8,7 @@ import { requisicoesApi } from '@/api/requisicoes.api'
 import { itemRequisicaoApi } from '@/api/itemRequisicao.api'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { cn, formatCurrency, formatCNPJ, destDespesaLabel } from '@/lib/utils'
+import { cn, formatCurrency, formatCNPJ, formatQtd, destDespesaLabel } from '@/lib/utils'
 import type { IItemRequisicao, IFornecimento, IItem, IUsuario, IUnidade, IUorg } from '@/types'
 
 
@@ -213,7 +213,7 @@ export function RequisicaoImprimirPage() {
                           <td className="px-3 py-2 font-mono text-center">{seq}</td>
                           <td className="px-3 py-2">{descDetalhada}</td>
                           <td className="px-3 py-2">{tipo}</td>
-                          <td className="px-3 py-2 text-right">{item.qtdSolicitada}</td>
+                          <td className="px-3 py-2 text-right">{formatQtd(item.qtdSolicitada)}</td>
                           <td className="px-3 py-2 text-right">
                             {item.valUnitario != null ? formatCurrency(item.valUnitario) : '—'}
                           </td>

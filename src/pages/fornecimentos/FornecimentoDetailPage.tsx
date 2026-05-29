@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatCurrency, destDespesaLabel } from '@/lib/utils'
+import { formatCurrency, formatQtd, destDespesaLabel } from '@/lib/utils'
 import { usePermission } from '@/hooks/usePermission'
 import {
   Select,
@@ -204,39 +204,42 @@ export function FornecimentoDetailPage() {
               {editMode && fornecimento.status === 'Processado' ? (
                 <Input
                   type="number"
+                  step="0.00001"
                   min={0}
                   value={editQtdAutorizada}
                   onChange={(e) => setEditQtdAutorizada(e.target.value)}
                   className="w-32"
                 />
               ) : (
-                fornecimento.qtdAutorizada ?? '—'
+                fornecimento.qtdAutorizada != null ? formatQtd(fornecimento.qtdAutorizada) : '—'
               )}
             </Field>
             <Field label="Qtd Utilizada">
               {editMode && fornecimento.status === 'Processado' ? (
                 <Input
                   type="number"
+                  step="0.00001"
                   min={0}
                   value={editQtdUtilizada}
                   onChange={(e) => setEditQtdUtilizada(e.target.value)}
                   className="w-32"
                 />
               ) : (
-                fornecimento.qtdUtilizada ?? '—'
+                fornecimento.qtdUtilizada != null ? formatQtd(fornecimento.qtdUtilizada) : '—'
               )}
             </Field>
             <Field label="Saldo Disponível">
               {editMode && fornecimento.status === 'Processado' ? (
                 <Input
                   type="number"
+                  step="0.00001"
                   min={0}
                   value={editSaldo}
                   onChange={(e) => setEditSaldo(e.target.value)}
                   className="w-32"
                 />
               ) : (
-                saldo ?? '—'
+                saldo != null ? formatQtd(saldo) : '—'
               )}
             </Field>
             <Field label="Destinação Despesa">

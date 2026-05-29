@@ -9,7 +9,7 @@ import { DataTable } from "@/components/shared/DataTable";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { formatCurrency, formatCNPJ, ENTITY } from "@/lib/utils";
+import { formatCurrency, formatCNPJ, formatQtd, ENTITY } from "@/lib/utils";
 import { usePermission } from "@/hooks/usePermission";
 import type { IFornecimento, IItem, IAtaRegPrecos, IContratacao, IContrato } from "@/types";
 
@@ -198,7 +198,7 @@ export function FornecimentosPage() {
       header: "Qtd. Autorizada",
       cell: ({ row }) => (
         <span className="text-sm font-medium">
-          {row.original.qtdAutorizada != null ? row.original.qtdAutorizada : "—"}
+          {row.original.qtdAutorizada != null ? formatQtd(row.original.qtdAutorizada) : "—"}
         </span>
       ),
     },
@@ -208,7 +208,7 @@ export function FornecimentosPage() {
       cell: ({ row }) => (
         <span className="text-sm font-medium">
           {row.original.saldoDisponivel != null
-            ? row.original.saldoDisponivel
+            ? formatQtd(row.original.saldoDisponivel)
             : "—"}
         </span>
       ),

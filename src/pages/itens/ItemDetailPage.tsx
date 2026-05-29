@@ -18,7 +18,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatQtd } from '@/lib/utils'
 import { usePermission } from '@/hooks/usePermission'
 import {
   Select,
@@ -226,7 +226,7 @@ export function ItemDetailPage() {
                 <Field label="Tipo">{item.tipo || '—'}</Field>
                 <Field label="Unidade de Medida">{unMedida || '—'}</Field>
                 <Field label="Qtd Homologada">
-                  {item.qtdHomologada != null ? `${item.qtdHomologada}${unMedida ? ` ${unMedida}` : ''}` : '—'}
+                  {item.qtdHomologada != null ? `${formatQtd(item.qtdHomologada)}${unMedida ? ` ${unMedida}` : ''}` : '—'}
                 </Field>
                 <Field label="Valor Unitário">
                   {valUnitario != null ? formatCurrency(valUnitario) : '—'}

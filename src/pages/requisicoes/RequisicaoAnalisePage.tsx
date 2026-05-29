@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/dialog'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { StatusBadge } from '@/components/shared/StatusBadge'
-import { cn, formatCurrency, destDespesaLabel } from '@/lib/utils'
+import { cn, formatCurrency, formatQtd, destDespesaLabel } from '@/lib/utils'
 import type { IItemRequisicao, IFornecimento, IItem, IUsuario, IUnidade, IUorg } from '@/types'
 
 // ---------------------------------------------------------------------------
@@ -117,7 +117,7 @@ function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogPro
               )}
             </Label>
             <Input
-              type="number" min={1} max={saldoMax ?? undefined} step={1}
+              type="number" min={0.00001} max={saldoMax ?? undefined} step={0.00001}
               value={qty}
               onChange={(e) => {
                 const v = Number(e.target.value)
@@ -261,7 +261,7 @@ function AddItemsDialog({
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium leading-snug line-clamp-1">{item ? descBreve(item) : typeof f.identItem === 'string' ? f.identItem : '—'}</p>
                           <div className="flex gap-3 mt-0.5 text-xs text-muted-foreground">
-                            <span>Saldo: {saldo}</span>
+                            <span>Saldo: {formatQtd(saldo)}</span>
                             <span className="font-medium text-foreground">{formatCurrency(valUnitario(f))}</span>
                             {isAlready && <span className="text-primary font-semibold">Já incluído</span>}
                           </div>
@@ -287,7 +287,7 @@ function AddItemsDialog({
                           <p className="text-xs text-muted-foreground uppercase font-medium">Descrição detalhada</p>
                           <p>{descDetalhada(item)}</p>
                           <div className="grid grid-cols-3 gap-3 text-xs">
-                            <div><p className="text-muted-foreground">Saldo</p><p className="font-medium">{saldo} {unMedida(item)}</p></div>
+                            <div><p className="text-muted-foreground">Saldo</p><p className="font-medium">{formatQtd(saldo)} {unMedida(item)}</p></div>
                             <div><p className="text-muted-foreground">Valor Unitário</p><p className="font-medium text-green-700">{formatCurrency(valUnitario(f))}</p></div>
                           </div>
                         </div>
@@ -326,7 +326,7 @@ function AddItemsDialog({
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground">Qtd:</span>
-                        <Input type="number" min={0} max={saldoDisp(entry.fornecimento)} step={1}
+                        <Input type="number" min={0} max={saldoDisp(entry.fornecimento)} step={0.00001}
                           value={entry.quantidade}
                           onChange={(e) => setNewItems((p) => {
                             const en = p.get(idForn); if (!en) return p
@@ -658,7 +658,7 @@ export function RequisicaoAnalisePage() {
                       {itensForn.map((item) => (
                         <tr key={item.id} className="hover:bg-muted/10">
                           <td className="px-5 py-2.5 font-medium">{getItemName(item)}</td>
-                          <td className="px-4 py-2.5 text-right">{item.qtdSolicitada}</td>
+                          <td className="px-4 py-2.5 text-right">{formatQtd(item.qtdSolicitada)}</td>
                           <td className="px-4 py-2.5 text-right">
                             {item.valUnitario != null ? formatCurrency(item.valUnitario) : '—'}
                           </td>

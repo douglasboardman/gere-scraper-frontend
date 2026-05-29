@@ -111,7 +111,7 @@ export function NovoFornecimentoPage() {
                   <FormItem>
                     <FormLabel>Quantidade Autorizada *</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.001" min={0.001} {...field} />
+                      <Input type="number" step="0.00001" min={0.00001} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

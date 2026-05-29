@@ -55,3 +55,13 @@ export function destDespesaLabel(dest?: string | null): string {
   if (dest === 'Outras_Obrigacoes') return 'Outras Obrigações'
   return dest ?? '—'
 }
+
+export function formatQtd(value: number | string | null | undefined): string {
+  if (value === null || value === undefined || value === '') return '—'
+  const n = typeof value === 'string' ? parseFloat(value) : value
+  if (isNaN(n)) return '—'
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 5,
+    maximumFractionDigits: 5,
+  }).format(n)
+}

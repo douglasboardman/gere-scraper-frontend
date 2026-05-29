@@ -60,7 +60,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { cn, formatCurrency, destDespesaLabel } from '@/lib/utils'
+import { cn, formatCurrency, formatQtd, destDespesaLabel } from '@/lib/utils'
 import { extractCnpj } from '@/lib/identifier-utils'
 import type { IContratacao, IFornecimento, IItem, IRequisicao, IUnidade } from '@/types'
 import { MODALIDADE_LABEL } from '@/types'
@@ -715,7 +715,7 @@ function Step3Itens({
                             {item ? descBreve(item) : f.identificador}
                           </p>
                           <div className="flex flex-wrap gap-x-3 mt-0.5 text-xs text-muted-foreground">
-                            <span>Saldo: {saldo} {item ? unMedida(item) : ''}</span>
+                            <span>Saldo: {formatQtd(saldo)} {item ? unMedida(item) : ''}</span>
                             <span className="text-foreground font-medium">
                               {formatCurrency(vUnit)}
                             </span>
@@ -764,13 +764,13 @@ function Step3Itens({
                             <div>
                               <p className="text-xs text-muted-foreground">Qtd Homologada</p>
                               <p className="font-medium">
-                                {item.qtdHomologada ?? '—'} {unMedida(item)}
+                                {item.qtdHomologada != null ? formatQtd(item.qtdHomologada) : '—'} {unMedida(item)}
                               </p>
                             </div>
                             <div>
                               <p className="text-xs text-muted-foreground">Saldo Disponível</p>
                               <p className="font-medium">
-                                {saldo} {unMedida(item)}
+                                {formatQtd(saldo)} {unMedida(item)}
                               </p>
                             </div>
                             <div>
@@ -864,7 +864,7 @@ function Step3Itens({
                           type="number"
                           min={0}
                           max={saldoMax}
-                          step={1}
+                          step={0.00001}
                           value={entry.quantidade}
                           onChange={(e) => handleQtd(idForn, Number(e.target.value))}
                           className="h-7 w-20 text-xs"
@@ -1116,7 +1116,7 @@ function Step4Revisao({
                           <p className="font-medium">{descBreve(entry.item)}</p>
                           <p className="text-xs text-muted-foreground">{unMedida(entry.item)}</p>
                         </td>
-                        <td className="py-2 px-2 text-right">{entry.quantidade}</td>
+                        <td className="py-2 px-2 text-right">{formatQtd(entry.quantidade)}</td>
                         <td className="py-2 px-2 text-right">{formatCurrency(vUnit)}</td>
                         <td className="py-2 pl-2 text-right font-medium">
                           {formatCurrency(vUnit * entry.quantidade)}
@@ -1200,9 +1200,9 @@ function Step4Revisao({
                   <p className="font-medium">{c.descricaoItem}</p>
                   <p className="text-muted-foreground text-xs">Fornecimento: {c.identFornecimento}</p>
                   <div className="grid grid-cols-3 gap-1 text-xs mt-1">
-                    <div><span className="text-muted-foreground">Saldo disponível</span><br />{c.saldoDisponivel}</div>
-                    <div><span className="text-muted-foreground">Comprometido</span><br />{c.qtdComprometida}</div>
-                    <div><span className="text-muted-foreground">Solicitado aqui</span><br />{c.qtdSolicitadaAtual}</div>
+                    <div><span className="text-muted-foreground">Saldo disponível</span><br />{formatQtd(c.saldoDisponivel)}</div>
+                    <div><span className="text-muted-foreground">Comprometido</span><br />{formatQtd(c.qtdComprometida)}</div>
+                    <div><span className="text-muted-foreground">Solicitado aqui</span><br />{formatQtd(c.qtdSolicitadaAtual)}</div>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Requisições concorrentes: {c.requisicoesConcorrentes.join(', ')}
