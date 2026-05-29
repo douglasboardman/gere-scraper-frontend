@@ -77,14 +77,14 @@ interface EditItemDialogProps {
 }
 
 function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogProps) {
-  const [qty, setQty] = useState(String(item.quantidadeSolicitada))
+  const [qty, setQty] = useState(String(item.qtdSolicitada))
   const f = typeof item.identFornecimento === 'string' ? null : item.identFornecimento as IFornecimento
   const saldoMax = f ? saldoDisp(f) : null
-  const vUnit = item.valorUnitario ?? (f ? valUnitario(f) : 0)
+  const vUnit = item.valUnitario ?? (f ? valUnitario(f) : 0)
   const newTotal = vUnit * (Number(qty) || 0)
 
   const mutation = useMutation({
-    mutationFn: () => itemRequisicaoApi.atualizar(item.id, { quantidadeSolicitada: Number(qty) }),
+    mutationFn: () => itemRequisicaoApi.atualizar(item.id, { qtdSolicitada: Number(qty) }),
     onSuccess: () => { toast.success('Quantidade atualizada.'); onSaved(); onOpenChange(false) },
     onError: (e: unknown) => {
       toast.error((e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Erro inesperado')
@@ -210,7 +210,7 @@ function AddItemsDialog({
         await itemRequisicaoApi.criar({
           identRequisicao: requisicaoIdentificador,
           identFornecimento: idForn,
-          quantidadeSolicitada: entry.quantidade,
+          qtdSolicitada: entry.quantidade,
         })
       }
     },
@@ -458,7 +458,7 @@ export function RequisicaoAnalisePage() {
 
   if (!requisicao) return <div>Requisição não encontrada.</div>
 
-  const valorTotal = itensRequisicao.reduce((sum, i) => sum + (i.valorTotal ?? 0), 0)
+  const valorTotal = itensRequisicao.reduce((sum, i) => sum + (i.valTotal ?? 0), 0)
   const unidade = typeof requisicao.identUnidade === 'string' ? null : (requisicao.identUnidade as IUnidade)
   const uorg = requisicao.uorg as IUorg | undefined
   const userUasg = unidade?.uasg ?? ''
@@ -632,7 +632,7 @@ export function RequisicaoAnalisePage() {
           </div>
         ) : (
           Object.entries(itensPorFornecedor).map(([fornecedor, itensForn]) => {
-            const totalFornecedor = itensForn.reduce((s, i) => s + (i.valorTotal ?? 0), 0)
+            const totalFornecedor = itensForn.reduce((s, i) => s + (i.valTotal ?? 0), 0)
             return (
               <Card key={fornecedor}>
                 <CardHeader className="pb-0 pt-4 px-5">
@@ -658,12 +658,12 @@ export function RequisicaoAnalisePage() {
                       {itensForn.map((item) => (
                         <tr key={item.id} className="hover:bg-muted/10">
                           <td className="px-5 py-2.5 font-medium">{getItemName(item)}</td>
-                          <td className="px-4 py-2.5 text-right">{item.quantidadeSolicitada}</td>
+                          <td className="px-4 py-2.5 text-right">{item.qtdSolicitada}</td>
                           <td className="px-4 py-2.5 text-right">
-                            {item.valorUnitario != null ? formatCurrency(item.valorUnitario) : '—'}
+                            {item.valUnitario != null ? formatCurrency(item.valUnitario) : '—'}
                           </td>
                           <td className="px-4 py-2.5 text-right font-medium">
-                            {item.valorTotal != null ? formatCurrency(item.valorTotal) : '—'}
+                            {item.valTotal != null ? formatCurrency(item.valTotal) : '—'}
                           </td>
                           <td className="px-4 py-2.5">
                             <div className="flex items-center gap-1 justify-end">

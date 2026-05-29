@@ -398,7 +398,7 @@ export function ContratacaoDetailPage() {
                           {" → "}
                           {ct.fimVigencia ? formatDate(ct.fimVigencia) : "—"}
                         </TableCell>
-                        <TableCell className="text-sm">{formatCurrency(ct.valorGlobal)}</TableCell>
+                        <TableCell className="text-sm">{formatCurrency(ct.valGlobal)}</TableCell>
                         <TableCell><StatusBadge status={ct.status} /></TableCell>
                         <TableCell className="text-right">
                           <Button

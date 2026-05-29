@@ -55,9 +55,9 @@ export function ContratoDetailPage() {
   const [editObjeto, setEditObjeto] = useState('')
   const [editIniVigencia, setEditIniVigencia] = useState('')
   const [editFimVigencia, setEditFimVigencia] = useState('')
-  const [editValorGlobal, setEditValorGlobal] = useState('')
+  const [editValGlobal, setEditValGlobal] = useState('')
   const [editNumParcelas, setEditNumParcelas] = useState('')
-  const [editValorParcelas, setEditValorParcelas] = useState('')
+  const [editValParcelas, setEditValParcelas] = useState('')
   const [editStatus, setEditStatus] = useState('')
   const [activeTab, setActiveTab] = useState('informacoes')
 
@@ -92,9 +92,9 @@ export function ContratoDetailPage() {
     setEditObjeto(contrato.objeto ?? '')
     setEditIniVigencia(contrato.iniVigencia ? contrato.iniVigencia.substring(0, 10) : '')
     setEditFimVigencia(contrato.fimVigencia ? contrato.fimVigencia.substring(0, 10) : '')
-    setEditValorGlobal(contrato.valorGlobal?.toString() ?? '')
+    setEditValGlobal(contrato.valGlobal?.toString() ?? '')
     setEditNumParcelas(contrato.numParcelas?.toString() ?? '')
-    setEditValorParcelas(contrato.valorParcelas?.toString() ?? '')
+    setEditValParcelas(contrato.valParcelas?.toString() ?? '')
     setEditStatus(contrato.status)
     setEditMode(true)
   }
@@ -106,9 +106,9 @@ export function ContratoDetailPage() {
       if (editObjeto !== '') payload.objeto = editObjeto
       if (editIniVigencia) payload.iniVigencia = editIniVigencia
       if (editFimVigencia) payload.fimVigencia = editFimVigencia
-      if (editValorGlobal !== '') payload.valorGlobal = Number(editValorGlobal)
+      if (editValGlobal !== '') payload.valGlobal = Number(editValGlobal)
       if (editNumParcelas !== '') payload.numParcelas = Number(editNumParcelas)
-      if (editValorParcelas !== '') payload.valorParcelas = Number(editValorParcelas)
+      if (editValParcelas !== '') payload.valParcelas = Number(editValParcelas)
     }
     if (editStatus) payload.status = editStatus as IContrato['status']
     updateMutation.mutate(payload)
@@ -130,9 +130,9 @@ export function ContratoDetailPage() {
     setEditObjeto(contrato?.objeto ?? '')
     setEditIniVigencia(contrato?.iniVigencia ? contrato.iniVigencia.substring(0, 10) : '')
     setEditFimVigencia(contrato?.fimVigencia ? contrato.fimVigencia.substring(0, 10) : '')
-    setEditValorGlobal(contrato?.valorGlobal?.toString() ?? '')
+    setEditValGlobal(contrato?.valGlobal?.toString() ?? '')
     setEditNumParcelas(contrato?.numParcelas?.toString() ?? '')
-    setEditValorParcelas(contrato?.valorParcelas?.toString() ?? '')
+    setEditValParcelas(contrato?.valParcelas?.toString() ?? '')
     setEditStatus(contrato?.status ?? '')
   }
 
@@ -244,8 +244,8 @@ export function ContratoDetailPage() {
                 </Field>
                 <Field label="Valor Global">
                   {editMode && contrato.status === 'Processado' ? (
-                    <Input type="number" step="0.01" min={0} value={editValorGlobal} onChange={(e) => setEditValorGlobal(e.target.value)} className="w-44" />
-                  ) : formatCurrency(contrato.valorGlobal)}
+                    <Input type="number" step="0.01" min={0} value={editValGlobal} onChange={(e) => setEditValGlobal(e.target.value)} className="w-44" />
+                  ) : formatCurrency(contrato.valGlobal)}
                 </Field>
                 <Field label="Nº Parcelas">
                   {editMode && contrato.status === 'Processado' ? (
@@ -254,8 +254,8 @@ export function ContratoDetailPage() {
                 </Field>
                 <Field label="Valor Parcelas">
                   {editMode && contrato.status === 'Processado' ? (
-                    <Input type="number" step="0.01" min={0} value={editValorParcelas} onChange={(e) => setEditValorParcelas(e.target.value)} className="w-44" />
-                  ) : (contrato.valorParcelas != null ? formatCurrency(contrato.valorParcelas) : '—')}
+                    <Input type="number" step="0.01" min={0} value={editValParcelas} onChange={(e) => setEditValParcelas(e.target.value)} className="w-44" />
+                  ) : (contrato.valParcelas != null ? formatCurrency(contrato.valParcelas) : '—')}
                 </Field>
                 <Field label="Status">
                   {editMode ? (

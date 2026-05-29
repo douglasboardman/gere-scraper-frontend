@@ -37,7 +37,7 @@ import type { IRequisicao, IUsuario, IUnidade } from '@/types'
 
 interface Filtros {
   unidadeId: string
-  requisitanteId: string
+  identRequisitante: string
   destDespesa: string
   contratacaoId: string
   status: string
@@ -47,7 +47,7 @@ interface Filtros {
 
 const FILTROS_INICIAIS: Filtros = {
   unidadeId: '',
-  requisitanteId: '',
+  identRequisitante: '',
   destDespesa: '',
   contratacaoId: '',
   status: '',
@@ -122,7 +122,7 @@ export function RequisicoesUnidadePage() {
 
       if (appliedFilters.status && req.status !== appliedFilters.status) return false
 
-      if (appliedFilters.requisitanteId && req.requisitanteId !== appliedFilters.requisitanteId)
+      if (appliedFilters.identRequisitante && req.identRequisitante !== appliedFilters.identRequisitante)
         return false
 
       if (appliedFilters.unidadeId) {
@@ -317,7 +317,7 @@ export function RequisicoesUnidadePage() {
                     setPendingFilters((prev) => ({
                       ...prev,
                       unidadeId: val === '__all__' ? '' : val,
-                      requisitanteId: '',
+                      identRequisitante: '',
                       contratacaoId: '',
                     }))
                   }
@@ -341,11 +341,11 @@ export function RequisicoesUnidadePage() {
             <div className="space-y-1.5">
               <Label>Requisitante</Label>
               <Select
-                value={pendingFilters.requisitanteId || '__all__'}
+                value={pendingFilters.identRequisitante || '__all__'}
                 onValueChange={(val) =>
                   setPendingFilters((prev) => ({
                     ...prev,
-                    requisitanteId: val === '__all__' ? '' : val,
+                    identRequisitante: val === '__all__' ? '' : val,
                   }))
                 }
               >

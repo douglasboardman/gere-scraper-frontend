@@ -164,9 +164,9 @@ export interface IContrato {
   fornecedor?: IFornecedor
   iniVigencia: string
   fimVigencia?: string
-  valorGlobal: number
+  valGlobal: number
   numParcelas?: number
-  valorParcelas?: number
+  valParcelas?: number
   tipoContrato?: 'Contrato' | 'Empenho'
   status: StatusElemContratacao
   createdAt: string
@@ -284,7 +284,7 @@ export type DestinacaoDespesa = 'Material' | 'Servico' | 'Outras_Obrigacoes'
 
 export interface IRequisicao {
   identificador: string
-  requisitanteId: string
+  identRequisitante: string
   requisitante: IUsuario | { nome: string; email: string; identUorg?: string }
   identUnidade: string | IUnidade
   identContratacao?: string
@@ -309,9 +309,9 @@ export interface IItemRequisicao {
   id: number
   identRequisicao: string
   identFornecimento: string | IFornecimento
-  quantidadeSolicitada: number
-  valorUnitario?: number
-  valorTotal?: number
+  qtdSolicitada: number
+  valUnitario?: number
+  valTotal?: number
   observacao?: string
   createdAt: string
   updatedAt: string
@@ -411,7 +411,7 @@ export interface CriarRequisicaoData {
 
 export interface CriarItemRequisicaoData {
   identFornecimento: string
-  quantidadeSolicitada: number
+  qtdSolicitada: number
   observacao?: string
 }
 
@@ -424,9 +424,9 @@ export interface CriarContratoData {
   objeto?: string
   iniVigencia: string
   fimVigencia?: string
-  valorGlobal: number
+  valGlobal: number
   numParcelas?: number
-  valorParcelas?: number
+  valParcelas?: number
 }
 
 export interface CriarFornecimentoManualData {

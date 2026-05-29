@@ -86,7 +86,7 @@ export function MinhasRequisicoesPage() {
   })
 
   const requisicoes = useMemo(
-    () => todasRequisicoes.filter((r) => r.requisitanteId === user?.id),
+    () => todasRequisicoes.filter((r) => r.identRequisitante === user?.id),
     [todasRequisicoes, user?.id]
   )
 

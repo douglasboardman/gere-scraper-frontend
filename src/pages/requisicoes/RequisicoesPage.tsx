@@ -166,7 +166,7 @@ export function RequisicoesPage() {
   }
 
   const isOwner = (req: IRequisicao) => {
-    return req.requisitanteId === user?.id
+    return req.identRequisitante === user?.id
   }
 
   const columns: ColumnDef<IRequisicao, unknown>[] = [

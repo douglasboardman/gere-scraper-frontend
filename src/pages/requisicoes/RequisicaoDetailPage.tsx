@@ -111,19 +111,19 @@ interface EditItemDialogProps {
 }
 
 function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogProps) {
-  const [qty, setQty] = useState(String(item.quantidadeSolicitada))
+  const [qty, setQty] = useState(String(item.qtdSolicitada))
 
   const f = typeof item.identFornecimento === 'string' ? null : item.identFornecimento as IFornecimento
   const i = f ? (typeof f.identItem === 'string' ? null : f.identItem as IItem) : null
   const itemName = i ? (i.descricaoBreve ?? i.descBreve ?? '—') : f?.identificador ?? '—'
   const fornecedorName = f?.nomeFornecedor ?? '—'
   const saldoMax = f ? saldoDisp(f) : null
-  const vUnit = item.valorUnitario ?? (f ? valUnitario(f) : 0)
+  const vUnit = item.valUnitario ?? (f ? valUnitario(f) : 0)
   const newTotal = vUnit * (Number(qty) || 0)
 
   const mutation = useMutation({
     mutationFn: () =>
-      itemRequisicaoApi.atualizar(item.id, { quantidadeSolicitada: Number(qty) }),
+      itemRequisicaoApi.atualizar(item.id, { qtdSolicitada: Number(qty) }),
     onSuccess: () => {
       toast.success('Quantidade atualizada.')
       onSaved()
@@ -330,7 +330,7 @@ function AddItemsDialog({
         await itemRequisicaoApi.criar({
           identRequisicao: requisicaoIdentificador,
           identFornecimento: idForn,
-          quantidadeSolicitada: entry.quantidade,
+          qtdSolicitada: entry.quantidade,
         })
       }
     },
@@ -571,9 +571,9 @@ function AddItemsDialog({
                           {getItemName(ei)}
                         </p>
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>Qtd: {ei.quantidadeSolicitada}</span>
+                          <span>Qtd: {ei.qtdSolicitada}</span>
                           <span className="font-medium">
-                            {ei.valorTotal != null ? formatCurrency(ei.valorTotal) : '—'}
+                            {ei.valTotal != null ? formatCurrency(ei.valTotal) : '—'}
                           </span>
                         </div>
                       </div>
@@ -876,12 +876,12 @@ export function RequisicaoDetailPage() {
 
   if (!requisicao) return <div>Requisição não encontrada.</div>
 
-  const isOwner = requisicao.requisitanteId === user?.id
+  const isOwner = requisicao.identRequisitante === user?.id
 
   const canEdit = isOwner && (requisicao.status === 'Rascunho' || requisicao.status === 'Rejeitada')
   const canSend = isOwner && (requisicao.status === 'Rascunho' || requisicao.status === 'Rejeitada') && itensRequisicao.length > 0
 
-  const valorTotal = itensRequisicao.reduce((sum, item) => sum + (item.valorTotal ?? 0), 0)
+  const valorTotal = itensRequisicao.reduce((sum, item) => sum + (item.valTotal ?? 0), 0)
 
   const unidade = typeof requisicao.identUnidade === 'string' ? null : (requisicao.identUnidade as IUnidade)
   const uorg = requisicao.uorg as IUorg | undefined
@@ -1058,13 +1058,13 @@ export function RequisicaoDetailPage() {
                         {getFornecedorName(item)}
                       </TableCell>
                       <TableCell className="text-right text-sm">
-                        {item.quantidadeSolicitada}
+                        {item.qtdSolicitada}
                       </TableCell>
                       <TableCell className="text-right text-sm">
-                        {item.valorUnitario != null ? formatCurrency(item.valorUnitario) : '—'}
+                        {item.valUnitario != null ? formatCurrency(item.valUnitario) : '—'}
                       </TableCell>
                       <TableCell className="text-right text-sm font-medium">
-                        {item.valorTotal != null ? formatCurrency(item.valorTotal) : '—'}
+                        {item.valTotal != null ? formatCurrency(item.valTotal) : '—'}
                       </TableCell>
                       {canEdit && (
                         <TableCell>

@@ -126,10 +126,10 @@ export function ContratosPage() {
       },
     },
     {
-      accessorKey: 'valorGlobal',
+      accessorKey: 'valGlobal',
       header: 'Valor Global',
       cell: ({ row }) => (
-        <span className="text-sm font-medium">{formatCurrency(row.original.valorGlobal)}</span>
+        <span className="text-sm font-medium">{formatCurrency(row.original.valGlobal)}</span>
       ),
     },
     {

@@ -973,7 +973,7 @@ function Step4Revisao({
         await itemRequisicaoApi.criar({
           identRequisicao: requisicao.identificador,
           identFornecimento: idForn,
-          quantidadeSolicitada: entry.quantidade,
+          qtdSolicitada: entry.quantidade,
         })
       }
       if (enviar) {

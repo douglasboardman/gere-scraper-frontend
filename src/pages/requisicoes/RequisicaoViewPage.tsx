@@ -254,8 +254,8 @@ export function RequisicaoViewPage() {
                     itemData?.descDetalhada ??
                     (typeof item.identFornecimento === 'string' ? item.identFornecimento : '—')
                   const nomeForn = forn?.nomeFornecedor ?? '—'
-                  const valUnit = item.valorUnitario ?? forn?.valorUnitario ?? forn?.valUnitHomologado ?? 0
-                  const valTotal = item.valorTotal ?? valUnit * item.quantidadeSolicitada
+                  const valUnit = item.valUnitario ?? forn?.valorUnitario ?? forn?.valUnitHomologado ?? 0
+                  const valTotal = item.valTotal ?? valUnit * item.qtdSolicitada
 
                   return (
                     <tr key={item.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
@@ -269,7 +269,7 @@ export function RequisicaoViewPage() {
                         )}
                       </td>
                       <td className="text-right py-3 pr-4 font-mono">
-                        {item.quantidadeSolicitada}
+                        {item.qtdSolicitada}
                       </td>
                       <td className="text-right py-3 pr-4 font-mono">
                         {valUnit > 0

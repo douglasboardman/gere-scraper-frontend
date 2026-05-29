@@ -97,7 +97,7 @@ export function RequisicaoImprimirPage() {
     enabled: !!requisicao?.identificador,
   })
 
-  const valorTotal = itens.reduce((sum, i) => sum + (i.valorTotal ?? 0), 0)
+  const valorTotal = itens.reduce((sum, i) => sum + (i.valTotal ?? 0), 0)
 
   const unidade = requisicao && typeof requisicao.identUnidade !== 'string'
     ? (requisicao.identUnidade as IUnidade)
@@ -173,7 +173,7 @@ export function RequisicaoImprimirPage() {
 
         {/* Documentos por fornecedor */}
         {fornecedores.map(([fornecedor, itensForn], idx) => {
-          const totalFornecedor = itensForn.reduce((s, i) => s + (i.valorTotal ?? 0), 0)
+          const totalFornecedor = itensForn.reduce((s, i) => s + (i.valTotal ?? 0), 0)
           const isLast = idx === fornecedores.length - 1
           const docLabel = `Documento ${String(idx + 1).padStart(2, '0')}`
 
@@ -213,12 +213,12 @@ export function RequisicaoImprimirPage() {
                           <td className="px-3 py-2 font-mono text-center">{seq}</td>
                           <td className="px-3 py-2">{descDetalhada}</td>
                           <td className="px-3 py-2">{tipo}</td>
-                          <td className="px-3 py-2 text-right">{item.quantidadeSolicitada}</td>
+                          <td className="px-3 py-2 text-right">{item.qtdSolicitada}</td>
                           <td className="px-3 py-2 text-right">
-                            {item.valorUnitario != null ? formatCurrency(item.valorUnitario) : '—'}
+                            {item.valUnitario != null ? formatCurrency(item.valUnitario) : '—'}
                           </td>
                           <td className="px-3 py-2 text-right font-medium">
-                            {item.valorTotal != null ? formatCurrency(item.valorTotal) : '—'}
+                            {item.valTotal != null ? formatCurrency(item.valTotal) : '—'}
                           </td>
                         </tr>
                       )

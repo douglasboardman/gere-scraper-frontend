@@ -28,9 +28,9 @@ const schema = z.object({
   objeto: z.string().optional(),
   iniVigencia: z.string().min(1, 'Data de início é obrigatória'),
   fimVigencia: z.string().optional(),
-  valorGlobal: z.coerce.number().positive('Valor global deve ser positivo'),
+  valGlobal: z.coerce.number().positive('Valor global deve ser positivo'),
   numParcelas: z.coerce.number().int().positive().optional().or(z.literal('')),
-  valorParcelas: z.coerce.number().positive().optional().or(z.literal('')),
+  valParcelas: z.coerce.number().positive().optional().or(z.literal('')),
 })
 
 type FormData = z.infer<typeof schema>
@@ -49,9 +49,9 @@ export function NovoContratoPage() {
       objeto: '',
       iniVigencia: '',
       fimVigencia: '',
-      valorGlobal: 0,
+      valGlobal: 0,
       numParcelas: '',
-      valorParcelas: '',
+      valParcelas: '',
     },
   })
 
@@ -66,9 +66,9 @@ export function NovoContratoPage() {
         objeto: data.objeto || undefined,
         iniVigencia: data.iniVigencia,
         fimVigencia: data.fimVigencia || undefined,
-        valorGlobal: data.valorGlobal,
+        valGlobal: data.valGlobal,
         numParcelas: data.numParcelas ? Number(data.numParcelas) : undefined,
-        valorParcelas: data.valorParcelas ? Number(data.valorParcelas) : undefined,
+        valParcelas: data.valParcelas ? Number(data.valParcelas) : undefined,
       }),
     onSuccess: (contrato) => {
       toast.success('Contrato criado com sucesso.')
@@ -190,7 +190,7 @@ export function NovoContratoPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="valorGlobal"
+                  name="valGlobal"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Valor Global (R$) *</FormLabel>
@@ -212,7 +212,7 @@ export function NovoContratoPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="valorParcelas"
+                  name="valParcelas"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Valor das Parcelas (R$)</FormLabel>
