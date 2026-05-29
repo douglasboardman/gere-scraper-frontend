@@ -255,14 +255,14 @@ export interface IUnidade {
 }
 
 export interface IUorg {
-  uorg_key: string
-  uorg_orgao_co: string
-  uorg_co?: string
-  uorg_nivel?: number
-  uorg_path?: string
-  uorg_no: string
-  uorg_sg?: string
-  status_atvd_reg_tab_in?: string
+  identificador: string
+  codOrgao: string
+  codUorg?: string
+  nivel?: number
+  caminho?: string
+  nome: string
+  sigla?: string
+  statusAtividade?: string
   createdAt: string
   updatedAt: string
 }
@@ -275,7 +275,7 @@ export interface IUsuario {
   ativo: boolean
   identUnidade?: string | null
   unidade?: IUnidade | null
-  uorg_key?: string | null
+  identUorg?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -285,10 +285,10 @@ export type DestinacaoDespesa = 'Material' | 'Servico' | 'Outras_Obrigacoes'
 export interface IRequisicao {
   identificador: string
   requisitanteId: string
-  requisitante: IUsuario | { nome: string; email: string; uorg_key?: string }
+  requisitante: IUsuario | { nome: string; email: string; identUorg?: string }
   identUnidade: string | IUnidade
   identContratacao?: string
-  uorg_key?: string
+  identUorg?: string
   uorg?: IUorg
   destDespesa: DestinacaoDespesa
   status: StatusRequisicao
@@ -367,7 +367,7 @@ export interface RegisterData {
   nome: string
   email: string
   unidade: string
-  uorg_key: string
+  identUorg: string
 }
 
 export interface AdminRegisterData {
@@ -376,7 +376,7 @@ export interface AdminRegisterData {
   senha: string
   role?: UserRole
   unidade?: string
-  uorg_key?: string
+  identUorg?: string
 }
 
 export interface AdminUpdateUsuarioData {
@@ -384,7 +384,7 @@ export interface AdminUpdateUsuarioData {
   email?: string
   role?: UserRole
   identUnidade?: string
-  uorg_key?: string
+  identUorg?: string
   ativo?: boolean
 }
 

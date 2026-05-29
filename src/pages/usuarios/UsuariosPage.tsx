@@ -52,7 +52,7 @@ const novoUsuarioSchema = z.object({
   senha: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
   role: z.enum(['admin', 'gestor_unidade', 'gestor_contratos', 'gestor_financeiro', 'gestor_contratacoes', 'requisitante'] as const),
   unidade: z.string().optional(),
-  uorg_key: z.string().optional(),
+  identUorg: z.string().optional(),
 })
 
 type NovoUsuarioFormData = z.infer<typeof novoUsuarioSchema>
@@ -108,7 +108,7 @@ export function UsuariosPage() {
       senha: '',
       role: 'requisitante',
       unidade: '',
-      uorg_key: '',
+      identUorg: '',
     },
   })
 
@@ -337,7 +337,7 @@ export function UsuariosPage() {
                         <Select
                           onValueChange={(value) => {
                             field.onChange(value)
-                            form.setValue('uorg_key', '')
+                            form.setValue('identUorg', '')
                           }}
                           value={field.value}
                         >
@@ -360,7 +360,7 @@ export function UsuariosPage() {
                   />
                   <FormField
                     control={form.control}
-                    name="uorg_key"
+                    name="identUorg"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>UORG *</FormLabel>
@@ -384,8 +384,8 @@ export function UsuariosPage() {
                           </FormControl>
                           <SelectContent>
                             {uorgs.map((uorg) => (
-                              <SelectItem key={uorg.uorg_key} value={uorg.uorg_key}>
-                                {uorg.uorg_sg ? `${uorg.uorg_sg} - ` : ''}{uorg.uorg_no}
+                              <SelectItem key={uorg.identificador} value={uorg.identificador}>
+                                {uorg.sigla ? `${uorg.sigla} - ` : ''}{uorg.nome}
                               </SelectItem>
                             ))}
                           </SelectContent>

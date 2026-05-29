@@ -907,8 +907,8 @@ export function RequisicaoDetailPage() {
     : (typeof requisicao.identUnidade === 'string' ? requisicao.identUnidade : '—')
 
   const uorgLabel = uorg
-    ? `${uorg.uorg_sg ? uorg.uorg_sg + ' — ' : ''}${uorg.uorg_no}`
-    : (requisicao.uorg_key ?? '—')
+    ? `${uorg.sigla ? uorg.sigla + ' — ' : ''}${uorg.nome}`
+    : (requisicao.identUorg ?? '—')
 
   return (
     <div>

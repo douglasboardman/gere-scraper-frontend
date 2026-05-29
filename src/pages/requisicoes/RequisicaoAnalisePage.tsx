@@ -575,7 +575,7 @@ export function RequisicaoAnalisePage() {
             <div>
               <span className="text-muted-foreground">Setor / UORG</span>
               <p className="font-medium">
-                {uorg ? `${uorg.uorg_sg ? uorg.uorg_sg + ' — ' : ''}${uorg.uorg_no}` : (requisicao.uorg_key ?? '—')}
+                {uorg ? `${uorg.sigla ? uorg.sigla + ' — ' : ''}${uorg.nome}` : (requisicao.identUorg ?? '—')}
               </p>
             </div>
             <div>

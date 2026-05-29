@@ -935,13 +935,13 @@ function Step4Revisao({
   const unidadeNome = userUnidade?.nomeAbrev ?? userUnidade?.nome ?? '—'
 
   const { data: uorg } = useQuery({
-    queryKey: ['uorg', user?.uorg_key],
-    queryFn: () => uorgsApi.obter(user!.uorg_key!),
-    enabled: !!user?.uorg_key,
+    queryKey: ['uorg', user?.identUorg],
+    queryFn: () => uorgsApi.obter(user!.identUorg!),
+    enabled: !!user?.identUorg,
   })
   const uorgLabel = uorg
-    ? `${uorg.uorg_sg ? uorg.uorg_sg + ' — ' : ''}${uorg.uorg_no}`
-    : (user?.uorg_key ?? '—')
+    ? `${uorg.sigla ? uorg.sigla + ' — ' : ''}${uorg.nome}`
+    : (user?.identUorg ?? '—')
 
   type ConflitosItem = {
     identFornecimento: string

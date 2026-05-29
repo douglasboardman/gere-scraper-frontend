@@ -109,7 +109,7 @@ function RequisicaoPendenteCard({ req, onAnalisar }: CardProps) {
             </div>
             <div>
               <span className="text-xs text-muted-foreground uppercase font-semibold">Setor / UORG</span>
-              <p className="font-medium">{req.uorg_key ?? '—'}</p>
+              <p className="font-medium">{req.identUorg ?? '—'}</p>
             </div>
             <div>
               <span className="text-xs text-muted-foreground uppercase font-semibold">Data de Criação</span>

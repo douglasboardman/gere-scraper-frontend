@@ -36,8 +36,8 @@ export const usuariosApi = {
     return data
   },
 
-  /** Gestor de unidade edita uorg_key, ativo e role (roles restritas) de usuário da sua unidade */
-  async gestorUnidadeAtualizar(id: string, userData: { uorg_key?: string; ativo?: boolean; role?: string }): Promise<IUsuario> {
+  /** Gestor de unidade edita identUorg, ativo e role (roles restritas) de usuário da sua unidade */
+  async gestorUnidadeAtualizar(id: string, userData: { identUorg?: string; ativo?: boolean; role?: string }): Promise<IUsuario> {
     const { data } = await apiClient.patch<IUsuario>(`/usuarios/${id}`, userData)
     return data
   },

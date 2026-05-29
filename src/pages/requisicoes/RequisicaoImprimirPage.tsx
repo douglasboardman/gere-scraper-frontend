@@ -43,10 +43,10 @@ interface InfoCardProps {
   observacoes: string | undefined
   status: string
   identUnidade: unknown
-  uorg_key: string | undefined
+  identUorg: string | undefined
 }
 
-function InfoCard({ requisitante, unidade, uorg, tipo, justificativa, observacoes, status, identUnidade, uorg_key }: InfoCardProps) {
+function InfoCard({ requisitante, unidade, uorg, tipo, justificativa, observacoes, status, identUnidade, identUorg }: InfoCardProps) {
   return (
     <div className="grid grid-cols-2 gap-x-8 gap-y-2 border rounded-md p-3 text-xs">
       <div>
@@ -62,7 +62,7 @@ function InfoCard({ requisitante, unidade, uorg, tipo, justificativa, observacoe
       <div>
         <p className="text-muted-foreground uppercase font-semibold mb-0.5">Setor / UORG</p>
         <p className="font-medium">
-          {uorg ? `${uorg.uorg_sg ? uorg.uorg_sg + ' — ' : ''}${uorg.uorg_no}` : (uorg_key ?? '—')}
+          {uorg ? `${uorg.sigla ? uorg.sigla + ' — ' : ''}${uorg.nome}` : (identUorg ?? '—')}
         </p>
       </div>
       <div>
@@ -139,7 +139,7 @@ export function RequisicaoImprimirPage() {
     observacoes,
     status: requisicao.status,
     identUnidade: requisicao.identUnidade,
-    uorg_key: requisicao.uorg_key,
+    identUorg: requisicao.identUorg,
   }
 
   return (

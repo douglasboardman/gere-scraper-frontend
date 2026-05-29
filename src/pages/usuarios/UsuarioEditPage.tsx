@@ -44,7 +44,7 @@ const editUsuarioSchema = z.object({
   email: z.string().email('E-mail inválido'),
   role: z.enum(['admin', 'gestor_unidade', 'gestor_contratos', 'gestor_financeiro', 'gestor_contratacoes', 'requisitante'] as const),
   unidade: z.string().optional(),
-  uorg_key: z.string().optional(),
+  identUorg: z.string().optional(),
 })
 
 type EditUsuarioFormData = z.infer<typeof editUsuarioSchema>
@@ -85,7 +85,7 @@ export function UsuarioEditPage() {
           email: usuario.email,
           role: usuario.role,
           unidade: usuario.identUnidade ?? usuario.unidade?.identificador ?? '',
-          uorg_key: usuario.uorg_key ?? '',
+          identUorg: usuario.identUorg ?? '',
         }
       : undefined,
   })
@@ -103,7 +103,7 @@ export function UsuarioEditPage() {
     mutationFn: (data: EditUsuarioFormData) =>
       isAdmin
         ? usuariosApi.atualizar(id!, data)
-        : usuariosApi.gestorUnidadeAtualizar(id!, { uorg_key: data.uorg_key, role: data.role }),
+        : usuariosApi.gestorUnidadeAtualizar(id!, { identUorg: data.identUorg, role: data.role }),
     onSuccess: () => {
       toast.success('Usuário atualizado com sucesso.')
       queryClient.invalidateQueries({ queryKey: ['usuarios'] })
@@ -277,7 +277,7 @@ export function UsuarioEditPage() {
                         <Select
                           onValueChange={(value) => {
                             field.onChange(value)
-                            form.setValue('uorg_key', '')
+                            form.setValue('identUorg', '')
                           }}
                           value={field.value}
                         >
@@ -301,7 +301,7 @@ export function UsuarioEditPage() {
 
                   <FormField
                     control={form.control}
-                    name="uorg_key"
+                    name="identUorg"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>UORG</FormLabel>
@@ -326,8 +326,8 @@ export function UsuarioEditPage() {
                           </FormControl>
                           <SelectContent>
                             {uorgs.map((uorg) => (
-                              <SelectItem key={uorg.uorg_key} value={uorg.uorg_key}>
-                                {uorg.uorg_sg ? `${uorg.uorg_sg} - ` : ''}{uorg.uorg_no}
+                              <SelectItem key={uorg.identificador} value={uorg.identificador}>
+                                {uorg.sigla ? `${uorg.sigla} - ` : ''}{uorg.nome}
                               </SelectItem>
                             ))}
                           </SelectContent>

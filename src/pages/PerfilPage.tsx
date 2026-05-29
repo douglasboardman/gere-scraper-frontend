@@ -61,9 +61,9 @@ export function PerfilPage() {
   const [saved, setSaved] = useState(false)
 
   const { data: uorg } = useQuery({
-    queryKey: ['uorg', user?.uorg_key],
-    queryFn: () => uorgsApi.obter(user!.uorg_key!),
-    enabled: !!user?.uorg_key,
+    queryKey: ['uorg', user?.identUorg],
+    queryFn: () => uorgsApi.obter(user!.identUorg!),
+    enabled: !!user?.identUorg,
   })
 
   const unidadeResolvida = user?.unidade ?? null
@@ -165,7 +165,7 @@ export function PerfilPage() {
                 <div>
                   <p className="text-sm font-medium">UORG</p>
                   <p className="text-sm text-muted-foreground">
-                    {uorg.uorg_sg ? `${uorg.uorg_sg} — ${uorg.uorg_no}` : uorg.uorg_no}
+                    {uorg.sigla ? `${uorg.sigla} — ${uorg.nome}` : uorg.nome}
                   </p>
                 </div>
               </div>

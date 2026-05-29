@@ -31,7 +31,7 @@ const registerSchema = z.object({
   nome: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
   email: z.string().email('E-mail inválido'),
   unidade: z.string().min(1, 'Selecione a unidade'),
-  uorg_key: z.string().min(1, 'Selecione a UORG de exercício'),
+  identUorg: z.string().min(1, 'Selecione a UORG de exercício'),
 })
 
 type RegisterFormData = z.infer<typeof registerSchema>
@@ -54,7 +54,7 @@ export function RegisterPage() {
       nome: '',
       email: '',
       unidade: '',
-      uorg_key: '',
+      identUorg: '',
     },
   })
 
@@ -198,7 +198,7 @@ export function RegisterPage() {
                     <Select
                       onValueChange={(value) => {
                         field.onChange(value)
-                        form.setValue('uorg_key', '')
+                        form.setValue('identUorg', '')
                       }}
                       value={field.value}
                     >
@@ -222,7 +222,7 @@ export function RegisterPage() {
 
               <FormField
                 control={form.control}
-                name="uorg_key"
+                name="identUorg"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>UORG de exercício *</FormLabel>
@@ -246,8 +246,8 @@ export function RegisterPage() {
                       </FormControl>
                       <SelectContent>
                         {uorgs.map((uorg) => (
-                          <SelectItem key={uorg.uorg_key} value={uorg.uorg_key}>
-                            {uorg.uorg_sg ? `${uorg.uorg_sg} - ` : ''}{uorg.uorg_no}
+                          <SelectItem key={uorg.identificador} value={uorg.identificador}>
+                            {uorg.sigla ? `${uorg.sigla} - ` : ''}{uorg.nome}
                           </SelectItem>
                         ))}
                       </SelectContent>
