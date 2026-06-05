@@ -88,11 +88,16 @@ export function ContratacoesPage() {
         const ini = row.original.iniVigencia
         const fim = row.original.fimVigencia
         if (!ini && !fim) return <span className="text-muted-foreground">—</span>
+        const fmtDate = (d: string) => {
+          const parsed = new Date(d)
+          if (isNaN(parsed.getTime())) return '?'
+          return format(parsed, 'dd/MM/yyyy', { locale: ptBR })
+        }
         return (
           <span className="text-sm whitespace-nowrap">
-            {ini ? format(new Date(ini), 'dd/MM/yyyy', { locale: ptBR }) : '?'}
+            {ini ? fmtDate(ini) : '?'}
             {' → '}
-            {fim ? format(new Date(fim), 'dd/MM/yyyy', { locale: ptBR }) : '?'}
+            {fim ? fmtDate(fim) : '?'}
           </span>
         )
       },

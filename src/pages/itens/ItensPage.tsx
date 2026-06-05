@@ -153,13 +153,14 @@ export function ItensPage() {
       accessorKey: "qtdHomologada",
       header: "Qtd Homologada",
       cell: ({ row }) => {
+        const qtd = row.original.qtdHomologada;
         const unidade = row.original.unMedida ?? row.original.unidadeMedida;
+        if (qtd == null) return <span className="text-muted-foreground">—</span>;
         return (
-          <span className="text-sm">
-            {row.original.qtdHomologada != null
-              ? `${formatQtd(row.original.qtdHomologada)} ${unidade ?? ""}`
-              : "—"}
-          </span>
+          <div>
+            <p className="font-mono text-xs text-muted-foreground">{unidade ?? "—"}</p>
+            <p className="text-sm">{formatQtd(qtd)}</p>
+          </div>
         );
       },
     },
