@@ -111,19 +111,27 @@ interface EditItemDialogProps {
 }
 
 function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogProps) {
-  const [qty, setQty] = useState(String(item.qtdSolicitada))
-
   const f = typeof item.identFornecimento === 'string' ? null : item.identFornecimento as IFornecimento
   const i = f ? (typeof f.identItem === 'string' ? null : f.identItem as IItem) : null
   const itemName = i ? (i.descricaoBreve ?? i.descBreve ?? '—') : f?.identificador ?? '—'
   const fornecedorName = f?.nomeFornecedor ?? '—'
   const saldoMax = f ? saldoDisp(f) : null
   const vUnit = item.valUnitario ?? (f ? valUnitario(f) : 0)
-  const newTotal = vUnit * (Number(qty) || 0)
+
+  const [modo, setModo] = useState<'qtd' | 'valor'>('qtd')
+  const [qty, setQty] = useState(String(item.qtdSolicitada))
+  const [valDigitado, setValDigitado] = useState(
+    String(Math.round(vUnit * Number(item.qtdSolicitada) * 100) / 100),
+  )
 
   const mutation = useMutation({
     mutationFn: () =>
-      itemRequisicaoApi.atualizar(item.id, { qtdSolicitada: Number(qty) }),
+      itemRequisicaoApi.atualizar(
+        item.id,
+        modo === 'valor'
+          ? { valDesejado: Number(valDigitado) }
+          : { qtdSolicitada: Number(qty) },
+      ),
     onSuccess: () => {
       toast.success('Quantidade atualizada.')
       onSaved()
@@ -137,9 +145,12 @@ function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogPro
     },
   })
 
-  const qtdNum = Number(qty)
+  const qtdNum = modo === 'qtd'
+    ? Number(qty)
+    : vUnit > 0 ? Math.round((Number(valDigitado) / vUnit) * 100000) / 100000 : 0
+  const newTotal = vUnit * qtdNum
   const canSave =
-    qtdNum >= 1 &&
+    qtdNum > 0 &&
     (saldoMax === null || qtdNum <= saldoMax) &&
     !mutation.isPending
 
@@ -177,32 +188,94 @@ function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogPro
               <p className="text-sm font-bold text-green-700">{formatCurrency(newTotal)}</p>
             </div>
           </div>
-          <div className="space-y-2">
-            <Label>
-              Quantidade{' '}
-              {saldoMax !== null && (
-                <span className="text-muted-foreground font-normal text-xs">
-                  (máx. {saldoMax})
-                </span>
+
+          {/* Toggle Qtd | Valor */}
+          <div className="flex rounded-md border overflow-hidden w-fit">
+            <button
+              type="button"
+              onClick={() => setModo('qtd')}
+              className={cn(
+                'px-3 py-1 text-xs',
+                modo === 'qtd'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-background text-muted-foreground hover:bg-muted',
               )}
-            </Label>
-            <Input
-              type="number"
-              min={1}
-              max={saldoMax ?? undefined}
-              step={0.00001}
-              value={qty}
-              onChange={(e) => {
-                const v = Number(e.target.value)
-                if (saldoMax !== null && v > saldoMax) {
-                  setQty(String(saldoMax))
-                } else {
-                  setQty(e.target.value)
-                }
-              }}
-              className="w-32"
-            />
+            >
+              Quantidade
+            </button>
+            <button
+              type="button"
+              onClick={() => setModo('valor')}
+              className={cn(
+                'px-3 py-1 text-xs',
+                modo === 'valor'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-background text-muted-foreground hover:bg-muted',
+              )}
+            >
+              Valor
+            </button>
           </div>
+
+          {modo === 'qtd' ? (
+            <div className="space-y-2">
+              <Label>
+                Quantidade{' '}
+                {saldoMax !== null && (
+                  <span className="text-muted-foreground font-normal text-xs">
+                    (máx. {saldoMax})
+                  </span>
+                )}
+              </Label>
+              <Input
+                type="number"
+                min={1}
+                max={saldoMax ?? undefined}
+                step={0.00001}
+                value={qty}
+                onChange={(e) => {
+                  const v = Number(e.target.value)
+                  if (saldoMax !== null && v > saldoMax) {
+                    setQty(String(saldoMax))
+                  } else {
+                    setQty(e.target.value)
+                  }
+                }}
+                className="w-32"
+              />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label>
+                Valor (R$){' '}
+                {saldoMax !== null && (
+                  <span className="text-muted-foreground font-normal text-xs">
+                    (máx. {formatCurrency(saldoMax * vUnit)})
+                  </span>
+                )}
+              </Label>
+              <Input
+                type="number"
+                min={0.01}
+                step={0.01}
+                value={valDigitado}
+                onChange={(e) => setValDigitado(e.target.value)}
+                className={cn(
+                  'w-36',
+                  saldoMax !== null && qtdNum > saldoMax && 'border-destructive',
+                )}
+              />
+              {qtdNum > 0 && (
+                <p className={cn(
+                  'text-xs',
+                  saldoMax !== null && qtdNum > saldoMax ? 'text-destructive' : 'text-muted-foreground',
+                )}>
+                  Quantidade calculada: {qtdNum}
+                  {saldoMax !== null && qtdNum > saldoMax && ` — excede saldo (máx. ${saldoMax})`}
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         <DialogFooter>
