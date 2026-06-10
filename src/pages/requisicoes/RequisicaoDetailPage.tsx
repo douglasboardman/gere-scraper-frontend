@@ -223,7 +223,13 @@ function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogPro
 // AddItemsDialog — large Step-3-style dialog for adding new items
 // ---------------------------------------------------------------------------
 
-type NewItemEntry = { fornecimento: IFornecimento; item: IItem; quantidade: number }
+type NewItemEntry = {
+  fornecimento: IFornecimento
+  item: IItem
+  quantidade: number
+  modo: 'qtd' | 'valor'
+  valDigitado: number
+}
 
 interface AddItemsDialogProps {
   open: boolean
@@ -294,7 +300,13 @@ function AddItemsDialog({
     setNewItems((prev) => {
       if (prev.has(f.identificador)) return prev
       const next = new Map(prev)
-      next.set(f.identificador, { fornecimento: f, item, quantidade: 1 })
+      next.set(f.identificador, {
+        fornecimento: f,
+        item,
+        quantidade: 1,
+        modo: 'qtd',
+        valDigitado: valUnitario(f),
+      })
       return next
     })
   }
@@ -319,6 +331,37 @@ function AddItemsDialog({
     })
   }
 
+  function handleValor(idForn: string, val: number) {
+    setNewItems((prev) => {
+      const entry = prev.get(idForn)
+      if (!entry) return prev
+      const vUnit = valUnitario(entry.fornecimento)
+      const qtdCalculada = vUnit > 0 ? Math.round((val / vUnit) * 100000) / 100000 : 0
+      const next = new Map(prev)
+      next.set(idForn, { ...entry, valDigitado: val, quantidade: qtdCalculada })
+      return next
+    })
+  }
+
+  function handleModo(idForn: string, novoModo: 'qtd' | 'valor') {
+    setNewItems((prev) => {
+      const entry = prev.get(idForn)
+      if (!entry) return prev
+      const next = new Map(prev)
+      const vUnit = valUnitario(entry.fornecimento)
+      if (novoModo === 'valor') {
+        next.set(idForn, {
+          ...entry,
+          modo: novoModo,
+          valDigitado: Math.round(entry.quantidade * vUnit * 100) / 100,
+        })
+      } else {
+        next.set(idForn, { ...entry, modo: novoModo })
+      }
+      return next
+    })
+  }
+
   const newTotal = Array.from(newItems.values()).reduce(
     (sum, e) => sum + valUnitario(e.fornecimento) * e.quantidade,
     0,
@@ -330,7 +373,9 @@ function AddItemsDialog({
         await itemRequisicaoApi.criar({
           identRequisicao: requisicaoIdentificador,
           identFornecimento: idForn,
-          qtdSolicitada: entry.quantidade,
+          ...(entry.modo === 'valor'
+            ? { valDesejado: entry.valDigitado }
+            : { qtdSolicitada: entry.quantidade }),
         })
       }
     },
@@ -592,6 +637,7 @@ function AddItemsDialog({
                     {Array.from(newItems.entries()).map(([idForn, entry]) => {
                       const vUnit = valUnitario(entry.fornecimento)
                       const saldoMax = saldoDisp(entry.fornecimento)
+                      const qtdExcedesSaldo = entry.quantidade > saldoMax
                       return (
                         <div key={idForn} className="px-3 py-2.5 space-y-2">
                           <div className="flex items-start justify-between gap-2">
@@ -607,23 +653,74 @@ function AddItemsDialog({
                               <Trash2 className="h-3 w-3" />
                             </Button>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">
-                              Qtd:
-                            </span>
-                            <Input
-                              type="number"
-                              min={0}
-                              max={saldoMax}
-                              step={0.00001}
-                              value={entry.quantidade}
-                              onChange={(e) => handleQtd(idForn, Number(e.target.value))}
-                              className="h-7 w-20 text-xs"
-                            />
-                            <span className="text-xs text-muted-foreground flex-1 text-right">
-                              {formatCurrency(vUnit * entry.quantidade)}
-                            </span>
+
+                          {/* Toggle Qtd | Valor */}
+                          <div className="flex rounded-md border overflow-hidden w-fit">
+                            <button
+                              type="button"
+                              onClick={() => handleModo(idForn, 'qtd')}
+                              className={cn(
+                                'px-2 py-0.5 text-xs',
+                                entry.modo === 'qtd'
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-background text-muted-foreground hover:bg-muted',
+                              )}
+                            >
+                              Qtd
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleModo(idForn, 'valor')}
+                              className={cn(
+                                'px-2 py-0.5 text-xs',
+                                entry.modo === 'valor'
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-background text-muted-foreground hover:bg-muted',
+                              )}
+                            >
+                              Valor
+                            </button>
                           </div>
+
+                          {entry.modo === 'qtd' ? (
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                Qtd:
+                              </span>
+                              <Input
+                                type="number"
+                                min={0}
+                                max={saldoMax}
+                                step={0.00001}
+                                value={entry.quantidade}
+                                onChange={(e) => handleQtd(idForn, Number(e.target.value))}
+                                className={cn('h-7 w-20 text-xs', qtdExcedesSaldo && 'border-destructive')}
+                              />
+                              <span className="text-xs text-muted-foreground flex-1 text-right">
+                                {formatCurrency(vUnit * entry.quantidade)}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                  R$:
+                                </span>
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  step={0.01}
+                                  value={entry.valDigitado}
+                                  onChange={(e) => handleValor(idForn, Number(e.target.value))}
+                                  className={cn('h-7 w-24 text-xs', qtdExcedesSaldo && 'border-destructive')}
+                                />
+                              </div>
+                              <p className={cn('text-xs', qtdExcedesSaldo ? 'text-destructive' : 'text-muted-foreground')}>
+                                Qtd: {entry.quantidade}
+                                {qtdExcedesSaldo && ` — excede saldo (máx. ${saldoMax})`}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       )
                     })}
@@ -649,7 +746,13 @@ function AddItemsDialog({
             Cancelar
           </Button>
           <Button
-            disabled={newItems.size === 0 || saveMutation.isPending}
+            disabled={
+              newItems.size === 0 ||
+              saveMutation.isPending ||
+              Array.from(newItems.values()).some(
+                (e) => e.quantidade > saldoDisp(e.fornecimento),
+              )
+            }
             onClick={() => saveMutation.mutate()}
           >
             {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
