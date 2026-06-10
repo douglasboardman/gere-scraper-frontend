@@ -424,7 +424,8 @@ export interface CriarRequisicaoData {
 
 export interface CriarItemRequisicaoData {
   identFornecimento: string
-  qtdSolicitada: number
+  qtdSolicitada?: number
+  valDesejado?: number
   observacao?: string
 }
 
