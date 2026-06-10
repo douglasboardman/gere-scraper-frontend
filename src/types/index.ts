@@ -336,6 +336,19 @@ export interface IScrapingJob {
   updatedAt: string
 }
 
+export interface CacheSyncStreamState {
+  progresso: number
+  mensagem: string
+  paginasProcessadas: number
+  paginasTotais: number | null
+  contratosEncontrados: number
+  contratosInseridos: number
+  contratosAtualizados: number
+  contratosIgnorados: number
+  status: 'running' | 'completed' | 'failed' | null
+  isActive: boolean
+}
+
 // ============================================================
 // API response wrappers
 // ============================================================

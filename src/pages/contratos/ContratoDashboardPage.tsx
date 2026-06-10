@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import { format, differenceInDays, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
@@ -136,8 +136,9 @@ const ADMIN_UNIT_SESSION_KEY = 'contratos-dashboard-admin-unidade'
 
 export function ContratoDashboardPage() {
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const user = useAuthStore((s) => s.user)
+  const activeCacheSyncJobId = useAuthStore((s) => s.activeCacheSyncJobId)
+  const setActiveCacheSyncJobId = useAuthStore((s) => s.setActiveCacheSyncJobId)
   const { isAdmin, isGestorUnidade, isGestorContratacoes, isGestorContratos } = usePermission()
   const isGestaoContratos = isGestorUnidade || isGestorContratacoes || isGestorContratos
   const podeAtualizarCache = isAdmin || isGestorUnidade || isGestorContratos
@@ -189,9 +190,8 @@ export function ContratoDashboardPage() {
 
   const syncMutation = useMutation({
     mutationFn: () => contratosApi.sincronizarCache({ codGestao: syncCodGestao }),
-    onSuccess: () => {
-      toast.success('Cache atualizado com sucesso.')
-      queryClient.invalidateQueries({ queryKey: ['contratos-dashboard'] })
+    onSuccess: (data) => {
+      setActiveCacheSyncJobId(data.jobId)
     },
     onError: (error: unknown) => {
       const msg =
@@ -442,9 +442,13 @@ export function ContratoDashboardPage() {
                     iconBg="#f9731618"
                     accentColor="#f97316"
                     title="Atualizar Cache de Contratos"
-                    description={`Sincroniza com Portal da Transparência. Última sync: ${ultimaSyncFormatada}`}
+                    description={
+                      activeCacheSyncJobId
+                        ? 'Sincronização em andamento...'
+                        : `Sincroniza com Portal da Transparência. Última sync: ${ultimaSyncFormatada}`
+                    }
                     onClick={() => syncMutation.mutate()}
-                    disabled={syncMutation.isPending}
+                    disabled={syncMutation.isPending || !!activeCacheSyncJobId}
                     isLoading={syncMutation.isPending}
                     className="sm:col-span-2"
                   />

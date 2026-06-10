@@ -79,7 +79,7 @@ export const contratosApi = {
     return data
   },
 
-  async sincronizarCache(body: { codGestao: string }): Promise<{ inseridos: number; atualizados: number; ignorados: number }> {
+  async sincronizarCache(body: { codGestao: string }): Promise<{ jobId: string }> {
     const { data } = await apiClient.post('/contratos/cache/sincronizar', body)
     return data
   },

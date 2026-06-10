@@ -16,6 +16,7 @@ interface AuthState {
   isAuthenticated: boolean
   activeJobId: string | null
   activeJobFormData: ActiveJobFormData | null
+  activeCacheSyncJobId: string | null
 }
 
 interface AuthActions {
@@ -24,6 +25,7 @@ interface AuthActions {
   setUser: (user: IUsuario) => void
   setActiveJobId: (jobId: string | null) => void
   setActiveJobFormData: (data: ActiveJobFormData | null) => void
+  setActiveCacheSyncJobId: (jobId: string | null) => void
 }
 
 type AuthStore = AuthState & AuthActions
@@ -37,6 +39,7 @@ export const useAuthStore = create<AuthStore>()(
       isAuthenticated: false,
       activeJobId: null,
       activeJobFormData: null,
+      activeCacheSyncJobId: null,
 
       // Actions
       login: (token: string, user: IUsuario) => {
@@ -48,7 +51,7 @@ export const useAuthStore = create<AuthStore>()(
       logout: () => {
         localStorage.removeItem('gere_token')
         localStorage.removeItem('gere_user')
-        set({ token: null, user: null, isAuthenticated: false, activeJobId: null })
+        set({ token: null, user: null, isAuthenticated: false, activeJobId: null, activeCacheSyncJobId: null })
       },
 
       setUser: (user: IUsuario) => {
@@ -62,6 +65,10 @@ export const useAuthStore = create<AuthStore>()(
 
       setActiveJobFormData: (data: ActiveJobFormData | null) => {
         set({ activeJobFormData: data })
+      },
+
+      setActiveCacheSyncJobId: (jobId: string | null) => {
+        set({ activeCacheSyncJobId: jobId })
       },
     }),
     {
