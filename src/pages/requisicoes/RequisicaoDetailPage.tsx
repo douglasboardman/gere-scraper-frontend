@@ -121,7 +121,7 @@ function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogPro
   const [modo, setModo] = useState<'qtd' | 'valor'>('qtd')
   const [qty, setQty] = useState(String(item.qtdSolicitada))
   const [valDigitado, setValDigitado] = useState(
-    String(Math.round(vUnit * Number(item.qtdSolicitada) * 100) / 100),
+    (Math.round(vUnit * Number(item.qtdSolicitada) * 100) / 100).toFixed(2),
   )
 
   const mutation = useMutation({
@@ -133,7 +133,7 @@ function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogPro
           : { qtdSolicitada: Number(qty) },
       ),
     onSuccess: () => {
-      toast.success('Quantidade atualizada.')
+      toast.success('Item atualizado.')
       onSaved()
       onOpenChange(false)
     },
