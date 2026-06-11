@@ -886,6 +886,7 @@ function Step3Itens({
                 Array.from(selectedItems.entries()).map(([idForn, entry]) => {
                   const vUnit = valUnitario(entry.fornecimento)
                   const saldoMax = saldoDisp(entry.fornecimento)
+                  const uMed = unMedida(entry.item)
                   const qtdExcedeSaldo = entry.quantidade > saldoMax
                   return (
                     <div key={idForn} className="px-3 py-3 space-y-2.5">
@@ -906,9 +907,9 @@ function Step3Itens({
 
                       {/* Linha 2: contexto — valor unitário + saldo disponível */}
                       <p className="text-xs text-muted-foreground">
-                        {formatCurrency(vUnit)} / {unMedida(entry.item)}
+                        {formatCurrency(vUnit)} / {uMed}
                         {' · '}
-                        Saldo: {formatQtd(saldoMax)} {unMedida(entry.item)}
+                        Saldo: {formatQtd(saldoMax)} {uMed}
                       </p>
 
                       {/* Linha 3: toggle modo + input unificado */}
@@ -963,7 +964,7 @@ function Step3Itens({
                         {entry.modo === 'qtd'
                           ? `= ${formatCurrency(vUnit * entry.quantidade)}`
                           : `Qtd calculada: ${formatQtd(entry.quantidade)}`}
-                        {qtdExcedeSaldo && ` · excede saldo (máx: ${formatQtd(saldoMax)} ${unMedida(entry.item)})`}
+                        {qtdExcedeSaldo && ` · excede saldo (máx: ${formatQtd(saldoMax)} ${uMed})`}
                       </p>
                     </div>
                   )
