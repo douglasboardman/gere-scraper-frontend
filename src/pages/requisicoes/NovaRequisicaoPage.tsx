@@ -888,7 +888,8 @@ function Step3Itens({
                   const saldoMax = saldoDisp(entry.fornecimento)
                   const qtdExcedeSaldo = entry.quantidade > saldoMax
                   return (
-                    <div key={idForn} className="px-3 py-2.5 space-y-2">
+                    <div key={idForn} className="px-3 py-3 space-y-2.5">
+                      {/* Linha 1: descrição + botão excluir */}
                       <div className="flex items-start justify-between gap-2">
                         <p className="text-xs font-medium leading-snug line-clamp-2 flex-1">
                           {descBreve(entry.item)}
@@ -903,72 +904,67 @@ function Step3Itens({
                         </Button>
                       </div>
 
-                      {/* Toggle Qtd | Valor */}
-                      <div className="flex rounded-md border overflow-hidden w-fit">
-                        <button
-                          type="button"
-                          onClick={() => handleModo(idForn, 'qtd')}
-                          className={cn(
-                            'px-2 py-0.5 text-xs',
+                      {/* Linha 2: contexto — valor unitário + saldo disponível */}
+                      <p className="text-xs text-muted-foreground">
+                        {formatCurrency(vUnit)} / {unMedida(entry.item)}
+                        {' · '}
+                        Saldo: {formatQtd(saldoMax)} {unMedida(entry.item)}
+                      </p>
+
+                      {/* Linha 3: toggle modo + input unificado */}
+                      <div className="flex items-center gap-2">
+                        <div className="flex rounded-md border overflow-hidden shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleModo(idForn, 'qtd')}
+                            className={cn(
+                              'px-2.5 py-1 text-xs',
+                              entry.modo === 'qtd'
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-background text-muted-foreground hover:bg-muted',
+                            )}
+                          >
+                            Qtd
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleModo(idForn, 'valor')}
+                            className={cn(
+                              'px-2.5 py-1 text-xs',
+                              entry.modo === 'valor'
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-background text-muted-foreground hover:bg-muted',
+                            )}
+                          >
+                            Valor
+                          </button>
+                        </div>
+                        <Input
+                          type="number"
+                          min={0}
+                          step={entry.modo === 'qtd' ? 0.00001 : 0.01}
+                          value={entry.modo === 'qtd' ? entry.quantidade : entry.valDigitado}
+                          onChange={(e) =>
                             entry.modo === 'qtd'
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-background text-muted-foreground hover:bg-muted',
-                          )}
-                        >
-                          Qtd
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleModo(idForn, 'valor')}
-                          className={cn(
-                            'px-2 py-0.5 text-xs',
-                            entry.modo === 'valor'
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-background text-muted-foreground hover:bg-muted',
-                          )}
-                        >
-                          Valor
-                        </button>
+                              ? handleQtd(idForn, Number(e.target.value))
+                              : handleValor(idForn, Number(e.target.value))
+                          }
+                          className={cn('h-8 flex-1 text-sm', qtdExcedeSaldo && 'border-destructive')}
+                        />
                       </div>
 
-                      {entry.modo === 'qtd' ? (
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            Qtd:
-                          </span>
-                          <Input
-                            type="number"
-                            min={0}
-                            step={0.00001}
-                            value={entry.quantidade}
-                            onChange={(e) => handleQtd(idForn, Number(e.target.value))}
-                            className={cn('h-7 w-20 text-xs', qtdExcedeSaldo && 'border-destructive')}
-                          />
-                          <span className="text-xs text-muted-foreground flex-1 text-right">
-                            {formatCurrency(vUnit * entry.quantidade)}
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">
-                              R$:
-                            </span>
-                            <Input
-                              type="number"
-                              min={0}
-                              step={0.01}
-                              value={entry.valDigitado}
-                              onChange={(e) => handleValor(idForn, Number(e.target.value))}
-                              className={cn('h-7 w-24 text-xs', qtdExcedeSaldo && 'border-destructive')}
-                            />
-                          </div>
-                          <p className={cn('text-xs', qtdExcedeSaldo ? 'text-destructive' : 'text-muted-foreground')}>
-                            Qtd: {entry.quantidade}
-                            {qtdExcedeSaldo && ` — excede saldo (máx. ${saldoMax})`}
-                          </p>
-                        </div>
-                      )}
+                      {/* Linha 4: valor calculado / erro — sempre abaixo, right-aligned */}
+                      <p
+                        className={cn(
+                          'text-xs text-right',
+                          qtdExcedeSaldo ? 'text-destructive' : 'text-muted-foreground',
+                        )}
+                      >
+                        {entry.modo === 'qtd'
+                          ? `= ${formatCurrency(vUnit * entry.quantidade)}`
+                          : `Qtd calculada: ${formatQtd(entry.quantidade)}`}
+                        {qtdExcedeSaldo && ` · excede saldo (máx: ${formatQtd(saldoMax)} ${unMedida(entry.item)})`}
+                      </p>
                     </div>
                   )
                 })
