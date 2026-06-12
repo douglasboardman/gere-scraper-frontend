@@ -77,55 +77,76 @@ interface EditItemDialogProps {
 }
 
 function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogProps) {
-  const [qty, setQty] = useState(String(item.qtdSolicitada))
   const f = typeof item.identFornecimento === 'string' ? null : item.identFornecimento as IFornecimento
-  const saldoMax = f ? saldoDisp(f) : null
   const vUnit = item.valUnitario ?? (f ? valUnitario(f) : 0)
-  const newTotal = vUnit * (Number(qty) || 0)
+  const saldoMax = f ? saldoDisp(f) : null
+  const itemObj = f && typeof f.identItem === 'object' ? f.identItem as IItem : null
+  const uMed = itemObj ? unMedida(itemObj) : ''
+
+  const [modo, setModo] = useState<'qtd' | 'valor'>('qtd')
+  const [qty, setQty] = useState(String(item.qtdSolicitada))
+  const [valDigitado, setValDigitado] = useState(parseFloat((vUnit * item.qtdSolicitada).toFixed(2)))
+
+  const quantidade = modo === 'qtd' ? Number(qty) : (vUnit > 0 ? valDigitado / vUnit : 0)
+  const qtdExcedeSaldo = saldoMax !== null && quantidade > saldoMax
 
   const mutation = useMutation({
-    mutationFn: () => itemRequisicaoApi.atualizar(item.id, { qtdSolicitada: Number(qty) }),
+    mutationFn: () => itemRequisicaoApi.atualizar(item.id, { qtdSolicitada: quantidade }),
     onSuccess: () => { toast.success('Quantidade atualizada.'); onSaved(); onOpenChange(false) },
     onError: (e: unknown) => {
       toast.error((e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Erro inesperado')
     },
   })
 
-  const qtdNum = Number(qty)
-  const canSave = qtdNum >= 1 && (saldoMax === null || qtdNum <= saldoMax) && !mutation.isPending
+  const canSave = quantidade > 0 && !qtdExcedeSaldo && !mutation.isPending
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>Editar Quantidade</DialogTitle></DialogHeader>
-        <div className="space-y-4 py-2">
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="text-xs text-muted-foreground uppercase font-medium">Valor Unitário</p>
-              <p className="font-medium">{formatCurrency(vUnit)}</p>
+        <DialogHeader><DialogTitle>Editar Item</DialogTitle></DialogHeader>
+        <div className="space-y-3 py-2">
+          {/* Contexto: valor unitário e saldo */}
+          <p className="text-xs text-muted-foreground">
+            {formatCurrency(vUnit)}{uMed ? ` / ${uMed}` : ''}
+            {saldoMax !== null && <> · Saldo: {formatQtd(saldoMax)}{uMed ? ` ${uMed}` : ''}</>}
+          </p>
+          {/* Toggle modo + input unificado */}
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-md border overflow-hidden shrink-0">
+              <button type="button" onClick={() => setModo('qtd')}
+                className={cn('px-2.5 py-1 text-xs',
+                  modo === 'qtd'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-background text-muted-foreground hover:bg-muted')}>
+                Qtd
+              </button>
+              <button type="button" onClick={() => setModo('valor')}
+                className={cn('px-2.5 py-1 text-xs',
+                  modo === 'valor'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-background text-muted-foreground hover:bg-muted')}>
+                Valor
+              </button>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground uppercase font-medium">Novo Total</p>
-              <p className="font-bold text-green-700">{formatCurrency(newTotal)}</p>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label>
-              Quantidade{' '}
-              {saldoMax !== null && (
-                <span className="text-muted-foreground font-normal text-xs">(máx. {saldoMax})</span>
-              )}
-            </Label>
             <Input
-              type="number" min={0.00001} max={saldoMax ?? undefined} step={0.00001}
-              value={qty}
+              type="number" min={0}
+              step={modo === 'qtd' ? 0.00001 : 0.01}
+              value={modo === 'qtd' ? qty : valDigitado}
               onChange={(e) => {
-                const v = Number(e.target.value)
-                setQty(saldoMax !== null && v > saldoMax ? String(saldoMax) : e.target.value)
+                if (modo === 'qtd') setQty(e.target.value)
+                else setValDigitado(Number(e.target.value))
               }}
-              className="w-32"
+              className={cn('h-8 flex-1 text-sm', qtdExcedeSaldo && 'border-destructive')}
             />
           </div>
+          {/* Valor calculado / erro — sempre abaixo, alinhado à direita */}
+          <p className={cn('text-xs text-right',
+            qtdExcedeSaldo ? 'text-destructive' : 'text-muted-foreground')}>
+            {modo === 'qtd'
+              ? `= ${formatCurrency(vUnit * quantidade)}`
+              : `Qtd calculada: ${formatQtd(quantidade)}`}
+            {qtdExcedeSaldo && ` · excede saldo (máx: ${formatQtd(saldoMax!)}${uMed ? ` ${uMed}` : ''})`}
+          </p>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
