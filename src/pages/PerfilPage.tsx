@@ -22,16 +22,15 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { PasswordInput } from '@/components/ui/password-input'
+import { PasswordStrengthIndicator } from '@/components/shared/PasswordStrengthIndicator'
+import { optionalStrongPasswordSchema } from '@/lib/password'
 
 const perfilSchema = z
   .object({
     nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').optional().or(z.literal('')),
     senhaAtual: z.string().optional().or(z.literal('')),
-    novaSenha: z
-      .string()
-      .min(6, 'Nova senha deve ter pelo menos 6 caracteres')
-      .optional()
-      .or(z.literal('')),
+    novaSenha: optionalStrongPasswordSchema,
     confirmarSenha: z.string().optional().or(z.literal('')),
   })
   .refine(
@@ -214,8 +213,7 @@ export function PerfilPage() {
                       <FormItem>
                         <FormLabel>Senha Atual</FormLabel>
                         <FormControl>
-                          <Input
-                            type="password"
+                          <PasswordInput
                             placeholder="Digite sua senha atual"
                             {...field}
                           />
@@ -231,12 +229,12 @@ export function PerfilPage() {
                       <FormItem>
                         <FormLabel>Nova Senha</FormLabel>
                         <FormControl>
-                          <Input
-                            type="password"
-                            placeholder="Mínimo 6 caracteres"
+                          <PasswordInput
+                            placeholder="Mínimo 10 caracteres"
                             {...field}
                           />
                         </FormControl>
+                        <PasswordStrengthIndicator password={field.value ?? ''} />
                         <FormMessage />
                       </FormItem>
                     )}
@@ -248,8 +246,7 @@ export function PerfilPage() {
                       <FormItem>
                         <FormLabel>Confirmar Nova Senha</FormLabel>
                         <FormControl>
-                          <Input
-                            type="password"
+                          <PasswordInput
                             placeholder="Repita a nova senha"
                             {...field}
                           />
