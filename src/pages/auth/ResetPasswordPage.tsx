@@ -8,7 +8,9 @@ import { Loader2, KeyRound, CheckCircle2 } from 'lucide-react'
 import { authApi } from '@/api/auth.api'
 import { fetchVersion } from '@/api/version.api'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
+import { PasswordStrengthIndicator } from '@/components/shared/PasswordStrengthIndicator'
+import { strongPasswordSchema } from '@/lib/password'
 import {
   Form,
   FormControl,
@@ -20,7 +22,7 @@ import {
 
 const resetSchema = z
   .object({
-    novaSenha: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
+    novaSenha: strongPasswordSchema,
     confirmarSenha: z.string().min(1, 'Confirme a senha'),
   })
   .refine((data) => data.novaSenha === data.confirmarSenha, {
@@ -184,13 +186,13 @@ export function ResetPasswordPage() {
                       <FormItem>
                         <FormLabel>{isAtivacao ? 'Criar senha' : 'Nova senha'}</FormLabel>
                         <FormControl>
-                          <Input
-                            type="password"
-                            placeholder="Mínimo 6 caracteres"
+                          <PasswordInput
+                            placeholder="Mínimo 10 caracteres"
                             autoComplete="new-password"
                             {...field}
                           />
                         </FormControl>
+                        <PasswordStrengthIndicator password={field.value} />
                         <FormMessage />
                       </FormItem>
                     )}
@@ -203,8 +205,7 @@ export function ResetPasswordPage() {
                       <FormItem>
                         <FormLabel>Confirmar nova senha</FormLabel>
                         <FormControl>
-                          <Input
-                            type="password"
+                          <PasswordInput
                             placeholder="Repita a senha"
                             autoComplete="new-password"
                             {...field}
