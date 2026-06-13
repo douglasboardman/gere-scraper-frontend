@@ -43,13 +43,16 @@ import type { IUsuario, UserRole } from '@/types'
 import { usePermission } from '@/hooks/usePermission'
 import { useAuthStore } from '@/store/auth.store'
 import type { BadgeProps } from '@/components/ui/badge'
+import { PasswordInput } from '@/components/ui/password-input'
+import { PasswordStrengthIndicator } from '@/components/shared/PasswordStrengthIndicator'
+import { strongPasswordSchema } from '@/lib/password'
 
 type BadgeVariant = BadgeProps['variant']
 
 const novoUsuarioSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('E-mail inválido'),
-  senha: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
+  senha: strongPasswordSchema,
   role: z.enum(['admin', 'gestor_unidade', 'gestor_contratos', 'gestor_financeiro', 'gestor_contratacoes', 'requisitante'] as const),
   unidade: z.string().optional(),
   identUorg: z.string().optional(),
@@ -156,12 +159,22 @@ export function UsuariosPage() {
 
   const toggleAtivoMutation = useMutation({
     mutationFn: (id: string) => usuariosApi.toggleAtivo(id),
-    onSuccess: (usuario) => {
-      toast.success(`Usuário ${usuario.ativo ? 'ativado' : 'desativado'} com sucesso.`)
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['usuarios'] })
+      const previous = queryClient.getQueryData<IUsuario[]>(['usuarios'])
+      queryClient.setQueryData<IUsuario[]>(['usuarios'], (old) =>
+        old?.map((u) => u.id === id ? { ...u, ativo: !u.ativo } : u) ?? []
+      )
+      const toastId = toast.loading('Processando...')
+      return { previous, toastId }
+    },
+    onSuccess: (usuario, _id, context) => {
+      toast.success(`Usuário ${usuario.ativo ? 'ativado' : 'desativado'} com sucesso.`, { id: context?.toastId })
       queryClient.invalidateQueries({ queryKey: ['usuarios'] })
     },
-    onError: () => {
-      toast.error('Erro ao alterar status do usuário.')
+    onError: (_error, _id, context) => {
+      if (context?.previous) queryClient.setQueryData(['usuarios'], context.previous)
+      toast.error('Erro ao alterar status do usuário.', { id: context?.toastId })
     },
   })
 
@@ -196,7 +209,7 @@ export function UsuariosPage() {
         <Switch
           checked={row.original.ativo}
           onCheckedChange={() => toggleAtivoMutation.mutate(row.original.id)}
-          disabled={toggleAtivoMutation.isPending}
+          disabled={toggleAtivoMutation.isPending && toggleAtivoMutation.variables === row.original.id}
         />
       ),
     },
@@ -294,8 +307,9 @@ export function UsuariosPage() {
                   <FormItem>
                     <FormLabel>Senha *</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Mínimo 6 caracteres" {...field} />
+                      <PasswordInput placeholder="Mínimo 10 caracteres" {...field} />
                     </FormControl>
+                    <PasswordStrengthIndicator password={field.value} />
                     <FormMessage />
                   </FormItem>
                 )}
