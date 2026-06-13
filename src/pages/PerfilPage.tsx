@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/form'
 import { PasswordInput } from '@/components/ui/password-input'
 import { PasswordStrengthIndicator } from '@/components/shared/PasswordStrengthIndicator'
-import { optionalStrongPasswordSchema } from '@/lib/password'
+import { optionalStrongPasswordSchema, meetsPasswordRules } from '@/lib/password'
 
 const perfilSchema = z
   .object({
@@ -76,6 +76,10 @@ export function PerfilPage() {
       confirmarSenha: '',
     },
   })
+
+  const novaSenha = form.watch('novaSenha') ?? ''
+  const confirmarSenha = form.watch('confirmarSenha') ?? ''
+  const passwordOk = !novaSenha || (meetsPasswordRules(novaSenha).allMet && novaSenha === confirmarSenha)
 
   const mutation = useMutation({
     mutationFn: (data: PerfilFormData) => {
@@ -261,7 +265,7 @@ export function PerfilPage() {
               <div className="flex gap-3 pt-2">
                 <Button
                   type="submit"
-                  disabled={mutation.isPending}
+                  disabled={mutation.isPending || !passwordOk}
                 >
                   {mutation.isPending ? (
                     <>

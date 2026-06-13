@@ -1,37 +1,39 @@
-import { getPasswordStrength } from '@/lib/password'
+import { Check, X } from 'lucide-react'
+import { meetsPasswordRules } from '@/lib/password'
 
 interface Props {
   password: string
 }
 
+const RULES = [
+  { key: 'hasMinLength' as const, label: 'Pelo menos 10 caracteres' },
+  { key: 'hasUppercase' as const, label: 'Uma letra maiúscula (A–Z)' },
+  { key: 'hasLowercase' as const, label: 'Uma letra minúscula (a–z)' },
+  { key: 'hasNumber' as const, label: 'Um número (0–9)' },
+  { key: 'hasSpecial' as const, label: 'Um caractere especial (!@#$%ç-/ etc.)' },
+]
+
 export function PasswordStrengthIndicator({ password }: Props) {
   if (!password) return null
 
-  const { score, label, color, suggestion } = getPasswordStrength(password)
-
-  // Segments filled: minimum 1 to give immediate visual feedback,
-  // maximum 4 (score 4 = all filled).
-  const filled = Math.max(1, score)
+  const rules = meetsPasswordRules(password)
 
   return (
-    <div className="space-y-1.5 mt-1.5">
-      <div className="flex gap-1">
-        {[0, 1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="h-1.5 flex-1 rounded-full transition-colors duration-300"
-            style={{ backgroundColor: i < filled ? color : '#e5e7eb' }}
-          />
-        ))}
-      </div>
-      <div className="flex items-center justify-between gap-4">
-        <p className="text-xs font-medium" style={{ color }}>
-          {label}
-        </p>
-        {score < 2 && suggestion && (
-          <p className="text-xs text-muted-foreground text-right">{suggestion}</p>
-        )}
-      </div>
+    <div className="mt-1.5 space-y-1">
+      {RULES.map(({ key, label }) => {
+        const met = rules[key]
+        return (
+          <div key={key} className="flex items-center gap-1.5">
+            {met
+              ? <Check className="h-3 w-3 text-green-600 shrink-0" />
+              : <X className="h-3 w-3 text-muted-foreground shrink-0" />
+            }
+            <span className={`text-xs ${met ? 'text-green-600' : 'text-muted-foreground'}`}>
+              {label}
+            </span>
+          </div>
+        )
+      })}
     </div>
   )
 }

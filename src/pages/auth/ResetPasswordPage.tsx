@@ -10,7 +10,7 @@ import { fetchVersion } from '@/api/version.api'
 import { Button } from '@/components/ui/button'
 import { PasswordInput } from '@/components/ui/password-input'
 import { PasswordStrengthIndicator } from '@/components/shared/PasswordStrengthIndicator'
-import { strongPasswordSchema } from '@/lib/password'
+import { strongPasswordSchema, meetsPasswordRules } from '@/lib/password'
 import {
   Form,
   FormControl,
@@ -53,6 +53,10 @@ export function ResetPasswordPage() {
       confirmarSenha: '',
     },
   })
+
+  const novaSenha = form.watch('novaSenha') ?? ''
+  const confirmarSenha = form.watch('confirmarSenha') ?? ''
+  const passwordOk = meetsPasswordRules(novaSenha).allMet && novaSenha === confirmarSenha
 
   const onSubmit = async (data: ResetFormData) => {
     if (!token) return
@@ -225,7 +229,7 @@ export function ResetPasswordPage() {
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={isLoading}
+                    disabled={isLoading || !passwordOk}
                     style={{ backgroundColor: '#2a593a' }}
                   >
                     {isLoading ? (

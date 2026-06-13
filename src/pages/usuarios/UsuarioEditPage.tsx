@@ -12,6 +12,7 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
 import {
   Form,
   FormControl,
@@ -36,7 +37,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { useState } from 'react'
-import type { UserRole } from '@/types'
+import type { UserRole, IUsuario } from '@/types'
 import { usePermission } from '@/hooks/usePermission'
 
 const editUsuarioSchema = z.object({
@@ -151,6 +152,28 @@ export function UsuarioEditPage() {
     },
   })
 
+  const toggleAtivoMutation = useMutation({
+    mutationFn: () => usuariosApi.toggleAtivo(id!),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['usuario', id] })
+      const previous = queryClient.getQueryData<IUsuario>(['usuario', id])
+      queryClient.setQueryData<IUsuario>(['usuario', id], (old) =>
+        old ? { ...old, ativo: !old.ativo } : old
+      )
+      const toastId = toast.loading('Processando...')
+      return { previous, toastId }
+    },
+    onSuccess: (updated, _vars, context) => {
+      toast.success(`Usuário ${updated.ativo ? 'ativado' : 'desativado'} com sucesso.`, { id: context?.toastId })
+      queryClient.invalidateQueries({ queryKey: ['usuario', id] })
+      queryClient.invalidateQueries({ queryKey: ['usuarios'] })
+    },
+    onError: (_error, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(['usuario', id], context.previous)
+      toast.error('Erro ao alterar status do usuário.', { id: context?.toastId })
+    },
+  })
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -199,9 +222,16 @@ export function UsuarioEditPage() {
         <div className="rounded-lg border bg-card p-6 space-y-6">
           {/* Status info */}
           <div className="flex items-center gap-3">
-            <Badge variant={usuario.ativo ? 'success' : 'secondary'}>
-              {usuario.ativo ? 'Ativo' : 'Inativo'}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={usuario.ativo}
+                onCheckedChange={() => toggleAtivoMutation.mutate()}
+                disabled={toggleAtivoMutation.isPending}
+              />
+              <span className="text-sm font-medium text-muted-foreground">
+                {usuario.ativo ? 'Ativo' : 'Inativo'}
+              </span>
+            </div>
             <Badge variant="outline">
               {roleLabels[usuario.role]}
             </Badge>

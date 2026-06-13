@@ -1,51 +1,46 @@
-import zxcvbn from 'zxcvbn'
 import { z } from 'zod'
 
-export interface PasswordStrength {
-  score: 0 | 1 | 2 | 3 | 4
-  label: string
-  color: string
-  suggestion: string | null
+export interface PasswordRules {
+  hasMinLength: boolean
+  hasUppercase: boolean
+  hasLowercase: boolean
+  hasNumber: boolean
+  hasSpecial: boolean
+  allMet: boolean
 }
 
-const LABELS = ['Muito fraca', 'Fraca', 'Razoável', 'Forte', 'Muito forte']
-const COLORS = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#16a34a']
-
-export function getPasswordStrength(password: string): PasswordStrength {
-  const result = zxcvbn(password)
+export function meetsPasswordRules(password: string): PasswordRules {
+  const hasMinLength = password.length >= 10
+  const hasUppercase = /[A-Z]/.test(password)
+  const hasLowercase = /[a-z]/.test(password)
+  const hasNumber = /[0-9]/.test(password)
+  const hasSpecial = /[^A-Za-z0-9]/.test(password)
   return {
-    score: result.score as 0 | 1 | 2 | 3 | 4,
-    label: LABELS[result.score],
-    color: COLORS[result.score],
-    suggestion: result.feedback.suggestions[0] ?? null,
+    hasMinLength,
+    hasUppercase,
+    hasLowercase,
+    hasNumber,
+    hasSpecial,
+    allMet: hasMinLength && hasUppercase && hasLowercase && hasNumber && hasSpecial,
   }
 }
 
-/**
- * Schema para campos de senha obrigatórios:
- * criação de usuário pelo admin, reset e ativação via token.
- */
 export const strongPasswordSchema = z
   .string()
   .min(10, 'Senha deve ter pelo menos 10 caracteres')
-  .refine(
-    (val) => getPasswordStrength(val).score >= 2,
-    'Senha muito fraca. Tente uma frase longa ou palavras aleatórias.'
-  )
+  .refine((val) => /[A-Z]/.test(val), 'Deve conter pelo menos uma letra maiúscula')
+  .refine((val) => /[a-z]/.test(val), 'Deve conter pelo menos uma letra minúscula')
+  .refine((val) => /[0-9]/.test(val), 'Deve conter pelo menos um número')
+  .refine((val) => /[^A-Za-z0-9]/.test(val), 'Deve conter pelo menos um caractere especial')
 
-/**
- * Schema para campo de senha opcional (perfil do usuário).
- * Quando preenchido, aplica as mesmas regras do strongPasswordSchema.
- * Vazio ('') ou undefined são válidos (usuário não quer alterar a senha).
- */
 export const optionalStrongPasswordSchema = z.union([
   z.literal(''),
   z.undefined(),
   z
     .string()
     .min(10, 'Nova senha deve ter pelo menos 10 caracteres')
-    .refine(
-      (val) => getPasswordStrength(val).score >= 2,
-      'Senha muito fraca. Tente uma frase longa ou palavras aleatórias.'
-    ),
+    .refine((val) => /[A-Z]/.test(val), 'Deve conter pelo menos uma letra maiúscula')
+    .refine((val) => /[a-z]/.test(val), 'Deve conter pelo menos uma letra minúscula')
+    .refine((val) => /[0-9]/.test(val), 'Deve conter pelo menos um número')
+    .refine((val) => /[^A-Za-z0-9]/.test(val), 'Deve conter pelo menos um caractere especial'),
 ])

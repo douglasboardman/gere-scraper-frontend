@@ -45,7 +45,7 @@ import { useAuthStore } from '@/store/auth.store'
 import type { BadgeProps } from '@/components/ui/badge'
 import { PasswordInput } from '@/components/ui/password-input'
 import { PasswordStrengthIndicator } from '@/components/shared/PasswordStrengthIndicator'
-import { strongPasswordSchema } from '@/lib/password'
+import { strongPasswordSchema, meetsPasswordRules } from '@/lib/password'
 
 type BadgeVariant = BadgeProps['variant']
 
@@ -117,6 +117,7 @@ export function UsuariosPage() {
 
   const selectedRole = form.watch('role')
   const selectedUnidade = form.watch('unidade')
+  const senhaValue = form.watch('senha') ?? ''
 
   const { data: uorgs = [], isLoading: uorgsLoading } = useQuery({
     queryKey: ['uorgs-unidade', selectedUnidade],
@@ -419,7 +420,7 @@ export function UsuariosPage() {
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={criarMutation.isPending}>
+                <Button type="submit" disabled={criarMutation.isPending || !meetsPasswordRules(senhaValue).allMet}>
                   {criarMutation.isPending ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
