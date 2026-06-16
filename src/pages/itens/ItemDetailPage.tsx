@@ -315,8 +315,8 @@ export function ItemDetailPage() {
                     {fornecimentos.map((f) => (
                       <TableRow key={f.identificador} className="hover:bg-muted/40 transition-colors duration-100">
                         <TableCell className="text-sm">{f.uasgUnParticipante}</TableCell>
-                        <TableCell className="text-sm">{f.qtdAutorizada ?? '—'}</TableCell>
-                        <TableCell className="text-sm">{f.saldoDisponivel ?? f.saldo ?? '—'}</TableCell>
+                        <TableCell className="text-sm">{f.qtdAutorizada != null ? formatQtd(f.qtdAutorizada) : '—'}</TableCell>
+                        <TableCell className="text-sm">{(f.saldoDisponivel ?? f.saldo) != null ? formatQtd(f.saldoDisponivel ?? f.saldo) : '—'}</TableCell>
                         <TableCell className="text-sm">
                           {(f.valorUnitario ?? f.valUnitHomologado) != null
                             ? formatCurrency(f.valorUnitario ?? f.valUnitHomologado ?? 0)

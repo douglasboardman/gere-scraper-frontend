@@ -18,7 +18,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatCurrency, formatCNPJ } from '@/lib/utils'
+import { formatCurrency, formatCNPJ, formatQtd } from '@/lib/utils'
 import { usePermission } from '@/hooks/usePermission'
 import {
   Select,
@@ -319,8 +319,8 @@ export function ContratoDetailPage() {
                           {typeof f.identItem === 'object' ? (f.identItem.descDetalhada ?? f.identItem.descBreve ?? '—') : '—'}
                         </TableCell>
                         <TableCell className="text-sm">{f.uasgUnParticipante}</TableCell>
-                        <TableCell className="text-sm">{f.qtdAutorizada ?? '—'}</TableCell>
-                        <TableCell className="text-sm">{f.saldoDisponivel ?? f.saldo ?? '—'}</TableCell>
+                        <TableCell className="text-sm">{f.qtdAutorizada != null ? formatQtd(f.qtdAutorizada) : '—'}</TableCell>
+                        <TableCell className="text-sm">{(f.saldoDisponivel ?? f.saldo) != null ? formatQtd(f.saldoDisponivel ?? f.saldo) : '—'}</TableCell>
                         <TableCell className="text-sm">
                           {(f.valorUnitario ?? f.valUnitHomologado) != null
                             ? formatCurrency(f.valorUnitario ?? f.valUnitHomologado ?? 0)
