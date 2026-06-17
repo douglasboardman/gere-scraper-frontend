@@ -257,7 +257,7 @@ export function RequisicaoImprimirPage() {
                     </div>
                     <div className="text-center">
                       <div className="border-b border-foreground mb-2 h-10" />
-                      <p className="text-sm font-medium">Gestor de Compras</p>
+                      <p className="text-sm font-medium">Gestor Financeiro</p>
                       <p className="text-xs text-muted-foreground">Aprovação</p>
                     </div>
                     <div className="text-center">
