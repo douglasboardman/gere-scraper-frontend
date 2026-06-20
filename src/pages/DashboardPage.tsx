@@ -81,10 +81,11 @@ export function DashboardPage() {
     queryFn: () => requisicoesApi.listar(),
   })
 
-  const contratacoesEmAnalise = contratacoes?.filter(
-    (c) => c.status === 'Em_Processamento' || c.status === 'Processada'
-  ) ?? []
-  const contratacoesDisponiveis = contratacoes?.filter((c) => c.status === 'Disponivel') ?? []
+  const contratacoesEmAnalise = contratacoes?.filter((c) => {
+    const s = c.statusParticipacao ?? c.status
+    return s === 'Em_Processamento' || s === 'Processada'
+  }) ?? []
+  const contratacoesDisponiveis = contratacoes?.filter((c) => (c.statusParticipacao ?? c.status) === 'Disponivel') ?? []
   const contratosVigentes = contratos?.filter((c) => c.status === 'Disponivel') ?? []
   const fornecimentosDisponiveis = fornecimentos?.filter((f) => f.status === 'Disponivel') ?? []
   const requisicoesExpedidas = requisicoes?.filter(
@@ -209,7 +210,7 @@ export function DashboardPage() {
                         {contratacao.objeto ?? contratacao.nomeUnGestora ?? 'Sem descrição'}
                       </p>
                     </div>
-                    <StatusBadge status={contratacao.status} />
+                    <StatusBadge status={contratacao.statusParticipacao ?? contratacao.status} />
                   </div>
                 ))}
               </div>

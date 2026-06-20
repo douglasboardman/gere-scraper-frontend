@@ -122,9 +122,11 @@ export function ContratacaoDetailPage() {
     },
   });
 
+  const efetiveStatus = contratacao?.statusParticipacao ?? contratacao?.status;
+
   const handleEdit = () => {
     setEditObjeto(contratacao?.objeto ?? "");
-    setEditStatus(contratacao?.status ?? "");
+    setEditStatus(efetiveStatus ?? "");
     setEditMode(true);
   };
 
@@ -243,7 +245,7 @@ export function ContratacaoDetailPage() {
                       </SelectContent>
                     </Select>
                   ) : (
-                    <StatusBadge status={contratacao.status} />
+                    <StatusBadge status={efetiveStatus ?? contratacao.status} />
                   )}
                 </Field>
                 <div className="col-span-2 md:col-span-3">
@@ -262,9 +264,9 @@ export function ContratacaoDetailPage() {
               </div>
 
               {/* Status actions */}
-              {can("edit:contratacoes") && (contratacao.status === "Processada" || contratacao.status === "Disponivel") && !editMode && (
+              {can("edit:contratacoes") && (efetiveStatus === "Processada" || efetiveStatus === "Disponivel") && !editMode && (
                 <div className="flex gap-3 flex-wrap mt-6 pt-5 border-t">
-                  {contratacao.status === "Processada" && (
+                  {efetiveStatus === "Processada" && (
                     <Button
                       size="sm"
                       className="bg-green-700 hover:bg-green-800 text-white"
@@ -275,7 +277,7 @@ export function ContratacaoDetailPage() {
                       Disponibilizar para Requisições
                     </Button>
                   )}
-                  {contratacao.status === "Disponivel" && (
+                  {efetiveStatus === "Disponivel" && (
                     <Button
                       size="sm"
                       className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -290,7 +292,7 @@ export function ContratacaoDetailPage() {
                     variant="outline"
                     size="sm"
                     onClick={handleEdit}
-                    disabled={contratacao.status !== "Processada"}
+                    disabled={efetiveStatus !== "Processada"}
                   >
                     <Pencil className="h-4 w-4" />
                     Editar

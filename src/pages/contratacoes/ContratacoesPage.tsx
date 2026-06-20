@@ -53,7 +53,7 @@ export function ContratacoesPage() {
 
   const filtered = statusFilter === 'all'
     ? compras
-    : compras.filter((c) => c.status === statusFilter)
+    : compras.filter((c) => (c.statusParticipacao ?? c.status) === statusFilter)
 
   const columns: ColumnDef<IContratacao, unknown>[] = [
     {

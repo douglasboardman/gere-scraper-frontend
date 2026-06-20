@@ -67,6 +67,7 @@ export interface IContratacao {
   iniVigencia?: string
   fimVigencia?: string
   status: StatusElemContratacaoAlt
+  statusParticipacao?: StatusElemContratacaoAlt | null
   createdAt: string
   updatedAt: string
   _count?: { atas: number; contratos: number }

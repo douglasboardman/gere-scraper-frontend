@@ -426,7 +426,7 @@ function Step2Contratacao({
 
   const isLoading = loadingForn || loadingContratacoes
 
-  const contratacoesFiltradas = contratacoes.filter((c) => c.status === 'Disponivel')
+  const contratacoesFiltradas = contratacoes.filter((c) => (c.statusParticipacao ?? c.status) === 'Disponivel')
 
   const filtered = contratacoesFiltradas.filter((c) => {
     if (!search) return true
