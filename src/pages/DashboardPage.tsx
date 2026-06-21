@@ -82,7 +82,7 @@ export function DashboardPage() {
   })
 
   const contratacoesEmAnalise = contratacoes?.filter((c) => {
-    const s = c.statusParticipacao ?? c.status
+    const s = c.ultimaImportacao?.status ?? 'Processada'
     return s === 'Em_Processamento' || s === 'Processada'
   }) ?? []
   const contratacoesDisponiveis = contratacoes?.filter((c) => (c.statusParticipacao ?? c.status) === 'Disponivel') ?? []

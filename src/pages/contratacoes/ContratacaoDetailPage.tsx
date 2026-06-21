@@ -132,7 +132,7 @@ export function ContratacaoDetailPage() {
 
   const handleSave = () => {
     const payload: Partial<IContratacao> = {};
-    if (contratacao?.status === "Processada") payload.objeto = editObjeto;
+    if (contratacao?.ultimaImportacao?.status === "Processada") payload.objeto = editObjeto;
     if (editStatus) payload.status = editStatus as IContratacao["status"];
     updateMutation.mutate(payload);
   };
@@ -250,7 +250,7 @@ export function ContratacaoDetailPage() {
                 </Field>
                 <div className="col-span-2 md:col-span-3">
                   <span className="text-xs text-muted-foreground uppercase tracking-wide">Objeto</span>
-                  {editMode && contratacao.status === "Processada" ? (
+                  {editMode && contratacao.ultimaImportacao?.status === "Processada" ? (
                     <Textarea
                       className="mt-1"
                       rows={4}

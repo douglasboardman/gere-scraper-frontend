@@ -52,6 +52,17 @@ export const AMPARO_LEGAL_LABEL: Record<AmparoLegal, string> = {
   LEI_8666_1993: 'Lei 8.666/1993',
 }
 
+export interface IImportacao {
+  identificador: string
+  identContratacao: string
+  identUsuario: string
+  uasgParticipante: string
+  realizadaEm: string
+  status: 'Em_Processamento' | 'Processada' | 'Inconsistente'
+  expiraEm?: string | null
+  log?: string | null
+}
+
 export interface IContratacao {
   identificador: string
   uasgUnGestora: string
@@ -68,6 +79,7 @@ export interface IContratacao {
   fimVigencia?: string
   status: StatusElemContratacaoAlt
   statusParticipacao?: StatusElemContratacaoAlt | null
+  ultimaImportacao?: IImportacao | null
   createdAt: string
   updatedAt: string
   _count?: { atas: number; contratos: number }
