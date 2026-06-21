@@ -77,7 +77,6 @@ export interface IContratacao {
   amparoLegal?: AmparoLegal
   iniVigencia?: string
   fimVigencia?: string
-  status: StatusElemContratacaoAlt
   statusParticipacao?: StatusElemContratacaoAlt | null
   ultimaImportacao?: IImportacao | null
   createdAt: string

@@ -64,7 +64,7 @@ export function ContratacaoDetailPage() {
   const resetEditState = () => {
     setEditMode(false);
     setEditObjeto(contratacao?.objeto ?? '');
-    setEditStatus(contratacao?.status ?? '');
+    setEditStatus(contratacao?.statusParticipacao ?? '');
   };
 
   const { isDialogOpen, handleNavigate, handleStay, guardTabChange } = useEditGuard(
@@ -122,7 +122,7 @@ export function ContratacaoDetailPage() {
     },
   });
 
-  const efetiveStatus = contratacao?.statusParticipacao ?? contratacao?.status;
+  const efetiveStatus = contratacao?.statusParticipacao ?? contratacao?.ultimaImportacao?.status;
 
   const handleEdit = () => {
     setEditObjeto(contratacao?.objeto ?? "");
@@ -133,7 +133,7 @@ export function ContratacaoDetailPage() {
   const handleSave = () => {
     const payload: Partial<IContratacao> = {};
     if (contratacao?.ultimaImportacao?.status === "Processada") payload.objeto = editObjeto;
-    if (editStatus) payload.status = editStatus as IContratacao["status"];
+    if (editStatus) (payload as Record<string, unknown>).status = editStatus;
     updateMutation.mutate(payload);
   };
 
@@ -245,7 +245,7 @@ export function ContratacaoDetailPage() {
                       </SelectContent>
                     </Select>
                   ) : (
-                    <StatusBadge status={efetiveStatus ?? contratacao.status} />
+                    <StatusBadge status={efetiveStatus ?? contratacao.ultimaImportacao?.status ?? ''} />
                   )}
                 </Field>
                 <div className="col-span-2 md:col-span-3">

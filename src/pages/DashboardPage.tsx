@@ -85,7 +85,7 @@ export function DashboardPage() {
     const s = c.ultimaImportacao?.status ?? 'Processada'
     return s === 'Em_Processamento' || s === 'Processada'
   }) ?? []
-  const contratacoesDisponiveis = contratacoes?.filter((c) => (c.statusParticipacao ?? c.status) === 'Disponivel') ?? []
+  const contratacoesDisponiveis = contratacoes?.filter((c) => (c.statusParticipacao ?? c.ultimaImportacao?.status) === 'Disponivel') ?? []
   const contratosVigentes = contratos?.filter((c) => c.status === 'Disponivel') ?? []
   const fornecimentosDisponiveis = fornecimentos?.filter((f) => f.status === 'Disponivel') ?? []
   const requisicoesExpedidas = requisicoes?.filter(
@@ -210,7 +210,7 @@ export function DashboardPage() {
                         {contratacao.objeto ?? contratacao.nomeUnGestora ?? 'Sem descrição'}
                       </p>
                     </div>
-                    <StatusBadge status={contratacao.statusParticipacao ?? contratacao.status} />
+                    <StatusBadge status={contratacao.statusParticipacao ?? contratacao.ultimaImportacao?.status ?? ''} />
                   </div>
                 ))}
               </div>

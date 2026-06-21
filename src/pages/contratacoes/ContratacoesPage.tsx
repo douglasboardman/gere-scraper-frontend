@@ -53,7 +53,7 @@ export function ContratacoesPage() {
 
   const filtered = statusFilter === 'all'
     ? compras
-    : compras.filter((c) => (c.statusParticipacao ?? c.status) === statusFilter)
+    : compras.filter((c) => (c.statusParticipacao ?? c.ultimaImportacao?.status) === statusFilter)
 
   const columns: ColumnDef<IContratacao, unknown>[] = [
     {
@@ -105,7 +105,7 @@ export function ContratacoesPage() {
     {
       accessorKey: 'status',
       header: 'Status',
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => <StatusBadge status={row.original.ultimaImportacao?.status ?? ''} />,
     },
     {
       id: 'acoes',
