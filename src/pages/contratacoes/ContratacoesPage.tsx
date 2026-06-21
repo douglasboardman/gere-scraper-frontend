@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
@@ -7,12 +7,14 @@ import { toast } from 'sonner'
 import { Plus, Eye, Trash2, TriangleAlert, FileText, ScrollText, Package } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { contratacoesApi } from '@/api/contratacoes.api'
+import { unidadesApi } from '@/api/unidades.api'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { usePermission } from '@/hooks/usePermission'
+import { useAuthStore } from '@/store/auth.store'
 import { ENTITY } from '@/lib/utils'
 import { displayNumEdital } from '@/lib/identifier-utils'
 import type { IContratacao } from '@/types'
@@ -27,8 +29,10 @@ import {
 export function ContratacoesPage() {
   const navigate = useNavigate()
   const { can, isAdmin } = usePermission()
+  const user = useAuthStore((s) => s.user)
   const queryClient = useQueryClient()
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [selectedUasg, setSelectedUasg] = useState<string>('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
   const { data: compras = [], isLoading } = useQuery({
@@ -36,12 +40,27 @@ export function ContratacoesPage() {
     queryFn: contratacoesApi.listar,
   })
 
+  const { data: unidades = [] } = useQuery({
+    queryKey: ['unidades'],
+    queryFn: unidadesApi.listar,
+    enabled: isAdmin && !!deleteId,
+  })
+
+  const deleteTarget = compras.find((c) => c.identificador === deleteId)
+  const participanteOptions = useMemo(() => {
+    const uasgs = deleteTarget?.uasgsParticipantes ?? []
+    const nomeMap = new Map(unidades.map((u) => [u.uasg, u.nome]))
+    return uasgs.map((uasg) => ({ uasg, label: `${uasg} - ${nomeMap.get(uasg) ?? uasg}` }))
+  }, [deleteTarget, unidades])
+
   const deleteMutation = useMutation({
-    mutationFn: (identificador: string) => contratacoesApi.deletar(identificador),
+    mutationFn: ({ identificador, uasg }: { identificador: string; uasg?: string }) =>
+      contratacoesApi.deletar(identificador, uasg),
     onSuccess: () => {
       toast.success('Contratação excluída com sucesso.')
       queryClient.invalidateQueries({ queryKey: ['contratacoes'] })
       setDeleteId(null)
+      setSelectedUasg('')
     },
     onError: (error: unknown) => {
       const msg =
@@ -156,7 +175,7 @@ export function ContratacoesPage() {
             >
               <Package className="h-3.5 w-3.5" />
             </Button>
-            {isAdmin && (
+            {can('delete:contratacoes') && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -218,8 +237,16 @@ export function ContratacoesPage() {
         confirmLabel="Excluir"
         variant="destructive"
         isLoading={deleteMutation.isPending}
-        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
-        onCancel={() => setDeleteId(null)}
+        onConfirm={() => {
+          if (!deleteId) return
+          const uasg = isAdmin ? selectedUasg : user?.unidade?.uasg
+          if (!uasg) {
+            toast.error('Selecione a UASG participante.')
+            return
+          }
+          deleteMutation.mutate({ identificador: deleteId, uasg })
+        }}
+        onCancel={() => { setDeleteId(null); setSelectedUasg('') }}
       >
         <div className="flex items-start gap-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-800">
           <TriangleAlert className="mt-0.5 h-10 w-10 shrink-0 text-amber-500" />
@@ -230,6 +257,21 @@ export function ContratacoesPage() {
             <strong>Esta ação não pode ser desfeita.</strong>
           </p>
         </div>
+        {isAdmin && (
+          <div className="mt-3">
+            <label className="text-sm font-medium mb-1.5 block">UASG Participante</label>
+            <Select value={selectedUasg} onValueChange={setSelectedUasg}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a UASG participante" />
+              </SelectTrigger>
+              <SelectContent>
+                {participanteOptions.map((p) => (
+                  <SelectItem key={p.uasg} value={p.uasg}>{p.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </ConfirmDialog>
     </div>
   )

@@ -27,7 +27,9 @@ export const contratacoesApi = {
     return result
   },
 
-  async deletar(identificador: string): Promise<void> {
-    await apiClient.delete(`/contratacoes/${encodeURIComponent(identificador)}`)
+  async deletar(identificador: string, uasgParticipante?: string): Promise<void> {
+    await apiClient.delete(`/contratacoes/${encodeURIComponent(identificador)}`, {
+      data: uasgParticipante ? { uasgParticipante } : undefined,
+    })
   },
 }
