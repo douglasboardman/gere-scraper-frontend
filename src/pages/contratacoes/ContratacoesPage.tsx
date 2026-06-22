@@ -124,7 +124,11 @@ export function ContratacoesPage() {
     {
       accessorKey: 'status',
       header: 'Status',
-      cell: ({ row }) => <StatusBadge status={row.original.ultimaImportacao?.status ?? ''} />,
+      cell: ({ row }) => {
+        const c = row.original
+        const status = c.statusParticipacao ?? c.ultimaImportacao?.status ?? ''
+        return <StatusBadge status={status} />
+      },
     },
     {
       id: 'acoes',
