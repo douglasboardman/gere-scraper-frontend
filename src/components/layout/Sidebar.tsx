@@ -13,7 +13,7 @@ import {
   Users,
   LogOut,
   Layers,
-  ScrollText,
+  Handshake,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
@@ -85,7 +85,7 @@ export function Sidebar() {
       title: 'Contratos',
       items: [
         ...((isAdmin || isGestaoContratos) ? [{ label: 'Painel Contratos', to: '/contratos/dashboard', icon: LayoutDashboard }] : []),
-        { label: 'Consultar', to: '/contratos', icon: ScrollText, end: true },
+        { label: 'Consultar', to: '/contratos', icon: Handshake, end: true },
       ],
     },
     {

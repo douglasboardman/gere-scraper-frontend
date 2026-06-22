@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Eye, PlusCircle, Search } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { fornecimentosApi } from "@/api/fornecimentos.api";
+import { useAuthStore } from "@/store/auth.store";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { DataTable } from "@/components/shared/DataTable";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -15,7 +16,10 @@ import type { IFornecimento, IItem, IAtaRegPrecos, IContratacao, IContrato } fro
 
 export function FornecimentosPage() {
   const navigate = useNavigate();
-  const { can } = usePermission();
+  const { can, isGestorUnidade, isGestorContratacoes } = usePermission();
+  const user = useAuthStore((s) => s.user);
+  const isGestorUnidadeOrContratacoes = isGestorUnidade || isGestorContratacoes;
+  const userUasg = user?.unidade?.uasg ?? null;
   const [searchParams] = useSearchParams();
   const idItemParam = searchParams.get("identItem") ?? undefined;
   const idFornecedorParam = searchParams.get("identFornecedor") ?? undefined;
@@ -24,6 +28,7 @@ export function FornecimentosPage() {
   const [contratacaoFilter, setContratacaoFilter] = useState("");
   const [contratoFilter, setContratoFilter] = useState("");
   const [deContratoOnly, setDeContratoOnly] = useState(false);
+  const [apenasMinhaUnidade, setApenasMinhaUnidade] = useState(true);
   const [fornecedorNameFilter, setFornecedorNameFilter] = useState("");
   const [itemDescFilter, setItemDescFilter] = useState("");
 
@@ -69,8 +74,28 @@ export function FornecimentosPage() {
     return identItem.identAta as IAtaRegPrecos;
   };
 
+  const contratacaoIdsComParticipacao = useMemo(() => {
+    if (!userUasg || !isGestorUnidadeOrContratacoes) return null;
+    const ids = new Set<string>();
+    for (const f of fornecimentos) {
+      if (f.uasgUnParticipante === userUasg) {
+        const c = getContratacaoFromItem(f.identItem);
+        if (c?.identificador) ids.add(c.identificador);
+      }
+    }
+    return ids;
+  }, [fornecimentos, userUasg, isGestorUnidadeOrContratacoes]);
+
   const fornecimentosFiltrados = fornecimentos
     .filter((f) => {
+      if (isGestorUnidadeOrContratacoes && userUasg) {
+        if (apenasMinhaUnidade) {
+          if (f.uasgUnParticipante !== userUasg) return false;
+        } else if (contratacaoIdsComParticipacao) {
+          const c = getContratacaoFromItem(f.identItem);
+          if (c && !contratacaoIdsComParticipacao.has(c.identificador)) return false;
+        }
+      }
       if (uasgFilter.trim() && !f.uasgUnParticipante.includes(uasgFilter.trim())) return false;
       if (contratacaoFilter) {
         const c = getContratacaoFromItem(f.identItem);
@@ -300,15 +325,28 @@ export function FornecimentosPage() {
             onChange={(e) => setItemDescFilter(e.target.value)}
             className="bg-background"
           />
-          <label className="flex items-center gap-2 cursor-pointer select-none h-9 px-3 rounded-md border bg-background text-sm">
-            <input
-              type="checkbox"
-              className="h-4 w-4 accent-primary cursor-pointer"
-              checked={deContratoOnly}
-              onChange={(e) => setDeContratoOnly(e.target.checked)}
-            />
-            De Contrato
-          </label>
+          <div className="flex gap-2">
+            <label className="flex flex-1 items-center gap-2 cursor-pointer select-none h-9 px-3 rounded-md border bg-background text-sm">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-primary cursor-pointer"
+                checked={deContratoOnly}
+                onChange={(e) => setDeContratoOnly(e.target.checked)}
+              />
+              De Contrato
+            </label>
+            {isGestorUnidadeOrContratacoes && userUasg && (
+              <label className="flex flex-1 items-center gap-2 cursor-pointer select-none h-9 px-3 rounded-md border bg-background text-sm">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-primary cursor-pointer"
+                  checked={apenasMinhaUnidade}
+                  onChange={(e) => setApenasMinhaUnidade(e.target.checked)}
+                />
+                Apenas Fornec. da Unidade
+              </label>
+            )}
+          </div>
         </div>
       </div>
 

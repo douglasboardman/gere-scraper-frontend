@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { ArrowLeft, Pencil, X, Check, CheckCircle2, PauseCircle, Eye } from "lucide-react";
+import { ArrowLeft, Pencil, X, Check, CheckCircle2, PauseCircle, Eye, FileDown } from "lucide-react";
 import { contratacoesApi } from "@/api/contratacoes.api";
 import { atasApi } from "@/api/atas.api";
 import { contratosApi } from "@/api/contratos.api";
@@ -23,6 +23,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermission } from "@/hooks/usePermission";
 import { useAuthStore } from "@/store/auth.store";
 import { formatCNPJ, formatCurrency } from "@/lib/utils";
+import { exportContratacaoExcel } from "@/lib/exportContratacaoExcel";
+import { fornecimentosApi } from "@/api/fornecimentos.api";
 import {
   Select,
   SelectContent,
@@ -38,7 +40,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { IContratacao, IAtaRegPrecos, IContrato, IItem } from "@/types";
+import type { IContratacao, IAtaRegPrecos, IContrato, IItem, IFornecimento } from "@/types";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -103,9 +105,17 @@ export function ContratacaoDetailPage() {
     enabled: !!identificador,
   });
 
+  const userUasg = usuario?.unidade?.uasg ?? null
+
+  const { data: fornecimentosUnidade = [] } = useQuery<IFornecimento[]>({
+    queryKey: ["fornecimentos", "contratacao", identificador, userUasg],
+    queryFn: () => fornecimentosApi.listarPorContratacaoUnidade(identificador!, userUasg!),
+    enabled: !!identificador && !!userUasg,
+  })
+
   const contratos = isAdmin
     ? todosContratos
-    : todosContratos.filter((ct) => ct.uasgContratante === usuario?.unidade?.uasg);
+    : todosContratos.filter((ct) => ct.uasgContratante === userUasg);
 
   const updateMutation = useMutation({
     mutationFn: (data: Partial<IContratacao>) =>
@@ -175,10 +185,20 @@ export function ContratacaoDetailPage() {
                 </Button>
               </>
             ) : (
-              <Button variant="outline" size="sm" onClick={() => navigate("/contratacoes")}>
-                <ArrowLeft className="h-4 w-4" />
-                Voltar
-              </Button>
+              <>
+                <Button variant="outline" size="sm" onClick={() => navigate("/contratacoes")}>
+                  <ArrowLeft className="h-4 w-4" />
+                  Voltar
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportContratacaoExcel(contratacao, atas, contratos, itens, fornecimentosUnidade)}
+                >
+                  <FileDown className="h-4 w-4" />
+                  Exportar Excel
+                </Button>
+              </>
             )}
           </div>
         }
@@ -267,36 +287,36 @@ export function ContratacaoDetailPage() {
               {can("edit:contratacoes") && (efetiveStatus === "Processada" || efetiveStatus === "Disponivel") && !editMode && (
                 <div className="flex gap-3 flex-wrap mt-6 pt-5 border-t">
                   {efetiveStatus === "Processada" && (
-                    <Button
-                      size="sm"
-                      className="bg-green-700 hover:bg-green-800 text-white"
-                      onClick={() => updateMutation.mutate({ status: "Disponivel" } as any)}
-                      disabled={updateMutation.isPending}
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                      Disponibilizar para Requisições
-                    </Button>
-                  )}
-                  {efetiveStatus === "Disponivel" && (
-                    <Button
-                      size="sm"
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                      onClick={() => updateMutation.mutate({ status: "Processada" } as any)}
-                      disabled={updateMutation.isPending}
-                    >
-                      <PauseCircle className="h-4 w-4" />
-                      Suspender Disponibilidade
-                    </Button>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleEdit}
-                    disabled={efetiveStatus !== "Processada"}
-                  >
-                    <Pencil className="h-4 w-4" />
-                    Editar
-                  </Button>
+                        <Button
+                          size="sm"
+                          className="bg-green-700 hover:bg-green-800 text-white"
+                          onClick={() => updateMutation.mutate({ status: "Disponivel" } as any)}
+                          disabled={updateMutation.isPending}
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                          Disponibilizar para Requisições
+                        </Button>
+                      )}
+                      {efetiveStatus === "Disponivel" && (
+                        <Button
+                          size="sm"
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                          onClick={() => updateMutation.mutate({ status: "Processada" } as any)}
+                          disabled={updateMutation.isPending}
+                        >
+                          <PauseCircle className="h-4 w-4" />
+                          Suspender Disponibilidade
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleEdit}
+                        disabled={efetiveStatus !== "Processada"}
+                      >
+                        <Pencil className="h-4 w-4" />
+                        Editar
+                      </Button>
                 </div>
               )}
 

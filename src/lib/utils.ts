@@ -6,7 +6,7 @@ import {
   Package,
   Truck,
   ArrowLeftRight,
-  ScrollText,
+  Handshake,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -25,7 +25,7 @@ export const ENTITY: Record<string, EntityConfig> = {
   item:         { icon: Package,        bg: ENTITY_BG, bgAlt: ENTITY_BG_ALT },
   fornecedor:   { icon: Truck,          bg: ENTITY_BG, bgAlt: ENTITY_BG_ALT },
   fornecimento: { icon: ArrowLeftRight, bg: ENTITY_BG, bgAlt: ENTITY_BG_ALT },
-  contrato:     { icon: ScrollText,     bg: ENTITY_BG, bgAlt: ENTITY_BG_ALT },
+  contrato:     { icon: Handshake,      bg: ENTITY_BG, bgAlt: ENTITY_BG_ALT },
 }
 
 export function cn(...inputs: ClassValue[]) {

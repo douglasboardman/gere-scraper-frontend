@@ -4,7 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import { format, differenceInDays, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
-  ScrollText,
+  Handshake,
   Package,
   DollarSign,
   Upload,
@@ -281,7 +281,7 @@ export function ContratoDashboardPage() {
           title="Contratos Disponíveis"
           value={data?.contratosDisponiveis ?? 0}
           description="com status Disponível"
-          icon={ScrollText}
+          icon={Handshake}
           isLoading={isLoading}
           color="#2a593a"
         />
@@ -399,7 +399,7 @@ export function ContratoDashboardPage() {
         <CardContent className="pt-0">
           <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
             <ActionCard
-              icon={ScrollText}
+              icon={Handshake}
               iconColor="#2a593a"
               iconBg="#2a593a18"
               accentColor="#2a593a"
