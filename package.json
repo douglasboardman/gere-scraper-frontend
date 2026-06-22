@@ -40,6 +40,9 @@
     "zod": "^3.24.1",
     "zustand": "^5.0.2"
   },
+  "overrides": {
+    "uuid": ">=11.1.1"
+  },
   "devDependencies": {
     "@types/node": "^22.10.2",
     "@types/react": "^18.3.14",
