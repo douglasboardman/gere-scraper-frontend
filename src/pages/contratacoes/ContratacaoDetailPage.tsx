@@ -193,7 +193,7 @@ export function ContratacaoDetailPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => exportContratacaoExcel(contratacao, atas, contratos, itens, fornecimentosUnidade)}
+                  onClick={() => void exportContratacaoExcel(contratacao, atas, contratos, itens, fornecimentosUnidade)}
                 >
                   <FileDown className="h-4 w-4" />
                   Exportar Excel
