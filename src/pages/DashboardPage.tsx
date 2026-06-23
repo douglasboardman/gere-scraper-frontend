@@ -82,8 +82,8 @@ export function DashboardPage() {
   })
 
   const contratacoesEmAnalise = contratacoes?.filter((c) => {
-    const s = c.ultimaImportacao?.status ?? 'Processada'
-    return s === 'Em_Processamento' || s === 'Processada'
+    if (c.ultimaImportacao?.status === 'Em_Processamento') return true
+    return (c.statusParticipacao ?? c.ultimaImportacao?.status) === 'Processada'
   }) ?? []
   const contratacoesDisponiveis = contratacoes?.filter((c) => (c.statusParticipacao ?? c.ultimaImportacao?.status) === 'Disponivel') ?? []
   const contratosVigentes = contratos?.filter((c) => c.status === 'Disponivel') ?? []
