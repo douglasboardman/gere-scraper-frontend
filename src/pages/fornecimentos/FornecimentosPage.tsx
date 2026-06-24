@@ -115,7 +115,12 @@ export function FornecimentosPage() {
         if (!(f.nomeFornecedor ?? "").toLowerCase().includes(fornecedorNameFilter.toLowerCase())) return false;
       }
       if (itemDescFilter.trim()) {
-        if (!getItemDesc(f.identItem).toLowerCase().includes(itemDescFilter.toLowerCase())) return false;
+        const term = itemDescFilter.toLowerCase();
+        const item = f.identItem;
+        const detalhada = typeof item !== "string"
+          ? (item.descDetalhada ?? item.descricaoDetalhada ?? "")
+          : "";
+        if (!detalhada.toLowerCase().includes(term)) return false;
       }
       return true;
     })
