@@ -1,4 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { fetchVersion } from '@/api/version.api'
 import {
   LayoutDashboard,
   Gavel,
@@ -36,7 +38,7 @@ interface NavGroup {
 
 function GereLogo() {
   return (
-    <img src="/logo-branco.svg" alt="GERE" width="40" height="40" />
+    <img src="/logo-branco.svg" alt="GERE" width="48" height="48" />
   )
 }
 
@@ -54,6 +56,11 @@ export function Sidebar() {
   const { isAdmin, isGestorUnidade, isGestorContratacoes, isGestorContratos, can } = usePermission()
   const isGestaoContratos = isGestorUnidade || isGestorContratacoes || isGestorContratos
   const navigate = useNavigate()
+  const [version, setVersion] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchVersion().then(setVersion).catch(() => null)
+  }, [])
 
   const canApprove = can('approve:requisicoes')
   const canCreateReq = can('create:requisicoes')
@@ -129,12 +136,14 @@ export function Sidebar() {
       style={{ backgroundColor: '#272626' }}
     >
       {/* Logo + Name */}
-      <div className="flex items-center gap-3 px-4 py-5">
-        <GereLogo />
-        <div>
-          <div className="text-white font-bold text-lg leading-none tracking-wide">GERE</div>
-          <div className="text-xs leading-tight mt-0.5" style={{ color: '#82ab90' }}>
-            Gestão de Requisições
+      <div className="px-4 pt-6 pb-2">
+        <div className="flex items-center gap-3">
+          <GereLogo />
+          <div>
+            <div className="text-white font-bold text-lg leading-none tracking-wide">GERE</div>
+            <div className="text-xs leading-tight mt-0.5" style={{ color: '#82ab90' }}>
+              Gestão e Requisições em Contratações Públicas
+            </div>
           </div>
         </div>
       </div>
@@ -187,7 +196,12 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Footer with user info */}
+      {/* Version + Footer */}
+      {version && (
+        <div className="text-xs text-right px-4 mb-1" style={{ color: '#e1e7e3' }}>
+          Versão {version}
+        </div>
+      )}
       <Separator className="bg-white/10 mx-4" style={{ width: 'calc(100% - 2rem)' }} />
       <div className="px-3 py-3">
         <div className="flex items-center gap-2 px-2 py-2 rounded-md">

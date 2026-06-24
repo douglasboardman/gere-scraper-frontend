@@ -46,7 +46,7 @@ export function SobrePage() {
                 GERE
               </h1>
               <p className="text-lg text-muted-foreground mt-1">
-                Gerenciador de Requisições em Contratações Públicas
+                Gestão e Requisições em Contratações Públicas
               </p>
             </div>
 

@@ -143,7 +143,7 @@ export function RegisterPage() {
               GERE
             </h1>
             <p className="text-sm text-muted-foreground text-center">
-              Gerenciador de Requisições em Contratações Públicas
+              Gestão e Requisições em Contratações Públicas
             </p>
           </div>
 
