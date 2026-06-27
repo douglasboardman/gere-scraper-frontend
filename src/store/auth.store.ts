@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { IUsuario } from '@/types'
+import { queryClient } from '@/lib/queryClient'
 
 export interface ActiveJobFormData {
   numContratacao: string
@@ -51,6 +52,7 @@ export const useAuthStore = create<AuthStore>()(
       logout: () => {
         localStorage.removeItem('gere_token')
         localStorage.removeItem('gere_user')
+        queryClient.clear()
         set({ token: null, user: null, isAuthenticated: false, activeJobId: null, activeCacheSyncJobId: null })
       },
 
