@@ -77,6 +77,8 @@ export interface IContratacao {
   amparoLegal?: AmparoLegal
   iniVigencia?: string
   fimVigencia?: string
+  status?: StatusElemContratacaoAlt
+  isOutrasObrigacoes?: boolean
   statusParticipacao?: StatusElemContratacaoAlt | null
   ultimaImportacao?: IImportacao | null
   createdAt: string
@@ -478,4 +480,50 @@ export interface SancoesResponse {
   sancionadoCEIS: boolean
   sancionadoCNEP: boolean
   sancionadoCEAF: boolean
+}
+
+// ============================================================
+// Outras Obrigações
+// ============================================================
+
+export interface IItemOob {
+  identificador: string
+  descBreve: string
+  descDetalhada: string
+  unMedida: string
+  valUnitario: number
+  status: StatusElemContratacao
+}
+
+export interface IFornecimentoOob {
+  identificador: string
+  identItem: string
+  item: IItemOob
+  identContrato: string
+  qtdAutorizada: number
+  saldoDisponivel: number
+  valUnitHomologado: number
+  destDespesa: 'Outras_Obrigacoes'
+  status: StatusElemContratacao
+}
+
+export interface IContratoOob {
+  identificador: string
+  numContrato: string
+  objeto?: string
+  valGlobal: number
+  iniVigencia: string
+  fimVigencia: string
+  status: StatusElemContratacao
+  fornecimentos: IFornecimentoOob[]
+}
+
+export interface IOutrasObrigacoesData {
+  identificador: string
+  objeto?: string
+  anoContratacao: string
+  status: StatusElemContratacaoAlt
+  isOutrasObrigacoes: true
+  itens: IItemOob[]
+  contratos: IContratoOob[]
 }
