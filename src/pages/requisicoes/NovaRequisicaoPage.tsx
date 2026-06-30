@@ -62,8 +62,9 @@ import {
 } from '@/components/ui/dialog'
 import { cn, formatCurrency, formatQtd, destDespesaLabel } from '@/lib/utils'
 import { extractCnpj } from '@/lib/identifier-utils'
-import type { IContratacao, IFornecimento, IItem, IRequisicao, IUnidade } from '@/types'
+import type { IContratacao, IContratoOob, IFornecimento, IItem, IRequisicao, IUnidade } from '@/types'
 import { MODALIDADE_LABEL } from '@/types'
+import { Step2OutrasObrigacoes } from './components/Step2OutrasObrigacoes'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -547,6 +548,7 @@ function Step3Itens({
   userUasg,
   destDespesa,
   initialItems,
+  identContratoOob,
   onComplete,
   onBack,
 }: {
@@ -554,6 +556,7 @@ function Step3Itens({
   userUasg: string
   destDespesa: 'Material' | 'Servico' | 'Outras_Obrigacoes'
   initialItems: Map<string, SelectedItemEntry>
+  identContratoOob?: string
   onComplete: (items: Map<string, SelectedItemEntry>) => void
   onBack: () => void
 }) {
@@ -563,9 +566,11 @@ function Step3Itens({
   const [catalogSearch, setCatalogSearch] = useState('')
 
   const { data: fornecimentos = [], isLoading: loadingForn } = useQuery({
-    queryKey: ['fornecimentos-wizard', selectedCompra.identificador, userUasg],
+    queryKey: ['fornecimentos-wizard', selectedCompra.identificador, userUasg, identContratoOob],
     queryFn: () =>
-      fornecimentosApi.listarPorContratacaoUnidade(selectedCompra.identificador, userUasg),
+      identContratoOob
+        ? fornecimentosApi.listar({ identContrato: identContratoOob, status: 'Disponivel' })
+        : fornecimentosApi.listarPorContratacaoUnidade(selectedCompra.identificador, userUasg),
   })
 
   const { data: itens = [], isLoading: loadingItens } = useQuery({
@@ -1358,6 +1363,7 @@ export function NovaRequisicaoPage() {
   const [selectedCompra, setSelectedCompra] = useState<IContratacao | null>(null)
   // selectedItems is lifted here so step 3 preserves selection when user goes back from step 4
   const [selectedItems, setSelectedItems] = useState<Map<string, SelectedItemEntry>>(new Map())
+  const [selectedContratoOob, setSelectedContratoOob] = useState<IContratoOob | null>(null)
 
   const userUasg =
     typeof user?.unidade === 'object' ? (user.unidade as IUnidade).uasg : undefined
@@ -1385,6 +1391,7 @@ export function NovaRequisicaoPage() {
               setSelectedCompra(null)
               setSelectedItems(new Map())
               setRequisicao(null)
+              setSelectedContratoOob(null)
             }
             setStep1Data(data)
             setStep(2)
@@ -1392,7 +1399,22 @@ export function NovaRequisicaoPage() {
         />
       )}
 
-      {step === 2 && userUasg && step1Data && (
+      {step === 2 && userUasg && step1Data && step1Data.destDespesa === 'Outras_Obrigacoes' && (
+        <Step2OutrasObrigacoes
+          userUasg={userUasg}
+          step1Data={step1Data}
+          existingRequisicao={requisicao}
+          onComplete={(req, contratacaoOob, contratoOob) => {
+            setRequisicao(req)
+            setSelectedCompra(contratacaoOob)
+            setSelectedContratoOob(contratoOob)
+            setStep(3)
+          }}
+          onBack={() => setStep(1)}
+        />
+      )}
+
+      {step === 2 && userUasg && step1Data && step1Data.destDespesa !== 'Outras_Obrigacoes' && (
         <Step2Contratacao
           userUasg={userUasg}
           tipoRequisicao={step1Data.destDespesa}
@@ -1421,6 +1443,7 @@ export function NovaRequisicaoPage() {
           userUasg={userUasg}
           destDespesa={step1Data!.destDespesa}
           initialItems={selectedItems}
+          identContratoOob={selectedContratoOob?.identificador}
           onComplete={(items) => {
             setSelectedItems(items)
             setStep(4)
