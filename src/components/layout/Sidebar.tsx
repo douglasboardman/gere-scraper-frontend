@@ -114,6 +114,13 @@ export function Sidebar() {
         ...(canManageUsuarios ? [{ label: 'Usuários', to: '/usuarios', icon: Users }] : []),
       ],
     },
+    {
+      title: 'Gestão Financeira',
+      requiresRole: 'admin_or_gestor_unidade',
+      items: [
+        { label: 'Outras Obrigações', to: '/outras-obrigacoes', icon: Layers },
+      ],
+    },
   ]
 
   const handleLogout = () => {

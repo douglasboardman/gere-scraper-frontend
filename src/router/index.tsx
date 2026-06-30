@@ -42,6 +42,7 @@ import { UsuariosPage } from '@/pages/usuarios/UsuariosPage'
 import { UsuarioEditPage } from '@/pages/usuarios/UsuarioEditPage'
 import { PerfilPage } from '@/pages/PerfilPage'
 import { SobrePage } from '@/pages/SobrePage'
+import { OutrasObrigacoesPage } from '@/pages/outras-obrigacoes/OutrasObrigacoesPage'
 
 // Protected route component
 function PrivateRoute({
@@ -283,6 +284,16 @@ export const router = createBrowserRouter([
               {
                 index: true,
                 element: <UsuarioEditPage />,
+              },
+            ],
+          },
+          {
+            path: 'outras-obrigacoes',
+            element: <PrivateRoute requireAdminOrGestorUnidade />,
+            children: [
+              {
+                index: true,
+                element: <OutrasObrigacoesPage />,
               },
             ],
           },
