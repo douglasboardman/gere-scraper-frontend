@@ -64,7 +64,7 @@ export const outrasObrigacoesApi = {
   // Contratos
   async criarContrato(
     ano: string,
-    payload: { objeto: string; valGlobal: number }
+    payload: { objeto: string }
   ): Promise<IContratoOob> {
     const { data } = await apiClient.post<IContratoOob>(`/outras-obrigacoes/${ano}/contratos`, payload)
     return data

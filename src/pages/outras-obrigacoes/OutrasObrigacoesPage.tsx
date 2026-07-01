@@ -34,7 +34,6 @@ type ItemForm = z.infer<typeof itemSchema>
 
 const contratoSchema = z.object({
   objeto: z.string().min(1, 'Obrigatório'),
-  valGlobal: z.coerce.number().positive('Deve ser positivo'),
 })
 type ContratoForm = z.infer<typeof contratoSchema>
 
@@ -124,9 +123,7 @@ function ContratoModal({
   const qc = useQueryClient()
   const form = useForm<ContratoForm>({
     resolver: zodResolver(contratoSchema),
-    defaultValues: contrato
-      ? { objeto: contrato.objeto ?? '', valGlobal: contrato.valGlobal }
-      : { objeto: '', valGlobal: 0 },
+    defaultValues: { objeto: contrato?.objeto ?? '' },
   })
 
   const mutation = useMutation({
@@ -154,11 +151,6 @@ function ContratoModal({
             <Label>Objeto / Descrição</Label>
             <Input {...form.register('objeto')} placeholder="ex: Bolsas e Auxílios" />
             {form.formState.errors.objeto && <p className="text-xs text-red-500">{form.formState.errors.objeto.message}</p>}
-          </div>
-          <div>
-            <Label>Valor global (R$)</Label>
-            <Input type="number" step="0.01" {...form.register('valGlobal')} />
-            {form.formState.errors.valGlobal && <p className="text-xs text-red-500">{form.formState.errors.valGlobal.message}</p>}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
