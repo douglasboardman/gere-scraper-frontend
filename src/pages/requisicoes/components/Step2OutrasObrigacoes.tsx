@@ -78,7 +78,7 @@ export function Step2OutrasObrigacoes({
     return (
       <Card className="max-w-2xl mx-auto">
         <CardContent className="py-16 text-center text-muted-foreground text-sm">
-          Não há contratos com status Disponível em Outras Obrigações para {anoAtual}.
+          Não há grupos de despesa com status Disponível em Outras Obrigações para {anoAtual}.
         </CardContent>
       </Card>
     )
@@ -87,7 +87,7 @@ export function Step2OutrasObrigacoes({
   return (
     <div className="space-y-4 max-w-2xl mx-auto">
       <p className="text-sm text-muted-foreground">
-        Selecione o contrato de Outras Obrigações ao qual deseja vincular sua requisição.
+        Selecione o grupo de despesa de Outras Obrigações ao qual deseja vincular sua requisição.
       </p>
 
       <div className="space-y-3">

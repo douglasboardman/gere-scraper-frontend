@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, CheckCircle, Layers } from 'lucide-react'
+import { Plus, Pencil, Trash2, CheckCircle, XCircle, Layers } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,9 +15,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import { outrasObrigacoesApi } from '@/api/outras-obrigacoes.api'
 import { formatCurrency } from '@/lib/utils'
-import type { IContratoOob, IItemOob, IFornecimentoOob, IOutrasObrigacoesData } from '@/types'
+import type { IContratoOob, IItemOob, IFornecimentoOob } from '@/types'
 
 const anoAtual = String(new Date().getFullYear())
 
@@ -115,7 +116,7 @@ function ItemModal({
   )
 }
 
-// ── Modal de Contrato ────────────────────────────────────────────────────────
+// ── Modal de Grupo de Despesa ────────────────────────────────────────────────
 
 function ContratoModal({
   open, onClose, ano, contrato,
@@ -135,17 +136,17 @@ function ContratoModal({
         : outrasObrigacoesApi.criarContrato(ano, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['oob', ano] })
-      toast.success(contrato ? 'Contrato atualizado.' : 'Contrato criado.')
+      toast.success(contrato ? 'Grupo de despesa atualizado.' : 'Grupo de despesa criado.')
       onClose()
     },
-    onError: () => toast.error('Erro ao salvar contrato.'),
+    onError: () => toast.error('Erro ao salvar grupo de despesa.'),
   })
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{contrato ? 'Editar Contrato' : 'Novo Contrato'}</DialogTitle>
+          <DialogTitle>{contrato ? 'Editar Grupo de Despesa' : 'Novo Grupo de Despesa'}</DialogTitle>
           <DialogDescription>Vigência automática: 01/01/{ano} — 31/12/{ano}</DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
@@ -169,7 +170,7 @@ function ContratoModal({
   )
 }
 
-// ── Modal de Fornecimento ────────────────────────────────────────────────────
+// ── Modal de Despesa ─────────────────────────────────────────────────────────
 
 function FornecimentoModal({
   open, onClose, ano, contratoId, itens, fornecimento,
@@ -192,17 +193,17 @@ function FornecimentoModal({
         : outrasObrigacoesApi.criarFornecimento(ano, contratoId, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['oob', ano] })
-      toast.success(fornecimento ? 'Fornecimento atualizado.' : 'Fornecimento adicionado.')
+      toast.success(fornecimento ? 'Despesa atualizada.' : 'Despesa adicionada.')
       onClose()
     },
-    onError: () => toast.error('Erro ao salvar fornecimento.'),
+    onError: () => toast.error('Erro ao salvar despesa.'),
   })
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{fornecimento ? 'Editar Fornecimento' : 'Adicionar Fornecimento'}</DialogTitle>
+          <DialogTitle>{fornecimento ? 'Editar Despesa' : 'Adicionar Despesa'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={form.handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
           <div>
@@ -245,7 +246,7 @@ function FornecimentoModal({
   )
 }
 
-// ── Painel de Fornecimentos ──────────────────────────────────────────────────
+// ── Painel de Despesas ───────────────────────────────────────────────────────
 
 function FornecimentosPanel({
   contrato, itens, ano,
@@ -259,9 +260,9 @@ function FornecimentosPanel({
       outrasObrigacoesApi.deletarFornecimento(ano, contrato.identificador, fornId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['oob', ano] })
-      toast.success('Fornecimento removido.')
+      toast.success('Despesa removida.')
     },
-    onError: () => toast.error('Não foi possível remover o fornecimento.'),
+    onError: () => toast.error('Não foi possível remover a despesa.'),
   })
 
   return (
@@ -269,11 +270,11 @@ function FornecimentosPanel({
       <div className="flex items-center justify-between mb-3">
         <p className="text-sm font-semibold">{contrato.objeto ?? contrato.identificador}</p>
         <Button size="sm" onClick={() => setAddOpen(true)}>
-          <Plus className="h-3 w-3 mr-1" /> Adicionar Fornecimento
+          <Plus className="h-3 w-3 mr-1" /> Adicionar Despesa
         </Button>
       </div>
       {contrato.fornecimentos.length === 0 && (
-        <p className="text-sm text-muted-foreground">Nenhum fornecimento cadastrado.</p>
+        <p className="text-sm text-muted-foreground">Nenhuma despesa cadastrada.</p>
       )}
       {contrato.fornecimentos.map((f) => {
         const itemNome = typeof f.item === 'object' ? f.item.descBreve : f.identItem
@@ -291,7 +292,7 @@ function FornecimentosPanel({
               </Button>
               <Button
                 size="icon" variant="ghost" className="h-7 w-7 text-destructive"
-                onClick={() => { if (confirm('Remover fornecimento?')) deletarMutation.mutate(f.identificador) }}
+                onClick={() => { if (confirm('Remover despesa?')) deletarMutation.mutate(f.identificador) }}
               >
                 <Trash2 className="h-3 w-3" />
               </Button>
@@ -337,7 +338,7 @@ export function OutrasObrigacoesPage() {
   const [editItem, setEditItem] = useState<IItemOob | undefined>()
   const [contratoModalOpen, setContratoModalOpen] = useState(false)
   const [editContrato, setEditContrato] = useState<IContratoOob | undefined>()
-  const [publicarConfirm, setPublicarConfirm] = useState(false)
+  const [disponibilizarConfirm, setDisponibilizarConfirm] = useState(false)
   const qc = useQueryClient()
 
   const { data: oob, isLoading } = useQuery({
@@ -345,14 +346,31 @@ export function OutrasObrigacoesPage() {
     queryFn: () => outrasObrigacoesApi.buscar(ano),
   })
 
-  const publicarMutation = useMutation({
-    mutationFn: () => outrasObrigacoesApi.publicar(ano),
+  const isDisponivel = oob?.status === 'Disponivel'
+
+  const disponibilizarMutation = useMutation({
+    mutationFn: () =>
+      isDisponivel
+        ? outrasObrigacoesApi.indisponibilizar(ano)
+        : outrasObrigacoesApi.disponibilizar(ano),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['oob', ano] })
-      toast.success('Outras Obrigações publicadas com sucesso.')
-      setPublicarConfirm(false)
+      qc.invalidateQueries({ queryKey: ['oob-wizard'] })
+      toast.success(isDisponivel ? 'Outras Obrigações indisponibilizadas.' : 'Outras Obrigações disponibilizadas.')
+      setDisponibilizarConfirm(false)
     },
-    onError: () => toast.error('Erro ao publicar.'),
+    onError: () => toast.error(isDisponivel ? 'Erro ao indisponibilizar.' : 'Erro ao disponibilizar.'),
+  })
+
+  const toggleContratoMutation = useMutation({
+    mutationFn: ({ contratoId, disponivel }: { contratoId: string; disponivel: boolean }) =>
+      outrasObrigacoesApi.toggleContrato(ano, contratoId, disponivel),
+    onSuccess: (_, { disponivel }) => {
+      qc.invalidateQueries({ queryKey: ['oob', ano] })
+      qc.invalidateQueries({ queryKey: ['oob-wizard'] })
+      toast.success(disponivel ? 'Grupo de despesa disponibilizado.' : 'Grupo de despesa indisponibilizado.')
+    },
+    onError: () => toast.error('Erro ao alterar disponibilidade do grupo de despesa.'),
   })
 
   const deletarItemMutation = useMutation({
@@ -369,9 +387,9 @@ export function OutrasObrigacoesPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['oob', ano] })
       setSelectedContratoId(null)
-      toast.success('Contrato removido.')
+      toast.success('Grupo de despesa removido.')
     },
-    onError: () => toast.error('Não foi possível remover o contrato.'),
+    onError: () => toast.error('Não foi possível remover o grupo de despesa.'),
   })
 
   const selectedContrato = (oob?.contratos ?? []).find((c) => c.identificador === selectedContratoId) ?? null
@@ -394,9 +412,15 @@ export function OutrasObrigacoesPage() {
             >
               {anos.map((a) => <option key={a} value={a}>{a}</option>)}
             </select>
-            {oob && oob.status !== 'Disponivel' && (
-              <Button onClick={() => setPublicarConfirm(true)}>
-                <CheckCircle className="h-4 w-4 mr-2" /> Publicar
+            {oob && (
+              <Button
+                variant={isDisponivel ? 'outline' : 'default'}
+                onClick={() => setDisponibilizarConfirm(true)}
+              >
+                {isDisponivel
+                  ? <><XCircle className="h-4 w-4 mr-2" /> Indisponibilizar</>
+                  : <><CheckCircle className="h-4 w-4 mr-2" /> Disponibilizar</>
+                }
               </Button>
             )}
           </div>
@@ -447,18 +471,18 @@ export function OutrasObrigacoesPage() {
             </Card>
           )}
 
-          {/* Duas colunas: contratos | fornecimentos */}
+          {/* Duas colunas: grupos de despesa | despesas */}
           <div className="grid grid-cols-5 gap-4">
-            {/* Coluna de contratos */}
+            {/* Coluna de grupos de despesa */}
             <div className="col-span-2 space-y-2">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold">Contratos</p>
+                <p className="text-sm font-semibold">Grupos de Despesa</p>
                 <Button size="sm" onClick={() => { setEditContrato(undefined); setContratoModalOpen(true) }}>
                   <Plus className="h-3 w-3 mr-1" /> Novo
                 </Button>
               </div>
               {(oob.contratos ?? []).length === 0 && (
-                <p className="text-xs text-muted-foreground">Nenhum contrato cadastrado.</p>
+                <p className="text-xs text-muted-foreground">Nenhum grupo de despesa cadastrado.</p>
               )}
               {(oob.contratos ?? []).map((c) => (
                 <Card
@@ -471,9 +495,8 @@ export function OutrasObrigacoesPage() {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{c.objeto ?? c.identificador}</p>
                         <p className="text-xs text-muted-foreground">
-                          {formatCurrency(c.valGlobal)} · {c.fornecimentos.length} fornecimento(s)
+                          {formatCurrency(c.valGlobal)} · {c.fornecimentos.length} despesa(s)
                         </p>
-                        <StatusOobBadge status={c.status} />
                       </div>
                       <div className="flex gap-1 shrink-0 ml-2">
                         <Button size="icon" variant="ghost" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); setEditContrato(c); setContratoModalOpen(true) }}>
@@ -481,11 +504,24 @@ export function OutrasObrigacoesPage() {
                         </Button>
                         <Button
                           size="icon" variant="ghost" className="h-6 w-6 text-destructive"
-                          onClick={(e) => { e.stopPropagation(); if (confirm('Remover contrato?')) deletarContratoMutation.mutate(c.identificador) }}
+                          onClick={(e) => { e.stopPropagation(); if (confirm('Remover grupo de despesa?')) deletarContratoMutation.mutate(c.identificador) }}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
+                    </div>
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t">
+                      <span className="text-xs text-muted-foreground">
+                        {c.status === 'Disponivel' ? 'Disponível' : 'Indisponível'}
+                      </span>
+                      <Switch
+                        checked={c.status === 'Disponivel'}
+                        onCheckedChange={(checked) => {
+                          toggleContratoMutation.mutate({ contratoId: c.identificador, disponivel: checked })
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        disabled={toggleContratoMutation.isPending}
+                      />
                     </div>
                   </CardContent>
                 </Card>
@@ -496,7 +532,7 @@ export function OutrasObrigacoesPage() {
             <div className="col-span-3 border rounded-lg p-4">
               {!selectedContrato && (
                 <p className="text-sm text-muted-foreground text-center py-8">
-                  Selecione um contrato para ver seus fornecimentos.
+                  Selecione um grupo de despesa para ver suas despesas.
                 </p>
               )}
               {selectedContrato && (
@@ -521,20 +557,28 @@ export function OutrasObrigacoesPage() {
         contrato={editContrato}
       />
 
-      {/* Confirmar publicação */}
-      <Dialog open={publicarConfirm} onOpenChange={setPublicarConfirm}>
+      {/* Confirmar disponibilização / indisponibilização */}
+      <Dialog open={disponibilizarConfirm} onOpenChange={setDisponibilizarConfirm}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Publicar Outras Obrigações {ano}</DialogTitle>
+            <DialogTitle>
+              {isDisponivel ? 'Indisponibilizar' : 'Disponibilizar'} Outras Obrigações {ano}
+            </DialogTitle>
             <DialogDescription>
-              Após a publicação, os contratos e fornecimentos ficarão disponíveis para requisições de empenho.
-              Confirma?
+              {isDisponivel
+                ? 'Ao indisponibilizar, os grupos de despesa e suas despesas não poderão ser utilizados em novas requisições de empenho até que sejam disponibilizados novamente. Confirma?'
+                : 'Após a disponibilização, os grupos de despesa e suas despesas ficarão disponíveis para requisições de empenho. Confirma?'
+              }
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPublicarConfirm(false)}>Cancelar</Button>
-            <Button onClick={() => publicarMutation.mutate()} disabled={publicarMutation.isPending}>
-              Publicar
+            <Button variant="outline" onClick={() => setDisponibilizarConfirm(false)}>Cancelar</Button>
+            <Button
+              variant={isDisponivel ? 'destructive' : 'default'}
+              onClick={() => disponibilizarMutation.mutate()}
+              disabled={disponibilizarMutation.isPending}
+            >
+              {isDisponivel ? 'Indisponibilizar' : 'Disponibilizar'}
             </Button>
           </DialogFooter>
         </DialogContent>

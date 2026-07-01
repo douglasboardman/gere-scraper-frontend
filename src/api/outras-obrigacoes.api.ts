@@ -21,8 +21,19 @@ export const outrasObrigacoesApi = {
     return data
   },
 
-  async publicar(ano: string): Promise<void> {
-    await apiClient.patch(`/outras-obrigacoes/${ano}/publicar`)
+  async disponibilizar(ano: string): Promise<void> {
+    await apiClient.patch(`/outras-obrigacoes/${ano}/disponibilizar`)
+  },
+
+  async indisponibilizar(ano: string): Promise<void> {
+    await apiClient.patch(`/outras-obrigacoes/${ano}/indisponibilizar`)
+  },
+
+  async toggleContrato(ano: string, contratoId: string, disponivel: boolean): Promise<void> {
+    await apiClient.patch(
+      `/outras-obrigacoes/${ano}/contratos/${encodeURIComponent(contratoId)}/toggle`,
+      { disponivel }
+    )
   },
 
   // Itens
