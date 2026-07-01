@@ -374,7 +374,7 @@ export function OutrasObrigacoesPage() {
     onError: () => toast.error('Não foi possível remover o contrato.'),
   })
 
-  const selectedContrato = oob?.contratos.find((c) => c.identificador === selectedContratoId) ?? null
+  const selectedContrato = (oob?.contratos ?? []).find((c) => c.identificador === selectedContratoId) ?? null
 
   const anos = Array.from({ length: 3 }, (_, i) => String(Number(anoAtual) - i))
 
@@ -418,13 +418,13 @@ export function OutrasObrigacoesPage() {
           </div>
 
           {/* Itens cadastrados */}
-          {oob.itens.length > 0 && (
+          {(oob.itens ?? []).length > 0 && (
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Itens cadastrados</CardTitle>
               </CardHeader>
               <CardContent className="space-y-1">
-                {oob.itens.map((it) => (
+                {(oob.itens ?? []).map((it) => (
                   <div key={it.identificador} className="flex items-center justify-between text-sm border rounded px-3 py-2">
                     <div>
                       <p className="font-medium">{it.descBreve}</p>
@@ -457,10 +457,10 @@ export function OutrasObrigacoesPage() {
                   <Plus className="h-3 w-3 mr-1" /> Novo
                 </Button>
               </div>
-              {oob.contratos.length === 0 && (
+              {(oob.contratos ?? []).length === 0 && (
                 <p className="text-xs text-muted-foreground">Nenhum contrato cadastrado.</p>
               )}
-              {oob.contratos.map((c) => (
+              {(oob.contratos ?? []).map((c) => (
                 <Card
                   key={c.identificador}
                   className={`cursor-pointer transition-colors ${selectedContratoId === c.identificador ? 'border-primary' : ''}`}
@@ -500,7 +500,7 @@ export function OutrasObrigacoesPage() {
                 </p>
               )}
               {selectedContrato && (
-                <FornecimentosPanel contrato={selectedContrato} itens={oob.itens} ano={ano} />
+                <FornecimentosPanel contrato={selectedContrato} itens={oob.itens ?? []} ano={ano} />
               )}
             </div>
           </div>
