@@ -33,7 +33,7 @@ interface NavItem {
 interface NavGroup {
   title: string
   items: NavItem[]
-  requiresRole?: 'admin' | 'admin_or_gestor_unidade' | 'can_approve' | 'gestao_contratos'
+  requiresRole?: 'gestao'
 }
 
 function GereLogo() {
@@ -86,13 +86,7 @@ export function Sidebar() {
       items: [
         { label: 'Fornecedores', to: '/fornecedores', icon: Truck },
         { label: 'Fornecimentos', to: '/fornecimentos', icon: ArrowLeftRight },
-      ],
-    },
-    {
-      title: 'Contratos',
-      items: [
-        ...((isAdmin || isGestaoContratos) ? [{ label: 'Painel Contratos', to: '/contratos/dashboard', icon: LayoutDashboard }] : []),
-        { label: 'Consultar', to: '/contratos', icon: Handshake, end: true },
+        { label: 'Contratos', to: '/contratos', icon: Handshake, end: true },
       ],
     },
     {
@@ -101,24 +95,17 @@ export function Sidebar() {
         ...(canCreateReq ? [{ label: 'Minhas Requisições', to: '/requisicoes/minhas_requisicoes', icon: ClipboardList }] : []),
         ...(canCreateReq ? [{ label: 'Nova Requisição', to: '/requisicoes/nova', icon: PlusCircle }] : []),
         { label: isAdmin ? 'Todas as Requisições' : 'Requisições da Unidade', to: '/requisicoes', icon: Layers, end: true },
-        ...(canApprove && !isAdmin
-          ? [{ label: 'Requisições para Análise', to: '/requisicoes/pendentes', icon: ClipboardCheck }]
-          : []),
       ],
     },
     {
-      title: 'Administração',
-      requiresRole: 'admin_or_gestor_unidade',
+      title: 'Gestão',
+      requiresRole: 'gestao',
       items: [
-        ...(isAdmin ? [{ label: 'Unidades', to: '/unidades', icon: Building2 }] : []),
-        ...(canManageUsuarios ? [{ label: 'Usuários', to: '/usuarios', icon: Users }] : []),
-      ],
-    },
-    {
-      title: 'Gestão Financeira',
-      requiresRole: 'admin_or_gestor_unidade',
-      items: [
-        { label: 'Outras Obrigações', to: '/outras-obrigacoes', icon: Layers },
+        ...(isGestorUnidade ? [{ label: 'Outras Obrigações', to: '/outras-obrigacoes', icon: Layers }] : []),
+        ...((isAdmin || isGestaoContratos) ? [{ label: 'Gestão de Contratos', to: '/contratos/dashboard', icon: LayoutDashboard }] : []),
+        ...(canApprove && !isAdmin ? [{ label: 'Analisar Requisições', to: '/requisicoes/pendentes', icon: ClipboardCheck }] : []),
+        ...(canManageUsuarios ? [{ label: 'Gerenciar Usuários', to: '/usuarios', icon: Users }] : []),
+        ...(isAdmin ? [{ label: 'Gerenciar Unidades', to: '/unidades', icon: Building2 }] : []),
       ],
     },
   ]
@@ -130,10 +117,7 @@ export function Sidebar() {
 
   const visibleGroups = navGroups.filter((g) => {
     if (!g.requiresRole) return true
-    if (g.requiresRole === 'admin_or_gestor_unidade') return (isAdmin || isGestorUnidade) && g.items.length > 0
-    if (g.requiresRole === 'admin') return isAdmin
-    if (g.requiresRole === 'can_approve') return canApprove
-    if (g.requiresRole === 'gestao_contratos') return isGestaoContratos
+    if (g.requiresRole === 'gestao') return g.items.length > 0
     return true
   })
 
