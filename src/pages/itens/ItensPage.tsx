@@ -263,6 +263,7 @@ export function ItensPage() {
         isLoading={isLoading}
         searchable={false}
         emptyMessage="Nenhum item encontrado."
+        pageResetKey={[descFilter, contratacaoFilter, tipoFilter].join('|')}
         renderExpandedRow={(row, colSpan) => {
           if (!expandedIds.has(row.original.identificador)) return null;
           const desc = row.original.descDetalhada ?? row.original.descricaoDetalhada;

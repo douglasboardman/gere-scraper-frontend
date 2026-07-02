@@ -361,6 +361,7 @@ export function FornecimentosPage() {
         isLoading={isLoading}
         searchable={false}
         emptyMessage="Nenhum fornecimento encontrado."
+        pageResetKey={[uasgFilter, contratacaoFilter, contratoFilter, deContratoOnly, apenasMinhaUnidade, fornecedorNameFilter, itemDescFilter].join('|')}
       />
     </div>
   );

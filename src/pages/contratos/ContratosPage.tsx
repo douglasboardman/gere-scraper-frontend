@@ -228,6 +228,7 @@ export function ContratosPage() {
         isLoading={isLoading}
         searchable={false}
         emptyMessage="Nenhum contrato encontrado."
+        pageResetKey={[uasgFilter, cnpjFilter, objetoFilter, statusFilter].join('|')}
       />
 
       <ConfirmDialog

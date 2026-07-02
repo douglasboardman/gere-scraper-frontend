@@ -232,6 +232,7 @@ export function ContratacoesPage() {
         data={filtered}
         isLoading={isLoading}
         emptyMessage="Nenhuma contratacao encontrada."
+        pageResetKey={statusFilter}
       />
 
       <ConfirmDialog

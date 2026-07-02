@@ -154,6 +154,7 @@ export function AtasPage() {
         isLoading={isLoading}
         searchable={false}
         emptyMessage="Nenhuma ata encontrada."
+        pageResetKey={fornecedorFilter}
       />
     </div>
   );

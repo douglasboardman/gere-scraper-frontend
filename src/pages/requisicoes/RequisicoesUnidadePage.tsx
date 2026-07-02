@@ -297,6 +297,7 @@ export function RequisicoesUnidadePage() {
         data={requisicoesFiltradas}
         isLoading={isLoading}
         emptyMessage="Nenhuma requisição encontrada."
+        pageResetKey={Object.values(appliedFilters).join('|')}
       />
 
       {/* Modal de filtros */}

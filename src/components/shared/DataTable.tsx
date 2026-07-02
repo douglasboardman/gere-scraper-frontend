@@ -1,4 +1,4 @@
-import { useState, useMemo, Fragment } from 'react'
+import { useState, useMemo, useEffect, Fragment } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
@@ -30,6 +30,7 @@ interface DataTableProps<TData> {
   searchPlaceholder?: string
   emptyMessage?: string
   renderExpandedRow?: (row: Row<TData>, colSpan: number) => React.ReactNode
+  pageResetKey?: unknown
 }
 
 export function DataTable<TData>({
@@ -40,6 +41,7 @@ export function DataTable<TData>({
   searchPlaceholder = 'Buscar...',
   emptyMessage = 'Nenhum registro encontrado.',
   renderExpandedRow,
+  pageResetKey,
 }: DataTableProps<TData>) {
   const [globalFilter, setGlobalFilter] = useState<string>('')
 
@@ -60,6 +62,16 @@ export function DataTable<TData>({
       pagination: { pageSize: 10 },
     },
   })
+
+  useEffect(() => {
+    table.setPageIndex(0)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageResetKey])
+
+  useEffect(() => {
+    table.setPageIndex(0)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [globalFilter])
 
   if (isLoading) {
     return (
