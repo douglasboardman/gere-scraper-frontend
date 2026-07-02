@@ -1,20 +1,19 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { Plus, Pencil, Trash2, CheckCircle, XCircle, Layers } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { outrasObrigacoesApi } from '@/api/outras-obrigacoes.api'
 import { formatCurrency } from '@/lib/utils'
@@ -22,29 +21,23 @@ import type { IContratoOob, IItemOob, IFornecimentoOob } from '@/types'
 
 const anoAtual = String(new Date().getFullYear())
 
-// ── Schemas de formulário ────────────────────────────────────────────────────
-
-const itemSchema = z.object({
-  descBreve: z.string().min(1, 'Obrigatório'),
-  descDetalhada: z.string().min(1, 'Obrigatório'),
-  unMedida: z.string().min(1, 'Obrigatório'),
-  valUnitario: z.coerce.number().positive('Deve ser positivo'),
-})
-type ItemForm = z.infer<typeof itemSchema>
+// ── Schemas ──────────────────────────────────────────────────────────────────
 
 const contratoSchema = z.object({
   objeto: z.string().min(1, 'Obrigatório'),
 })
 type ContratoForm = z.infer<typeof contratoSchema>
 
-const fornecimentoSchema = z.object({
-  identItem: z.string().min(1, 'Selecione um item'),
+const despesaSchema = z.object({
+  descBreve: z.string().min(1, 'Obrigatório'),
+  descDetalhada: z.string().min(1, 'Obrigatório'),
+  unMedida: z.string().min(1, 'Obrigatório'),
+  valorUnitario: z.coerce.number().positive('Deve ser positivo'),
   qtdAutorizada: z.coerce.number().positive('Deve ser positivo'),
-  valUnitHomologado: z.coerce.number().positive('Deve ser positivo'),
 })
-type FornecimentoForm = z.infer<typeof fornecimentoSchema>
+type DespesaForm = z.infer<typeof despesaSchema>
 
-// ── StatusBadge local ────────────────────────────────────────────────────────
+// ── StatusBadge ───────────────────────────────────────────────────────────────
 
 function StatusOobBadge({ status }: { status: string }) {
   const color = status === 'Disponivel'
@@ -53,69 +46,7 @@ function StatusOobBadge({ status }: { status: string }) {
   return <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${color}`}>{status}</span>
 }
 
-// ── Modal de Item ────────────────────────────────────────────────────────────
-
-function ItemModal({
-  open, onClose, ano, item,
-}: { open: boolean; onClose: () => void; ano: string; item?: IItemOob }) {
-  const qc = useQueryClient()
-  const form = useForm<ItemForm>({
-    resolver: zodResolver(itemSchema),
-    defaultValues: item
-      ? { descBreve: item.descBreve, descDetalhada: item.descDetalhada, unMedida: item.unMedida, valUnitario: item.valUnitario }
-      : { descBreve: '', descDetalhada: '', unMedida: '', valUnitario: 0 },
-  })
-
-  const mutation = useMutation({
-    mutationFn: (data: ItemForm) =>
-      item
-        ? outrasObrigacoesApi.atualizarItem(ano, item.identificador, data)
-        : outrasObrigacoesApi.criarItem(ano, data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['oob', ano] })
-      toast.success(item ? 'Item atualizado.' : 'Item criado.')
-      onClose()
-    },
-    onError: () => toast.error('Erro ao salvar item.'),
-  })
-
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{item ? 'Editar Item' : 'Novo Item'}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={form.handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
-          <div>
-            <Label>Descrição breve</Label>
-            <Input {...form.register('descBreve')} />
-            {form.formState.errors.descBreve && <p className="text-xs text-red-500">{form.formState.errors.descBreve.message}</p>}
-          </div>
-          <div>
-            <Label>Descrição detalhada</Label>
-            <Textarea {...form.register('descDetalhada')} rows={3} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Unidade de medida</Label>
-              <Input {...form.register('unMedida')} placeholder="ex: bolsista, diária" />
-            </div>
-            <div>
-              <Label>Valor unitário (R$)</Label>
-              <Input type="number" step="0.01" {...form.register('valUnitario')} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={mutation.isPending}>Salvar</Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-// ── Modal de Grupo de Despesa ────────────────────────────────────────────────
+// ── Modal de Grupo de Despesa ─────────────────────────────────────────────────
 
 function ContratoModal({
   open, onClose, ano, contrato,
@@ -162,30 +93,44 @@ function ContratoModal({
   )
 }
 
-// ── Modal de Despesa ─────────────────────────────────────────────────────────
+// ── Modal de Despesa (unificado Item + Fornecimento) ──────────────────────────
 
-function FornecimentoModal({
-  open, onClose, ano, contratoId, itens, fornecimento,
+function DespesaModal({
+  open, onClose, ano, contratoId, despesa,
 }: {
   open: boolean; onClose: () => void; ano: string; contratoId: string
-  itens: IItemOob[]; fornecimento?: IFornecimentoOob
+  despesa?: IFornecimentoOob & { item?: IItemOob }
 }) {
   const qc = useQueryClient()
-  const form = useForm<FornecimentoForm>({
-    resolver: zodResolver(fornecimentoSchema),
-    defaultValues: fornecimento
-      ? { identItem: fornecimento.identItem, qtdAutorizada: fornecimento.qtdAutorizada, valUnitHomologado: fornecimento.valUnitHomologado }
-      : { identItem: '', qtdAutorizada: 0, valUnitHomologado: 0 },
+  const item = despesa && typeof despesa.item === 'object' ? despesa.item as IItemOob : undefined
+
+  const form = useForm<DespesaForm>({
+    resolver: zodResolver(despesaSchema),
+    defaultValues: despesa
+      ? {
+          descBreve: item?.descBreve ?? '',
+          descDetalhada: item?.descDetalhada ?? '',
+          unMedida: item?.unMedida ?? '',
+          valorUnitario: Number(despesa.valUnitHomologado) || 0,
+          qtdAutorizada: Number(despesa.qtdAutorizada) || 0,
+        }
+      : { descBreve: '', descDetalhada: '', unMedida: '', valorUnitario: 0, qtdAutorizada: 0 },
   })
 
+  const [valorUnitario, qtdAutorizada] = useWatch({
+    control: form.control,
+    name: ['valorUnitario', 'qtdAutorizada'],
+  })
+  const total = (Number(valorUnitario) || 0) * (Number(qtdAutorizada) || 0)
+
   const mutation = useMutation({
-    mutationFn: (data: FornecimentoForm) =>
-      fornecimento
-        ? outrasObrigacoesApi.atualizarFornecimento(ano, contratoId, fornecimento.identificador, { qtdAutorizada: data.qtdAutorizada, valUnitHomologado: data.valUnitHomologado })
-        : outrasObrigacoesApi.criarFornecimento(ano, contratoId, data),
+    mutationFn: (data: DespesaForm) =>
+      despesa
+        ? outrasObrigacoesApi.atualizarDespesa(ano, contratoId, despesa.identificador, data)
+        : outrasObrigacoesApi.criarDespesa(ano, contratoId, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['oob', ano] })
-      toast.success(fornecimento ? 'Despesa atualizada.' : 'Despesa adicionada.')
+      toast.success(despesa ? 'Despesa atualizada.' : 'Despesa adicionada.')
       onClose()
     },
     onError: () => toast.error('Erro ao salvar despesa.'),
@@ -193,41 +138,43 @@ function FornecimentoModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{fornecimento ? 'Editar Despesa' : 'Adicionar Despesa'}</DialogTitle>
+          <DialogTitle>{despesa ? 'Editar Despesa' : 'Adicionar Despesa'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={form.handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
           <div>
-            <Label>Item</Label>
-            <Select
-              value={form.watch('identItem')}
-              onValueChange={(v) => form.setValue('identItem', v)}
-              disabled={!!fornecimento}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um item..." />
-              </SelectTrigger>
-              <SelectContent>
-                {itens.map((it) => (
-                  <SelectItem key={it.identificador} value={it.identificador}>
-                    {it.descBreve}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {form.formState.errors.identItem && <p className="text-xs text-red-500">{form.formState.errors.identItem.message}</p>}
+            <Label>Descrição breve</Label>
+            <Input {...form.register('descBreve')} placeholder="ex: Bolsa Permanência" />
+            {form.formState.errors.descBreve && <p className="text-xs text-red-500">{form.formState.errors.descBreve.message}</p>}
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label>Descrição detalhada</Label>
+            <Textarea {...form.register('descDetalhada')} rows={3} placeholder="Descrição completa da despesa..." />
+            {form.formState.errors.descDetalhada && <p className="text-xs text-red-500">{form.formState.errors.descDetalhada.message}</p>}
+          </div>
+          <div className="grid grid-cols-3 gap-3">
             <div>
-              <Label>Qtd autorizada</Label>
-              <Input type="number" step="0.001" {...form.register('qtdAutorizada')} />
+              <Label>Unidade de medida</Label>
+              <Input {...form.register('unMedida')} placeholder="ex: bolsista" />
+              {form.formState.errors.unMedida && <p className="text-xs text-red-500">{form.formState.errors.unMedida.message}</p>}
             </div>
             <div>
               <Label>Valor unitário (R$)</Label>
-              <Input type="number" step="0.01" {...form.register('valUnitHomologado')} />
+              <Input type="number" step="0.01" {...form.register('valorUnitario')} />
+              {form.formState.errors.valorUnitario && <p className="text-xs text-red-500">{form.formState.errors.valorUnitario.message}</p>}
+            </div>
+            <div>
+              <Label>Quantidade</Label>
+              <Input type="number" step="0.001" {...form.register('qtdAutorizada')} />
+              {form.formState.errors.qtdAutorizada && <p className="text-xs text-red-500">{form.formState.errors.qtdAutorizada.message}</p>}
             </div>
           </div>
+          {total > 0 && (
+            <p className="text-sm text-right text-muted-foreground">
+              Total: <span className="font-semibold text-foreground">{formatCurrency(total)}</span>
+            </p>
+          )}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
             <Button type="submit" disabled={mutation.isPending}>Salvar</Button>
@@ -238,18 +185,16 @@ function FornecimentoModal({
   )
 }
 
-// ── Painel de Despesas ───────────────────────────────────────────────────────
+// ── Painel de Despesas ────────────────────────────────────────────────────────
 
-function FornecimentosPanel({
-  contrato, itens, ano,
-}: { contrato: IContratoOob; itens: IItemOob[]; ano: string }) {
+function DespesasPanel({ contrato, ano }: { contrato: IContratoOob; ano: string }) {
   const qc = useQueryClient()
   const [addOpen, setAddOpen] = useState(false)
-  const [editForn, setEditForn] = useState<IFornecimentoOob | undefined>()
+  const [editDespesa, setEditDespesa] = useState<(IFornecimentoOob & { item?: IItemOob }) | undefined>()
 
   const deletarMutation = useMutation({
-    mutationFn: (fornId: string) =>
-      outrasObrigacoesApi.deletarFornecimento(ano, contrato.identificador, fornId),
+    mutationFn: (despesaId: string) =>
+      outrasObrigacoesApi.deletarDespesa(ano, contrato.identificador, despesaId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['oob', ano] })
       toast.success('Despesa removida.')
@@ -269,17 +214,19 @@ function FornecimentosPanel({
         <p className="text-sm text-muted-foreground">Nenhuma despesa cadastrada.</p>
       )}
       {contrato.fornecimentos.map((f) => {
-        const itemNome = typeof f.item === 'object' ? f.item.descBreve : f.identItem
+        const item = typeof f.item === 'object' ? f.item as IItemOob : undefined
+        const descBreve = item?.descBreve ?? f.identItem
+        const unMedida = item?.unMedida ?? ''
         return (
           <div key={f.identificador} className="flex items-center justify-between border rounded px-3 py-2 text-sm">
             <div>
-              <p className="font-medium">{itemNome}</p>
+              <p className="font-medium">{descBreve}</p>
               <p className="text-xs text-muted-foreground">
-                Qtd: {f.qtdAutorizada} · Val. unit.: {formatCurrency(f.valUnitHomologado)} · Saldo: {f.saldoDisponivel}
+                {unMedida && `${unMedida} · `}Qtd: {f.qtdAutorizada} · Val. unit.: {formatCurrency(f.valUnitHomologado)} · Total: {formatCurrency(Number(f.qtdAutorizada) * Number(f.valUnitHomologado))}
               </p>
             </div>
             <div className="flex gap-1">
-              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditForn(f)}>
+              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditDespesa(f)}>
                 <Pencil className="h-3 w-3" />
               </Button>
               <Button
@@ -292,15 +239,15 @@ function FornecimentosPanel({
           </div>
         )
       })}
-      <FornecimentoModal open={addOpen} onClose={() => setAddOpen(false)} ano={ano} contratoId={contrato.identificador} itens={itens} />
-      {editForn && (
-        <FornecimentoModal open onClose={() => setEditForn(undefined)} ano={ano} contratoId={contrato.identificador} itens={itens} fornecimento={editForn} />
+      <DespesaModal open={addOpen} onClose={() => setAddOpen(false)} ano={ano} contratoId={contrato.identificador} />
+      {editDespesa && (
+        <DespesaModal open onClose={() => setEditDespesa(undefined)} ano={ano} contratoId={contrato.identificador} despesa={editDespesa} />
       )}
     </div>
   )
 }
 
-// ── Estado A — sem OOB ───────────────────────────────────────────────────────
+// ── Estado A — sem OOB ────────────────────────────────────────────────────────
 
 function EstadoVazio({ ano, onCreate }: { ano: string; onCreate: () => void }) {
   const mutation = useMutation({
@@ -321,13 +268,11 @@ function EstadoVazio({ ano, onCreate }: { ano: string; onCreate: () => void }) {
   )
 }
 
-// ── Página principal ─────────────────────────────────────────────────────────
+// ── Página principal ──────────────────────────────────────────────────────────
 
 export function OutrasObrigacoesPage() {
   const [ano, setAno] = useState(anoAtual)
   const [selectedContratoId, setSelectedContratoId] = useState<string | null>(null)
-  const [itemModalOpen, setItemModalOpen] = useState(false)
-  const [editItem, setEditItem] = useState<IItemOob | undefined>()
   const [contratoModalOpen, setContratoModalOpen] = useState(false)
   const [editContrato, setEditContrato] = useState<IContratoOob | undefined>()
   const [disponibilizarConfirm, setDisponibilizarConfirm] = useState(false)
@@ -365,15 +310,6 @@ export function OutrasObrigacoesPage() {
     onError: () => toast.error('Erro ao alterar disponibilidade do grupo de despesa.'),
   })
 
-  const deletarItemMutation = useMutation({
-    mutationFn: (itemId: string) => outrasObrigacoesApi.deletarItem(ano, itemId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['oob', ano] })
-      toast.success('Item removido.')
-    },
-    onError: () => toast.error('Não foi possível remover o item.'),
-  })
-
   const deletarContratoMutation = useMutation({
     mutationFn: (contratoId: string) => outrasObrigacoesApi.deletarContrato(ano, contratoId),
     onSuccess: () => {
@@ -385,7 +321,6 @@ export function OutrasObrigacoesPage() {
   })
 
   const selectedContrato = (oob?.contratos ?? []).find((c) => c.identificador === selectedContratoId) ?? null
-
   const anos = Array.from({ length: 3 }, (_, i) => String(Number(anoAtual) - i))
 
   if (isLoading) return <div className="p-8 text-sm text-muted-foreground">Carregando...</div>
@@ -425,45 +360,10 @@ export function OutrasObrigacoesPage() {
 
       {oob && (
         <div className="space-y-4">
-          {/* Status + Itens */}
           <div className="flex items-center gap-3">
             <StatusOobBadge status={oob.status} />
-            <Button size="sm" variant="outline" onClick={() => { setEditItem(undefined); setItemModalOpen(true) }}>
-              <Plus className="h-3 w-3 mr-1" /> Gerenciar Itens
-            </Button>
           </div>
 
-          {/* Itens cadastrados */}
-          {(oob.itens ?? []).length > 0 && (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Itens cadastrados</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-1">
-                {(oob.itens ?? []).map((it) => (
-                  <div key={it.identificador} className="flex items-center justify-between text-sm border rounded px-3 py-2">
-                    <div>
-                      <p className="font-medium">{it.descBreve}</p>
-                      <p className="text-xs text-muted-foreground">{it.unMedida} · {formatCurrency(it.valUnitario)}</p>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setEditItem(it); setItemModalOpen(true) }}>
-                        <Pencil className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="icon" variant="ghost" className="h-7 w-7 text-destructive"
-                        onClick={() => { if (confirm('Remover item?')) deletarItemMutation.mutate(it.identificador) }}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Duas colunas: grupos de despesa | despesas */}
           <div className="grid grid-cols-5 gap-4">
             {/* Coluna de grupos de despesa */}
             <div className="col-span-2 space-y-2">
@@ -520,7 +420,7 @@ export function OutrasObrigacoesPage() {
               ))}
             </div>
 
-            {/* Coluna de fornecimentos */}
+            {/* Painel de despesas */}
             <div className="col-span-3 border rounded-lg p-4">
               {!selectedContrato && (
                 <p className="text-sm text-muted-foreground text-center py-8">
@@ -528,20 +428,13 @@ export function OutrasObrigacoesPage() {
                 </p>
               )}
               {selectedContrato && (
-                <FornecimentosPanel contrato={selectedContrato} itens={oob.itens ?? []} ano={ano} />
+                <DespesasPanel contrato={selectedContrato} ano={ano} />
               )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Modals */}
-      <ItemModal
-        open={itemModalOpen}
-        onClose={() => { setItemModalOpen(false); setEditItem(undefined) }}
-        ano={ano}
-        item={editItem}
-      />
       <ContratoModal
         open={contratoModalOpen}
         onClose={() => { setContratoModalOpen(false); setEditContrato(undefined) }}
@@ -549,7 +442,6 @@ export function OutrasObrigacoesPage() {
         contrato={editContrato}
       />
 
-      {/* Confirmar disponibilização / indisponibilização */}
       <Dialog open={disponibilizarConfirm} onOpenChange={setDisponibilizarConfirm}>
         <DialogContent>
           <DialogHeader>

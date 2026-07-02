@@ -117,4 +117,36 @@ export const outrasObrigacoesApi = {
       `/outras-obrigacoes/${ano}/contratos/${encodeURIComponent(contratoId)}/fornecimentos/${encodeURIComponent(fornecimentoId)}`
     )
   },
+
+  // Despesas (Item + Fornecimento unificados)
+  async criarDespesa(
+    ano: string,
+    contratoId: string,
+    payload: { descBreve: string; descDetalhada: string; unMedida: string; valorUnitario: number; qtdAutorizada: number }
+  ): Promise<IFornecimentoOob> {
+    const { data } = await apiClient.post<IFornecimentoOob>(
+      `/outras-obrigacoes/${ano}/contratos/${encodeURIComponent(contratoId)}/despesas`,
+      payload
+    )
+    return data
+  },
+
+  async atualizarDespesa(
+    ano: string,
+    contratoId: string,
+    despesaId: string,
+    payload: Partial<{ descBreve: string; descDetalhada: string; unMedida: string; valorUnitario: number; qtdAutorizada: number }>
+  ): Promise<IFornecimentoOob> {
+    const { data } = await apiClient.patch<IFornecimentoOob>(
+      `/outras-obrigacoes/${ano}/contratos/${encodeURIComponent(contratoId)}/despesas/${encodeURIComponent(despesaId)}`,
+      payload
+    )
+    return data
+  },
+
+  async deletarDespesa(ano: string, contratoId: string, despesaId: string): Promise<void> {
+    await apiClient.delete(
+      `/outras-obrigacoes/${ano}/contratos/${encodeURIComponent(contratoId)}/despesas/${encodeURIComponent(despesaId)}`
+    )
+  },
 }
