@@ -16,6 +16,7 @@ import {
   LogOut,
   Layers,
   Handshake,
+  Upload,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
@@ -84,9 +85,9 @@ export function Sidebar() {
     {
       title: 'Fornecimento',
       items: [
-        { label: 'Fornecedores', to: '/fornecedores', icon: Truck },
         { label: 'Fornecimentos', to: '/fornecimentos', icon: ArrowLeftRight },
         { label: 'Contratos', to: '/contratos', icon: Handshake, end: true },
+        { label: 'Fornecedores', to: '/fornecedores', icon: Truck },
       ],
     },
     {
@@ -101,6 +102,7 @@ export function Sidebar() {
       title: 'Gestão',
       requiresRole: 'gestao',
       items: [
+        ...(can('create:contratacoes') ? [{ label: 'Importar Contratação', to: '/contratos/importar', icon: Upload }] : []),
         ...(isGestorUnidade ? [{ label: 'Outras Obrigações', to: '/outras-obrigacoes', icon: Layers }] : []),
         ...((isAdmin || isGestaoContratos) ? [{ label: 'Gestão de Contratos', to: '/contratos/dashboard', icon: LayoutDashboard }] : []),
         ...(canApprove && !isAdmin ? [{ label: 'Analisar Requisições', to: '/requisicoes/pendentes', icon: ClipboardCheck }] : []),
