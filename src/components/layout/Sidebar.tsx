@@ -102,7 +102,7 @@ export function Sidebar() {
       title: 'Gestão',
       requiresRole: 'gestao',
       items: [
-        ...(can('create:contratacoes') ? [{ label: 'Importar Contratação', to: '/contratos/importar', icon: Upload }] : []),
+        ...(can('create:contratacoes') ? [{ label: 'Importar Contratação', to: '/contratacoes/nova', icon: Upload }] : []),
         ...(isGestorUnidade ? [{ label: 'Outras Obrigações', to: '/outras-obrigacoes', icon: Layers }] : []),
         ...((isAdmin || isGestaoContratos) ? [{ label: 'Gestão de Contratos', to: '/contratos/dashboard', icon: LayoutDashboard }] : []),
         ...(canApprove && !isAdmin ? [{ label: 'Analisar Requisições', to: '/requisicoes/pendentes', icon: ClipboardCheck }] : []),
