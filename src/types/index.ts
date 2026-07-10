@@ -118,6 +118,8 @@ export interface IItem {
   unMedida?: string
   unidadeMedida?: string
   status: StatusElemContratacao
+  /** Status efetivo da participação da unidade do usuário logado. Sobrepõe `status` para exibição e controle de edição. */
+  statusParticipacao?: StatusElemContratacao
   createdAt: string
   updatedAt: string
 }

@@ -83,16 +83,18 @@ export function ItemDetailPage() {
     },
   })
 
+  const statusEfetivo = item?.statusParticipacao ?? item?.status
+
   const handleEdit = () => {
     setEditDescBreve(item?.descBreve ?? item?.descricaoBreve ?? '')
     setEditDescDetalhada(item?.descDetalhada ?? item?.descricaoDetalhada ?? '')
-    setEditStatus(item?.status ?? '')
+    setEditStatus(statusEfetivo ?? '')
     setEditMode(true)
   }
 
   const handleSave = () => {
     const payload: Partial<IItem> = {}
-    if (item?.status === 'Processado') {
+    if (statusEfetivo === 'Processado') {
       payload.descBreve = editDescBreve
       payload.descDetalhada = editDescDetalhada
     }
@@ -104,7 +106,7 @@ export function ItemDetailPage() {
     setEditMode(false)
     setEditDescBreve(item?.descBreve ?? item?.descricaoBreve ?? '')
     setEditDescDetalhada(item?.descDetalhada ?? item?.descricaoDetalhada ?? '')
-    setEditStatus(item?.status ?? '')
+    setEditStatus(statusEfetivo ?? '')
   }
 
   const { isDialogOpen, handleNavigate, handleStay, guardTabChange } = useEditGuard(
@@ -244,12 +246,12 @@ export function ItemDetailPage() {
                       </SelectContent>
                     </Select>
                   ) : (
-                    <StatusBadge status={item.status} />
+                    <StatusBadge status={statusEfetivo ?? item.status} />
                   )}
                 </Field>
                 <div className="col-span-2 md:col-span-3">
                   <span className="text-xs text-muted-foreground uppercase tracking-wide">Descrição Breve</span>
-                  {editMode && item.status === 'Processado' ? (
+                  {editMode && statusEfetivo === 'Processado' ? (
                     <Textarea
                       className="mt-1"
                       rows={2}
@@ -262,7 +264,7 @@ export function ItemDetailPage() {
                 </div>
                 <div className="col-span-2 md:col-span-3">
                   <span className="text-xs text-muted-foreground uppercase tracking-wide">Descrição Detalhada</span>
-                  {editMode && item.status === 'Processado' ? (
+                  {editMode && statusEfetivo === 'Processado' ? (
                     <Textarea
                       className="mt-1"
                       rows={4}
@@ -276,7 +278,7 @@ export function ItemDetailPage() {
                   )}
                 </div>
               </div>
-              {can('edit:itens') && item.status === 'Processado' && !editMode && (
+              {can('edit:itens') && statusEfetivo === 'Processado' && !editMode && (
                 <div className="flex gap-3 flex-wrap mt-6 pt-5 border-t">
                   <Button variant="outline" size="sm" onClick={handleEdit}>
                     <Pencil className="h-4 w-4" />

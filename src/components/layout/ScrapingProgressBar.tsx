@@ -38,6 +38,7 @@ export function ScrapingProgressBar() {
   const { activeJobId, setActiveJobId, activeJobFormData } = useAuthStore()
   const [minimized, setMinimized] = useState(false)
   const [notFoundDialogOpen, setNotFoundDialogOpen] = useState(false)
+  const [naoParticipanteDialogOpen, setNaoParticipanteDialogOpen] = useState(false)
   const queryClient = useQueryClient()
   const { progresso, itensProcessados, totalItens, atasProcessadas, atasTotal, mensagem, status, errorCode, isActive } =
     useJobStream(activeJobId)
@@ -52,6 +53,9 @@ export function ScrapingProgressBar() {
     if (status === 'failed' && errorCode === 'CONTRATACAO_NOT_FOUND') {
       setNotFoundDialogOpen(true)
     }
+    if (status === 'failed' && errorCode === 'UASG_NAO_PARTICIPANTE') {
+      setNaoParticipanteDialogOpen(true)
+    }
   }, [status, errorCode])
 
   const handleNotFoundDialogClose = () => {
@@ -65,12 +69,46 @@ export function ScrapingProgressBar() {
     navigate('/contratacoes/nova')
   }
 
+  const handleNaoParticipanteDialogClose = () => {
+    setNaoParticipanteDialogOpen(false)
+    setActiveJobId(null)
+  }
+
   // Don't render if no active job
   if (!activeJobId) return null
 
   // Hide if minimized and completed
   if (minimized && status === 'completed') {
     return null
+  }
+
+  // When the "not a participant" dialog is open, render only the dialog (no progress bar)
+  if (naoParticipanteDialogOpen) {
+    return (
+      <Dialog open onOpenChange={(open) => { if (!open) handleNaoParticipanteDialogClose() }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertTriangle className="h-5 w-5" />
+              Unidade não é participante
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              {mensagem || 'A unidade não possui contratos registrados nesta contratação e não pôde ser adicionada como participante.'}
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            A participação em uma contratação legada é confirmada somente quando a unidade possui
+            contratos firmados nessa contratação nas bases dos Dados Abertos do Governo Federal.
+            Verifique se a unidade realmente aderiu a esta contratação antes de tentar novamente.
+          </p>
+          <DialogFooter>
+            <Button onClick={handleNaoParticipanteDialogClose}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    )
   }
 
   const handleClose = () => {
@@ -217,6 +255,7 @@ export function ScrapingProgressBar() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
     </>
   )
 }

@@ -490,7 +490,7 @@ export function ContratacaoDetailPage() {
                               ? formatCurrency(item.valUnitario ?? item.valorUnitario ?? 0)
                               : "—"}
                           </TableCell>
-                          <TableCell><StatusBadge status={item.status} /></TableCell>
+                          <TableCell><StatusBadge status={item.statusParticipacao ?? item.status} /></TableCell>
                           <TableCell className="text-right">
                             <Button
                               variant="ghost"
