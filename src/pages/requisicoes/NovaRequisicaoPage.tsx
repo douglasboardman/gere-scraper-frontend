@@ -578,7 +578,9 @@ function Step3Itens({
     queryFn: () => itensApi.listar({ identContratacao: selectedCompra.identificador }),
   })
 
-  const fornecimentosFiltrados = fornecimentos.filter((f) => f.destDespesa === destDespesa)
+  const fornecimentosFiltrados = fornecimentos
+    .filter((f) => f.destDespesa === destDespesa)
+    .sort((a, b) => parseInt(a.identificador.slice(-5), 10) - parseInt(b.identificador.slice(-5), 10))
   const itemMap = new Map<string, IItem>(itens.map((it) => [it.identificador, it]))
   const isLoading = loadingForn || loadingItens
 

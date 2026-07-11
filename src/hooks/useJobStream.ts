@@ -84,6 +84,8 @@ export function useJobStream(jobId: string | null): JobStreamState {
           setState((prev) => ({
             ...prev,
             progresso: 100,
+            atasProcessadas: prev.atasTotal > 0 ? prev.atasTotal : prev.atasProcessadas,
+            itensProcessados: prev.totalItens > 0 ? prev.totalItens : prev.itensProcessados,
             mensagem: payload.mensagem ?? 'Processamento concluído!',
             status: 'completed',
             isActive: false,
@@ -92,6 +94,8 @@ export function useJobStream(jobId: string | null): JobStreamState {
           setState((prev) => ({
             ...prev,
             progresso: 100,
+            atasProcessadas: prev.atasTotal > 0 ? prev.atasTotal : prev.atasProcessadas,
+            itensProcessados: prev.totalItens > 0 ? prev.totalItens : prev.itensProcessados,
             mensagem: 'Processamento concluído!',
             status: 'completed',
             isActive: false,
