@@ -202,11 +202,11 @@ export function ItemDetailPage() {
                 {item.identAta && (
                   <Field label="Ata">
                     {typeof item.identAta === 'string' ? (
-                      <Link to={`/atas/${item.identAta}`} className="font-mono text-primary hover:underline">
+                      <Link to={`/atas/detalhe?id=${item.identAta}`} className="font-mono text-primary hover:underline">
                         {item.identAta}
                       </Link>
                     ) : (
-                      <Link to={`/atas/${(item.identAta as any).identificador}`} className="font-mono text-primary hover:underline">
+                      <Link to={`/atas/detalhe?id=${(item.identAta as any).identificador}`} className="font-mono text-primary hover:underline">
                         {(item.identAta as any).identificador ?? '—'}
                       </Link>
                     )}
@@ -215,11 +215,11 @@ export function ItemDetailPage() {
                 {!item.identAta && item.identContratacao && (
                   <Field label="Contratação">
                     {typeof item.identContratacao === 'string' ? (
-                      <Link to={`/contratacoes/${item.identContratacao}`} className="font-mono text-primary hover:underline">
+                      <Link to={`/contratacoes/detalhe?id=${item.identContratacao}`} className="font-mono text-primary hover:underline">
                         {item.identContratacao}
                       </Link>
                     ) : (
-                      <Link to={`/contratacoes/${(item.identContratacao as IContratacao).identificador}`} className="font-mono text-primary hover:underline">
+                      <Link to={`/contratacoes/detalhe?id=${(item.identContratacao as IContratacao).identificador}`} className="font-mono text-primary hover:underline">
                         {(item.identContratacao as IContratacao).identificador}
                       </Link>
                     )}

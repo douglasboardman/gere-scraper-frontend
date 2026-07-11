@@ -282,7 +282,7 @@ export function FornecimentoDetailPage() {
                 <div>
                   <span className="text-xs text-muted-foreground">Identificador</span>
                   <Link
-                    to={`/itens/${(fornecimento.identItem as IItem).identificador}`}
+                    to={`/itens/detalhe?id=${(fornecimento.identItem as IItem).identificador}`}
                     className="block text-xs font-mono mt-0.5 text-primary hover:underline"
                   >
                     {(fornecimento.identItem as IItem).identificador}

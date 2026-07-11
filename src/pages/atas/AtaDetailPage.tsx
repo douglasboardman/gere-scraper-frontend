@@ -188,14 +188,14 @@ export function AtaDetailPage() {
                 <Field label="ID Contratação">
                   {typeof ata.identContratacao === "string" ? (
                     <Link
-                      to={`/contratacoes/${ata.identContratacao}`}
+                      to={`/contratacoes/detalhe?id=${ata.identContratacao}`}
                       className="font-mono text-primary hover:underline"
                     >
                       {ata.identContratacao}
                     </Link>
                   ) : (
                     <Link
-                      to={`/contratacoes/${ata.identContratacao.identificador}`}
+                      to={`/contratacoes/detalhe?id=${ata.identContratacao.identificador}`}
                       className="font-mono text-primary hover:underline"
                     >
                       {ata.identContratacao.identificador}
