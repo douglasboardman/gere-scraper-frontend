@@ -79,6 +79,8 @@ export function AtaDetailPage() {
       toast.success("Ata atualizada com sucesso.");
       queryClient.invalidateQueries({ queryKey: ["ata", id] });
       queryClient.invalidateQueries({ queryKey: ["atas"] });
+      queryClient.invalidateQueries({ queryKey: ["itens"] });
+      queryClient.invalidateQueries({ queryKey: ["fornecimentos"] });
       setEditMode(false);
     },
     onError: (error: unknown) => {

@@ -124,6 +124,8 @@ export function ContratacaoDetailPage() {
       toast.success("Contratação atualizada com sucesso.");
       queryClient.invalidateQueries({ queryKey: ["contratacao", identificador] });
       queryClient.invalidateQueries({ queryKey: ["contratacoes"] });
+      queryClient.invalidateQueries({ queryKey: ["itens", { identContratacao: identificador }] });
+      queryClient.invalidateQueries({ queryKey: ["fornecimentos"] });
       setEditMode(false);
     },
     onError: (error: unknown) => {
