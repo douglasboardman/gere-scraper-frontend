@@ -81,6 +81,7 @@ export interface IContratacao {
   isOutrasObrigacoes?: boolean
   statusParticipacao?: StatusElemContratacaoAlt | null
   ultimaImportacao?: IImportacao | null
+  idContratacaoPncp?: string
   createdAt: string
   updatedAt: string
   _count?: { atas: number; contratos: number }

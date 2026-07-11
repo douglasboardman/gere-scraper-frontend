@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { ArrowLeft, Pencil, X, Check, CheckCircle2, PauseCircle, Eye, FileDown } from "lucide-react";
+import { ArrowLeft, Pencil, X, Check, CheckCircle2, PauseCircle, Eye, FileDown, ExternalLink } from "lucide-react";
 import { contratacoesApi } from "@/api/contratacoes.api";
 import { atasApi } from "@/api/atas.api";
 import { contratosApi } from "@/api/contratos.api";
@@ -41,6 +41,33 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { IContratacao, IAtaRegPrecos, IContrato, IItem, IFornecimento } from "@/types";
+
+function buildComprasNetUrl(identificador: string): string {
+  const parts = identificador.replace('CON-', '').split('.');
+  return `https://cnetmobile.estaleiro.serpro.gov.br/comprasnet-web/public/compras/acompanhamento-compra?compra=${parts.join('')}`;
+}
+
+function buildPncpUrl(idContratacaoPncp: string | undefined): string | null {
+  if (!idContratacaoPncp || idContratacaoPncp === 'PENDING') return null;
+  const dashParts = idContratacaoPncp.split('-');
+  if (dashParts.length < 3) return null;
+  const [numero, ano] = dashParts[2].split('/');
+  if (!numero || !ano) return null;
+  return `https://pncp.gov.br/app/editais/${dashParts[0]}/${ano}/${numero}`;
+}
+
+function buildComprasNetLegadaUrl(identificador: string): string {
+  const [uasg, mod, numero, ano] = identificador.replace('CON-', '').split('.');
+  const modInt = parseInt(mod, 10);
+  const numprp = `${parseInt(numero, 10)}${ano}`;
+  return `https://comprasnet.gov.br/livre/pregao/ata2.asp?co_no_uasg=${uasg}&numprp=${numprp}&codigoModalidade=${modInt}&f_lstSrp=&f_Uf=&f_numPrp=${numprp}&f_codUasg=${uasg}&f_codMod=${modInt}&f_tpPregao=E&f_lstICMS=&f_dtAberturaIni=&f_dtAberturaFim=`;
+}
+
+function buildSiasgUrl(identificador: string): string {
+  const [uasg, mod, numero, ano] = identificador.replace('CON-', '').split('.');
+  const modInt = parseInt(mod, 10);
+  return `https://www2.comprasnet.gov.br/siasgnet-atasrp/public/pesquisarItemSRP.do?method=iniciar&parametro.identificacaoCompra.numeroUasg=${uasg}&parametro.identificacaoCompra.modalidadeCompra=${modInt}&parametro.identificacaoCompra.numeroCompra=${numero}&parametro.identificacaoCompra.anoCompra=${ano}`;
+}
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -283,6 +310,65 @@ export function ContratacaoDetailPage() {
                     <p className="mt-1 text-sm leading-relaxed">{contratacao.objeto || "—"}</p>
                   )}
                 </div>
+
+                {!(contratacao.amparoLegal === 'LEI_8666_1993' && contratacao.modContratacao === 'Inexigibilidade') && (
+                <div className="col-span-2 md:col-span-3">
+                  <span className="text-xs text-muted-foreground uppercase tracking-wide">Links Externos</span>
+                  {contratacao.amparoLegal === 'LEI_8666_1993' ? (
+                    <ul className="mt-1 space-y-1">
+                      <li>
+                        <a
+                          href={buildComprasNetLegadaUrl(contratacao.identificador)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                          Acessar Documentos da Contratação
+                        </a>
+                      </li>
+                      <li>
+                        <a
+                          href={buildSiasgUrl(contratacao.identificador)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                          Acessar Dados da Contratação no SIASG NET
+                        </a>
+                      </li>
+                    </ul>
+                  ) : (
+                    <ul className="mt-1 space-y-1">
+                      <li>
+                        <a
+                          href={buildComprasNetUrl(contratacao.identificador)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                          Acessar Documentos da Contratação
+                        </a>
+                      </li>
+                      {buildPncpUrl(contratacao.idContratacaoPncp) && (
+                        <li>
+                          <a
+                            href={buildPncpUrl(contratacao.idContratacaoPncp)!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                            Acessar Dados da Contratação no PNCP
+                          </a>
+                        </li>
+                      )}
+                    </ul>
+                  )}
+                </div>
+                )}
               </div>
 
               {/* Status actions */}
