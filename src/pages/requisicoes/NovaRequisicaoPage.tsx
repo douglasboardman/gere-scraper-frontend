@@ -103,7 +103,8 @@ function fmtDate(dateStr?: string): string {
 }
 
 function valUnitario(f: IFornecimento): number {
-  return f.valUnitHomologado ?? f.valorUnitario ?? 0
+  const raw = f.valUnitHomologado ?? f.valorUnitario ?? 0
+  return Math.round(raw * 100) / 100
 }
 
 function saldoDisp(f: IFornecimento): number {
@@ -764,6 +765,8 @@ function Step3Itens({
                       <div className="flex items-center gap-2 px-3 py-2.5">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium leading-snug line-clamp-1">
+                            <span className="text-muted-foreground font-normal">{f.identificador.slice(-5)}</span>
+                            {' — '}
                             {item ? descBreve(item) : f.identificador}
                           </p>
                           <div className="flex flex-wrap gap-x-3 mt-0.5 text-xs text-muted-foreground">
@@ -900,6 +903,8 @@ function Step3Itens({
                       {/* Linha 1: descrição + botão excluir */}
                       <div className="flex items-start justify-between gap-2">
                         <p className="text-xs font-medium leading-snug line-clamp-2 flex-1">
+                          <span className="text-muted-foreground font-normal">{idForn.slice(-5)}</span>
+                          {' — '}
                           {descBreve(entry.item)}
                         </p>
                         <Button
@@ -950,8 +955,8 @@ function Step3Itens({
                         <Input
                           type="number"
                           min={0}
-                          step={entry.modo === 'qtd' ? 0.00001 : 0.01}
-                          value={entry.modo === 'qtd' ? entry.quantidade : entry.valDigitado}
+                          step={entry.modo === 'qtd' ? 1 : 0.01}
+                          value={entry.modo === 'qtd' ? entry.quantidade.toFixed(5) : entry.valDigitado}
                           onChange={(e) =>
                             entry.modo === 'qtd'
                               ? handleQtd(idForn, Number(e.target.value))
