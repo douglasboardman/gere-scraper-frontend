@@ -82,6 +82,31 @@ function extrairIdContratacao(identFornecimento: string): string | null {
   return `CON-${afterIte.slice(0, lastDot)}`
 }
 
+function floatToMaskDigits(value: number): string {
+  return Math.round(value * 100).toString()
+}
+
+function formatCurrencyMask(digits: string): string {
+  if (!digits) return '0,00'
+  const n = parseInt(digits, 10) || 0
+  if (digits.length < 3) {
+    const padded = digits.padStart(3, '0')
+    return padded[0] + ',' + padded.slice(1)
+  }
+  if (n < 10) return '0,0' + String(n)
+  if (n < 100) return '0,' + String(n).padStart(2, '0')
+  const clean = String(n)
+  const l = clean.length
+  const intPart = clean.slice(0, l - 2)
+  const decPart = clean.slice(l - 2)
+  let formatted = ''
+  for (let i = 0; i < intPart.length; i++) {
+    if (i > 0 && (intPart.length - i) % 3 === 0) formatted += '.'
+    formatted += intPart[i]
+  }
+  return formatted + ',' + decPart
+}
+
 // ---------------------------------------------------------------------------
 // Helpers to read enriched item data
 // ---------------------------------------------------------------------------
@@ -121,16 +146,14 @@ function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogPro
 
   const [modo, setModo] = useState<'qtd' | 'valor'>('qtd')
   const [qty, setQty] = useState(Number(item.qtdSolicitada).toFixed(5))
-  const [valDigitado, setValDigitado] = useState(
-    (Math.round(vUnit * Number(item.qtdSolicitada) * 100) / 100).toFixed(2),
-  )
+  const [valorRawDigits, setValorRawDigits] = useState('0')
 
   const mutation = useMutation({
     mutationFn: () =>
       itemRequisicaoApi.atualizar(
         item.id,
         modo === 'valor'
-          ? { valDesejado: Number(valDigitado) }
+          ? { valDesejado: (parseInt(valorRawDigits, 10) || 0) / 100 }
           : { qtdSolicitada: Number(qty) },
       ),
     onSuccess: () => {
@@ -146,9 +169,10 @@ function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogPro
     },
   })
 
+  const valFloat = (parseInt(valorRawDigits, 10) || 0) / 100
   const qtdNum = modo === 'qtd'
     ? Number(qty)
-    : vUnit > 0 ? Math.round((Number(valDigitado) / vUnit) * 100000) / 100000 : 0
+    : vUnit > 0 ? Math.round((valFloat / vUnit) * 100000) / 100000 : 0
   const newTotal = vUnit * qtdNum
   const canSave =
     qtdNum > 0 &&
@@ -210,7 +234,7 @@ function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogPro
             </button>
             <button
               type="button"
-              onClick={() => setModo('valor')}
+              onClick={() => { setModo('valor'); setValorRawDigits('0') }}
               className={cn(
                 'px-3 py-1 text-xs',
                 modo === 'valor'
@@ -260,11 +284,22 @@ function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogPro
                 )}
               </Label>
               <Input
-                type="number"
-                min={0.01}
-                step={0.01}
-                value={valDigitado}
-                onChange={(e) => setValDigitado(e.target.value)}
+                type="text"
+                inputMode="numeric"
+                autoFocus
+                value={formatCurrencyMask(valorRawDigits)}
+                onClick={(e) => {
+                  const t = e.currentTarget
+                  t.selectionStart = t.selectionEnd = t.value.length
+                }}
+                onKeyDown={(e) => {
+                  e.preventDefault()
+                  const key = e.key
+                  if (!/[0-9]/.test(key) && key !== 'Backspace') return
+                  const digits = key === 'Backspace' ? valorRawDigits.slice(0, -1) : valorRawDigits + key
+                  setValorRawDigits(digits)
+                }}
+                onChange={() => {}}
                 className={cn(
                   'w-36',
                   saldoMax !== null && qtdNum > saldoMax && 'border-destructive',
@@ -275,7 +310,7 @@ function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogPro
                   'text-xs',
                   saldoMax !== null && qtdNum > saldoMax ? 'text-destructive' : 'text-muted-foreground',
                 )}>
-                  Quantidade calculada: {qtdNum}
+                  Quantidade calculada: {formatQtd(qtdNum)}
                   {saldoMax !== null && qtdNum > saldoMax && ` — excede saldo (máx. ${saldoMax})`}
                 </p>
               )}
@@ -329,6 +364,7 @@ function AddItemsDialog({
   onSaved,
 }: AddItemsDialogProps) {
   const [newItems, setNewItems] = useState<Map<string, NewItemEntry>>(new Map())
+  const [valorRawDigits, setValorRawDigits] = useState<Map<string, string>>(new Map())
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [catalogPage, setCatalogPage] = useState(1)
   const [catalogSearch, setCatalogSearch] = useState('')
@@ -422,22 +458,28 @@ function AddItemsDialog({
   }
 
   function handleModo(idForn: string, novoModo: 'qtd' | 'valor') {
-    setNewItems((prev) => {
-      const entry = prev.get(idForn)
-      if (!entry) return prev
-      const next = new Map(prev)
-      const vUnit = valUnitario(entry.fornecimento)
-      if (novoModo === 'valor') {
-        next.set(idForn, {
-          ...entry,
-          modo: novoModo,
-          valDigitado: Math.round(entry.quantidade * vUnit * 100) / 100,
-        })
-      } else {
-        next.set(idForn, { ...entry, modo: novoModo })
-      }
-      return next
-    })
+    if (novoModo === 'valor') {
+      setValorRawDigits((d) => {
+        const nd = new Map(d)
+        nd.set(idForn, '0')
+        return nd
+      })
+      setNewItems((prev) => {
+        const e = prev.get(idForn)
+        if (!e) return prev
+        const next = new Map(prev)
+        next.set(idForn, { ...e, modo: novoModo, valDigitado: 0 })
+        return next
+      })
+    } else {
+      setNewItems((prev) => {
+        const e = prev.get(idForn)
+        if (!e) return prev
+        const next = new Map(prev)
+        next.set(idForn, { ...e, modo: novoModo })
+        return next
+      })
+    }
   }
 
   const newTotal = Array.from(newItems.values()).reduce(
@@ -479,6 +521,7 @@ function AddItemsDialog({
       onOpenChange={(v) => {
         if (!saveMutation.isPending) {
           setNewItems(new Map())
+          setValorRawDigits(new Map())
           setCatalogSearch('')
           setCatalogPage(1)
           onOpenChange(v)
@@ -789,16 +832,33 @@ function AddItemsDialog({
                                   R$:
                                 </span>
                                 <Input
-                                  type="number"
-                                  min={0}
-                                  step={0.01}
-                                  value={entry.valDigitado}
-                                  onChange={(e) => handleValor(idForn, Number(e.target.value))}
+                                  type="text"
+                                  inputMode="numeric"
+                                  autoFocus
+                                  value={formatCurrencyMask(valorRawDigits.get(idForn) ?? floatToMaskDigits(entry.valDigitado))}
+                                  onClick={(e) => {
+                                    const t = e.currentTarget
+                                    t.selectionStart = t.selectionEnd = t.value.length
+                                  }}
+                                  onKeyDown={(e) => {
+                                    e.preventDefault()
+                                    const key = e.key
+                                    if (!/[0-9]/.test(key) && key !== 'Backspace') return
+                                    const current = valorRawDigits.get(idForn) ?? floatToMaskDigits(entry.valDigitado)
+                                    const digits = key === 'Backspace' ? current.slice(0, -1) : current + key
+                                    setValorRawDigits((prev) => {
+                                      const nd = new Map(prev)
+                                      nd.set(idForn, digits)
+                                      return nd
+                                    })
+                                    handleValor(idForn, (parseInt(digits, 10) || 0) / 100)
+                                  }}
+                                  onChange={() => {}}
                                   className={cn('h-7 w-24 text-xs', qtdExcedesSaldo && 'border-destructive')}
                                 />
                               </div>
                               <p className={cn('text-xs', qtdExcedesSaldo ? 'text-destructive' : 'text-muted-foreground')}>
-                                Qtd: {entry.quantidade}
+                                Qtd: {formatQtd(entry.quantidade)}
                                 {qtdExcedesSaldo && ` — excede saldo (máx. ${saldoMax})`}
                               </p>
                             </div>

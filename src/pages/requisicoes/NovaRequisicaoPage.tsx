@@ -123,6 +123,31 @@ function unMedida(item: IItem): string {
   return item.unMedida ?? item.unidadeMedida ?? ''
 }
 
+function floatToMaskDigits(value: number): string {
+  return Math.round(value * 100).toString()
+}
+
+function formatCurrencyMask(digits: string): string {
+  if (!digits) return '0,00'
+  const n = parseInt(digits, 10) || 0
+  if (digits.length < 3) {
+    const padded = digits.padStart(3, '0')
+    return padded[0] + ',' + padded.slice(1)
+  }
+  if (n < 10) return '0,0' + String(n)
+  if (n < 100) return '0,' + String(n).padStart(2, '0')
+  const clean = String(n)
+  const l = clean.length
+  const intPart = clean.slice(0, l - 2)
+  const decPart = clean.slice(l - 2)
+  let formatted = ''
+  for (let i = 0; i < intPart.length; i++) {
+    if (i > 0 && (intPart.length - i) % 3 === 0) formatted += '.'
+    formatted += intPart[i]
+  }
+  return formatted + ',' + decPart
+}
+
 // ---------------------------------------------------------------------------
 // Step Indicator
 // ---------------------------------------------------------------------------
@@ -563,6 +588,7 @@ function Step3Itens({
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [selectedItems, setSelectedItems] = useState<Map<string, SelectedItemEntry>>(initialItems)
+  const [valorRawDigits, setValorRawDigits] = useState<Map<string, string>>(new Map())
   const [catalogPage, setCatalogPage] = useState(1)
   const [catalogSearch, setCatalogSearch] = useState('')
 
@@ -661,22 +687,30 @@ function Step3Itens({
   }
 
   function handleModo(idForn: string, novoModo: 'qtd' | 'valor') {
-    setSelectedItems((prev) => {
-      const entry = prev.get(idForn)
-      if (!entry) return prev
-      const next = new Map(prev)
-      const vUnit = valUnitario(entry.fornecimento)
-      if (novoModo === 'valor') {
-        next.set(idForn, {
-          ...entry,
-          modo: novoModo,
-          valDigitado: Math.round(entry.quantidade * vUnit * 100) / 100,
-        })
-      } else {
-        next.set(idForn, { ...entry, modo: novoModo })
-      }
-      return next
-    })
+    if (novoModo === 'valor') {
+      const entry = selectedItems.get(idForn)
+      if (!entry) return
+      setValorRawDigits((d) => {
+        const nd = new Map(d)
+        nd.set(idForn, '0')
+        return nd
+      })
+      setSelectedItems((prev) => {
+        const e = prev.get(idForn)
+        if (!e) return prev
+        const next = new Map(prev)
+        next.set(idForn, { ...e, modo: novoModo, valDigitado: 0 })
+        return next
+      })
+    } else {
+      setSelectedItems((prev) => {
+        const e = prev.get(idForn)
+        if (!e) return prev
+        const next = new Map(prev)
+        next.set(idForn, { ...e, modo: novoModo })
+        return next
+      })
+    }
   }
 
   const totalValue = Array.from(selectedItems.values()).reduce(
@@ -952,18 +986,42 @@ function Step3Itens({
                             Valor
                           </button>
                         </div>
-                        <Input
-                          type="number"
-                          min={0}
-                          step={entry.modo === 'qtd' ? 1 : 0.01}
-                          value={entry.modo === 'qtd' ? entry.quantidade.toFixed(5) : entry.valDigitado}
-                          onChange={(e) =>
-                            entry.modo === 'qtd'
-                              ? handleQtd(idForn, Number(e.target.value))
-                              : handleValor(idForn, Number(e.target.value))
-                          }
-                          className={cn('h-8 flex-1 text-sm', qtdExcedeSaldo && 'border-destructive')}
-                        />
+                        {entry.modo === 'qtd' ? (
+                          <Input
+                            type="number"
+                            min={0}
+                            step={1}
+                            value={entry.quantidade.toFixed(5)}
+                            onChange={(e) => handleQtd(idForn, Number(e.target.value))}
+                            className={cn('h-8 flex-1 text-sm', qtdExcedeSaldo && 'border-destructive')}
+                          />
+                        ) : (
+                          <Input
+                            type="text"
+                            inputMode="numeric"
+                            autoFocus
+                            value={formatCurrencyMask(valorRawDigits.get(idForn) ?? floatToMaskDigits(entry.valDigitado))}
+                            onClick={(e) => {
+                              const t = e.currentTarget
+                              t.selectionStart = t.selectionEnd = t.value.length
+                            }}
+                            onKeyDown={(e) => {
+                              e.preventDefault()
+                              const key = e.key
+                              if (!/[0-9]/.test(key) && key !== 'Backspace') return
+                              const current = valorRawDigits.get(idForn) ?? floatToMaskDigits(entry.valDigitado)
+                              const digits = key === 'Backspace' ? current.slice(0, -1) : current + key
+                              setValorRawDigits((prev) => {
+                                const nd = new Map(prev)
+                                nd.set(idForn, digits)
+                                return nd
+                              })
+                              handleValor(idForn, (parseInt(digits, 10) || 0) / 100)
+                            }}
+                            onChange={() => {}}
+                            className={cn('h-8 flex-1 text-sm', qtdExcedeSaldo && 'border-destructive')}
+                          />
+                        )}
                       </div>
 
                       {/* Linha 4: valor calculado / erro — sempre abaixo, right-aligned */}
