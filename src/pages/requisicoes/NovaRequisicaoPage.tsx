@@ -714,7 +714,7 @@ function Step3Itens({
   }
 
   const totalValue = Array.from(selectedItems.values()).reduce(
-    (sum, e) => sum + valUnitario(e.fornecimento) * e.quantidade,
+    (sum, e) => sum + (e.modo === 'valor' ? e.valDigitado : valUnitario(e.fornecimento) * e.quantidade),
     0,
   )
 
@@ -1090,7 +1090,7 @@ function Step4Revisao({
   const documents = Array.from(byFornecedor.entries())
 
   const totalGeral = Array.from(selectedItems.values()).reduce(
-    (sum, e) => sum + valUnitario(e.fornecimento) * e.quantidade,
+    (sum, e) => sum + (e.modo === 'valor' ? e.valDigitado : valUnitario(e.fornecimento) * e.quantidade),
     0,
   )
 
@@ -1242,7 +1242,7 @@ function Step4Revisao({
         const cnpj = cnpjFromFornecedorId(identFornecedor)
         const nomeFornecedor = entries[0].fornecimento.nomeFornecedor ?? null
         const subTotal = entries.reduce(
-          (s, e) => s + valUnitario(e.fornecimento) * e.quantidade,
+          (s, e) => s + (e.modo === 'valor' ? e.valDigitado : valUnitario(e.fornecimento) * e.quantidade),
           0,
         )
 

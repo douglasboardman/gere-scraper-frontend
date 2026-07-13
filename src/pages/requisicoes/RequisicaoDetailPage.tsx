@@ -173,7 +173,7 @@ function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogPro
   const qtdNum = modo === 'qtd'
     ? Number(qty)
     : vUnit > 0 ? Math.round((valFloat / vUnit) * 100000) / 100000 : 0
-  const newTotal = vUnit * qtdNum
+  const newTotal = modo === 'valor' ? valFloat : vUnit * qtdNum
   const canSave =
     qtdNum > 0 &&
     (saldoMax === null || qtdNum <= saldoMax) &&
@@ -483,7 +483,7 @@ function AddItemsDialog({
   }
 
   const newTotal = Array.from(newItems.values()).reduce(
-    (sum, e) => sum + valUnitario(e.fornecimento) * e.quantidade,
+    (sum, e) => sum + (e.modo === 'valor' ? e.valDigitado : valUnitario(e.fornecimento) * e.quantidade),
     0,
   )
 
