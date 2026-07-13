@@ -4,9 +4,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { ArrowLeft, Pencil, X, Check, Eye } from 'lucide-react'
+import { ArrowLeft, Pencil, X, Check, Eye, ExternalLink } from 'lucide-react'
 import { useIdParam } from '@/hooks/useIdParam'
-import { displayNumEdital } from '@/lib/identifier-utils'
+import { displayNumEdital, idContratoPncpParaUrl } from '@/lib/identifier-utils'
 import { contratosApi } from '@/api/contratos.api'
 import { useEditGuard } from '@/hooks/useEditGuard'
 import { UnsavedChangesDialog } from '@/components/shared/UnsavedChangesDialog'
@@ -271,6 +271,40 @@ export function ContratoDetailPage() {
                     <StatusBadge status={contrato.status} />
                   )}
                 </Field>
+
+                {(contrato.idContratosGov || contrato.idContratoPncp) && (
+                  <div className="col-span-2 md:col-span-3 pt-1">
+                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Links Externos</span>
+                    <ul className="mt-2 flex flex-col gap-y-2">
+                      {contrato.idContratosGov && (
+                        <li>
+                          <a
+                            href={`https://contratos.comprasnet.gov.br/transparencia/contratos/${contrato.idContratosGov}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                            Acessar dados do contrato no Contratos.gov.br
+                          </a>
+                        </li>
+                      )}
+                      {contrato.idContratoPncp && (
+                        <li>
+                          <a
+                            href={`https://pncp.gov.br/app/contratos/${idContratoPncpParaUrl(contrato.idContratoPncp)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                            Acessar dados do contrato no PNCP
+                          </a>
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                )}
               </div>
               {canEdit && !editMode && (
                 <div className="flex gap-3 flex-wrap mt-6 pt-5 border-t">

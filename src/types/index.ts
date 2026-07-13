@@ -185,6 +185,8 @@ export interface IContrato {
   numParcelas?: number
   valParcelas?: number
   tipoContrato?: 'Contrato' | 'Empenho'
+  idContratosGov?: string | null
+  idContratoPncp?: string | null
   status: StatusElemContratacao
   createdAt: string
   updatedAt: string
