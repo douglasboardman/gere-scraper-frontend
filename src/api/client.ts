@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { useAuthStore } from '@/store/auth.store'
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL
   ? import.meta.env.VITE_API_URL + '/api'
@@ -16,7 +17,7 @@ export const apiClient = axios.create({
 // Request interceptor: inject Bearer token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('gere_token')
+    const token = useAuthStore.getState().token
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -38,8 +39,7 @@ apiClient.interceptors.response.use(
       }
     }
     if (error.response?.status === 401) {
-      localStorage.removeItem('gere_token')
-      localStorage.removeItem('gere_user')
+      useAuthStore.getState().logout()
       window.location.href = '/login'
     }
     return Promise.reject(error)

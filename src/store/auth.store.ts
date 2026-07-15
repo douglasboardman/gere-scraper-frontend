@@ -44,20 +44,15 @@ export const useAuthStore = create<AuthStore>()(
 
       // Actions
       login: (token: string, user: IUsuario) => {
-        localStorage.setItem('gere_token', token)
-        localStorage.setItem('gere_user', JSON.stringify(user))
         set({ token, user, isAuthenticated: true })
       },
 
       logout: () => {
-        localStorage.removeItem('gere_token')
-        localStorage.removeItem('gere_user')
         queryClient.clear()
         set({ token: null, user: null, isAuthenticated: false, activeJobId: null, activeCacheSyncJobId: null })
       },
 
       setUser: (user: IUsuario) => {
-        localStorage.setItem('gere_user', JSON.stringify(user))
         set({ user })
       },
 
