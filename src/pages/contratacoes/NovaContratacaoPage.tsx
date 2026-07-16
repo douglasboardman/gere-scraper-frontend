@@ -171,7 +171,7 @@ export function NovaContratacaoPage() {
                   render={({ field }) => (
                     <FormItem className="sm:col-span-2">
                       <FormLabel>Amparo Legal *</FormLabel>
-                      <Select onValueChange={(v) => { field.onChange(v); form.setValue('modalidade', undefined as any) }} value={field.value}>
+                      <Select onValueChange={(v) => { field.onChange(v); form.resetField('modalidade') }} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione o amparo legal..." />

@@ -42,6 +42,7 @@ import { Badge } from '@/components/ui/badge'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { contratosApi } from '@/api/contratos.api'
 import { unidadesApi } from '@/api/unidades.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { useAuthStore } from '@/store/auth.store'
 import { usePermission } from '@/hooks/usePermission'
 import { formatCurrency } from '@/lib/utils'
@@ -186,7 +187,7 @@ export function ContratoDashboardPage() {
 
   const syncCodGestao = isAdmin
     ? selectedUnidade?.codGestao ?? ''
-    : (user as any)?.unidade?.codGestao ?? ''
+    : user?.unidade?.codGestao ?? ''
 
   const syncMutation = useMutation({
     mutationFn: () => contratosApi.sincronizarCache({ codGestao: syncCodGestao }),
@@ -194,11 +195,7 @@ export function ContratoDashboardPage() {
       setActiveCacheSyncJobId(data.jobId)
     },
     onError: (error: unknown) => {
-      const msg =
-        (error as any)?.response?.data?.message ??
-        (error as any)?.response?.data?.error ??
-        'Erro ao atualizar cache.'
-      toast.error(msg)
+      toast.error(getApiErrorMessage(error, 'Erro ao atualizar cache.'))
     },
   })
 

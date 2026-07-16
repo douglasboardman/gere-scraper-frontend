@@ -35,7 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import type { IItem, IContratacao } from '@/types'
+import type { IItem, IContratacao, IAtaRegPrecos } from '@/types'
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -206,8 +206,8 @@ export function ItemDetailPage() {
                         {item.identAta}
                       </Link>
                     ) : (
-                      <Link to={`/atas/detalhe?id=${(item.identAta as any).identificador}`} className="font-mono text-primary hover:underline">
-                        {(item.identAta as any).identificador ?? '—'}
+                      <Link to={`/atas/detalhe?id=${(item.identAta as IAtaRegPrecos).identificador}`} className="font-mono text-primary hover:underline">
+                        {(item.identAta as IAtaRegPrecos).identificador ?? '—'}
                       </Link>
                     )}
                   </Field>

@@ -8,6 +8,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { ArrowLeft, Pencil, X, Check, Eye } from "lucide-react";
 import { atasApi } from "@/api/atas.api";
+import type { IAtaRegPrecos, StatusElemContratacaoAlt } from "@/types";
 import { itensApi } from "@/api/itens.api";
 import { useEditGuard } from "@/hooks/useEditGuard";
 import { UnsavedChangesDialog } from "@/components/shared/UnsavedChangesDialog";
@@ -74,7 +75,7 @@ export function AtaDetailPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: Record<string, string>) => atasApi.atualizar(id!, data as any),
+    mutationFn: (data: Partial<IAtaRegPrecos>) => atasApi.atualizar(id!, data),
     onSuccess: () => {
       toast.success("Ata atualizada com sucesso.");
       queryClient.invalidateQueries({ queryKey: ["ata", id] });
@@ -95,7 +96,7 @@ export function AtaDetailPage() {
   };
 
   const handleSave = () => {
-    if (editStatus) updateMutation.mutate({ status: editStatus });
+    if (editStatus) updateMutation.mutate({ status: editStatus as StatusElemContratacaoAlt });
   };
 
   const formatDate = (d?: string) =>

@@ -378,7 +378,7 @@ export function ContratacaoDetailPage() {
                         <Button
                           size="sm"
                           className="bg-green-700 hover:bg-green-800 text-white"
-                          onClick={() => updateMutation.mutate({ status: "Disponivel" } as any)}
+                          onClick={() => updateMutation.mutate({ status: 'Disponivel' })}
                           disabled={updateMutation.isPending}
                         >
                           <CheckCircle2 className="h-4 w-4" />
@@ -389,7 +389,7 @@ export function ContratacaoDetailPage() {
                         <Button
                           size="sm"
                           className="bg-blue-600 hover:bg-blue-700 text-white"
-                          onClick={() => updateMutation.mutate({ status: "Processada" } as any)}
+                          onClick={() => updateMutation.mutate({ status: 'Processada' })}
                           disabled={updateMutation.isPending}
                         >
                           <PauseCircle className="h-4 w-4" />

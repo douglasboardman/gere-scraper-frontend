@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { IFornecimento, IItem, IFornecedor, IContratacao } from '@/types'
+import type { IFornecimento, IItem, IFornecedor, IContratacao, DestinacaoDespesa } from '@/types'
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -87,7 +87,7 @@ export function FornecimentoDetailPage() {
       if (editQtdUtilizada !== '') payload.qtdUtilizada = Number(editQtdUtilizada)
       if (editSaldo !== '') payload.saldoDisponivel = Number(editSaldo)
     }
-    if (editDestDespesa) (payload as any).destDespesa = editDestDespesa
+    if (editDestDespesa) payload.destDespesa = editDestDespesa as DestinacaoDespesa
     if (editStatus) payload.status = editStatus as IFornecimento['status']
     updateMutation.mutate(payload)
   }
