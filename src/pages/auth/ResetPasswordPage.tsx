@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { Loader2, KeyRound, CheckCircle2 } from 'lucide-react'
 import { authApi } from '@/api/auth.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { fetchVersion } from '@/api/version.api'
 import { Button } from '@/components/ui/button'
 import { PasswordInput } from '@/components/ui/password-input'
@@ -68,10 +69,7 @@ export function ResetPasswordPage() {
       setSuccess(true)
       toast.success('Senha redefinida com sucesso!')
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Erro ao redefinir senha. O link pode ter expirado.'
-      setError(msg)
+      setError(getApiErrorMessage(err, 'Erro ao redefinir senha. O link pode ter expirado.'))
     } finally {
       setIsLoading(false)
     }

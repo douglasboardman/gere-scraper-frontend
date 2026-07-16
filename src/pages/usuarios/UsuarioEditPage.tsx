@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { ArrowLeft, Loader2, KeyRound, Trash2 } from 'lucide-react'
 import { usuariosApi } from '@/api/usuarios.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { unidadesApi } from '@/api/unidades.api'
 import { uorgsApi } from '@/api/uorgs.api'
 import { qk } from '@/lib/query-keys'
@@ -130,11 +131,7 @@ export function UsuarioEditPage() {
       navigate('/usuarios')
     },
     onError: (error: unknown) => {
-      const msg =
-        (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data?.message ??
-        (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data?.error ??
-        'Erro ao excluir usuário.'
-      toast.error(msg)
+      toast.error(getApiErrorMessage(error, 'Erro ao excluir usuário.'))
       setDeleteDialogOpen(false)
     },
   })
@@ -146,10 +143,7 @@ export function UsuarioEditPage() {
       setResetDialogOpen(false)
     },
     onError: (error: unknown) => {
-      const msg =
-        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Erro ao enviar e-mail de redefinição de senha.'
-      toast.error(msg)
+      toast.error(getApiErrorMessage(error, 'Erro ao enviar e-mail de redefinição de senha.'))
     },
   })
 

@@ -10,6 +10,7 @@ import {
   Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Loader2,
 } from 'lucide-react'
 import { requisicoesApi } from '@/api/requisicoes.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { itemRequisicaoApi } from '@/api/itemRequisicao.api'
 import { fornecimentosApi } from '@/api/fornecimentos.api'
 import { itensApi } from '@/api/itens.api'
@@ -95,7 +96,7 @@ function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogPro
     mutationFn: () => itemRequisicaoApi.atualizar(item.id, { qtdSolicitada: quantidade }),
     onSuccess: () => { toast.success('Quantidade atualizada.'); onSaved(); onOpenChange(false) },
     onError: (e: unknown) => {
-      toast.error((e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Erro inesperado')
+      toast.error(getApiErrorMessage(e))
     },
   })
 
@@ -242,7 +243,7 @@ function AddItemsDialog({
       onSaved(); onOpenChange(false)
     },
     onError: (e: unknown) => {
-      toast.error((e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Erro ao adicionar itens.')
+      toast.error(getApiErrorMessage(e, 'Erro ao adicionar itens.'))
     },
   })
 
@@ -433,7 +434,7 @@ export function RequisicaoAnalisePage() {
       navigate('/requisicoes/pendentes')
     },
     onError: (e: unknown) => {
-      toast.error((e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Erro inesperado')
+      toast.error(getApiErrorMessage(e))
     },
   })
 
@@ -448,7 +449,7 @@ export function RequisicaoAnalisePage() {
       navigate('/requisicoes/pendentes')
     },
     onError: (e: unknown) => {
-      toast.error((e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Erro inesperado')
+      toast.error(getApiErrorMessage(e))
     },
   })
 
@@ -456,7 +457,7 @@ export function RequisicaoAnalisePage() {
     mutationFn: (itemId: number) => itemRequisicaoApi.deletar(itemId),
     onSuccess: () => { toast.success('Item removido.'); invalidateItems() },
     onError: (e: unknown) => {
-      toast.error((e as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Erro ao remover item.')
+      toast.error(getApiErrorMessage(e, 'Erro ao remover item.'))
     },
   })
 

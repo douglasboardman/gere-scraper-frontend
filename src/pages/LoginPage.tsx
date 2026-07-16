@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { Loader2, LogIn } from 'lucide-react'
 import { authApi } from '@/api/auth.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { fetchVersion } from '@/api/version.api'
 import { useAuthStore } from '@/store/auth.store'
 import { Button } from '@/components/ui/button'
@@ -54,11 +55,7 @@ export function LoginPage() {
       toast.success(`Bem-vindo, ${response.usuario.nome}!`)
       navigate('/dashboard')
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { error?: string; message?: string } } })?.response?.data?.message ??
-        (err as { response?: { data?: { error?: string; message?: string } } })?.response?.data?.error ??
-        'Credenciais inválidas. Tente novamente.'
-      setError(msg)
+      setError(getApiErrorMessage(err, 'Credenciais inválidas. Tente novamente.'))
     } finally {
       setIsLoading(false)
     }

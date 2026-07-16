@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { contratacoesApi } from '@/api/contratacoes.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { unidadesApi } from '@/api/unidades.api'
 import type { IContratacao, ModalidadeContratacao, AmparoLegal } from '@/types'
 import { useAuthStore } from '@/store/auth.store'
@@ -130,10 +131,7 @@ export function NovaContratacaoPage() {
       navigate('/contratacoes')
     },
     onError: (error: unknown) => {
-      const msg =
-        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Erro ao registrar contratação.'
-      toast.error(msg)
+      toast.error(getApiErrorMessage(error, 'Erro ao registrar contratação.'))
     },
   })
 

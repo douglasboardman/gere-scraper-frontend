@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { Plus, Eye, Trash2, TriangleAlert, FileText, Handshake, Package } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { contratacoesApi } from '@/api/contratacoes.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { unidadesApi } from '@/api/unidades.api'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable } from '@/components/shared/DataTable'
@@ -64,10 +65,7 @@ export function ContratacoesPage() {
       setSelectedUasg('')
     },
     onError: (error: unknown) => {
-      const msg =
-        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Erro ao excluir contratação.'
-      toast.error(msg)
+      toast.error(getApiErrorMessage(error, 'Erro ao excluir contratação.'))
     },
   })
 

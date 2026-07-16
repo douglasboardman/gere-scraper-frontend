@@ -7,6 +7,7 @@ import { ptBR } from 'date-fns/locale'
 import { ArrowLeft, Printer, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { requisicoesApi } from '@/api/requisicoes.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { itemRequisicaoApi } from '@/api/itemRequisicao.api'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/shared/StatusBadge'
@@ -32,10 +33,7 @@ export function RequisicaoViewPage() {
       navigate('/requisicoes')
     },
     onError: (error: unknown) => {
-      toast.error(
-        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-          'Erro ao excluir a requisição.'
-      )
+      toast.error(getApiErrorMessage(error, 'Erro ao excluir a requisição.'))
     },
   })
 

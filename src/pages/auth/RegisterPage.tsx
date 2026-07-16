@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { Loader2, UserPlus } from 'lucide-react'
 import { authApi } from '@/api/auth.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { uorgsApi } from '@/api/uorgs.api'
 import { qk } from '@/lib/query-keys'
 import { fetchVersion } from '@/api/version.api'
@@ -80,10 +81,7 @@ export function RegisterPage() {
       toast.success('Solicitação de cadastro enviada! Aguarde a aprovação do administrador.')
       navigate('/login')
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Erro ao solicitar cadastro. Tente novamente.'
-      setError(msg)
+      setError(getApiErrorMessage(err, 'Erro ao solicitar cadastro. Tente novamente.'))
     } finally {
       setIsLoading(false)
     }

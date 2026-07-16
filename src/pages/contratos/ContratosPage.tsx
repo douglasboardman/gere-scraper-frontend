@@ -5,6 +5,7 @@ import { Eye, PlusCircle, Search, Trash2, TriangleAlert } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { toast } from 'sonner'
 import { contratosApi } from '@/api/contratos.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
@@ -43,11 +44,7 @@ export function ContratosPage() {
       setDeleteId(null)
     },
     onError: (error: unknown) => {
-      const msg =
-        (error as { response?: { data?: { error?: string; message?: string } } })?.response?.data?.message ??
-        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Erro ao excluir contrato.'
-      toast.error(msg)
+      toast.error(getApiErrorMessage(error, 'Erro ao excluir contrato.'))
       setDeleteId(null)
     },
   })

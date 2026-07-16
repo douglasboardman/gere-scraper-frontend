@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import type { ColumnDef } from '@tanstack/react-table'
 import { unidadesApi } from '@/api/unidades.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { qk } from '@/lib/query-keys'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable } from '@/components/shared/DataTable'
@@ -66,10 +67,7 @@ export function UnidadesPage() {
       form.reset()
     },
     onError: (error: unknown) => {
-      const msg =
-        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Erro ao cadastrar unidade.'
-      toast.error(msg)
+      toast.error(getApiErrorMessage(error, 'Erro ao cadastrar unidade.'))
     },
   })
 

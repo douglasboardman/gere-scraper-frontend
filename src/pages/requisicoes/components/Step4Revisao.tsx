@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { requisicoesApi } from '@/api/requisicoes.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { itemRequisicaoApi } from '@/api/itemRequisicao.api'
 import { uorgsApi } from '@/api/uorgs.api'
 import { useAuthStore } from '@/store/auth.store'
@@ -134,10 +135,7 @@ export function Step4Revisao({
       if (axiosErr.response?.status === 409 && axiosErr.response.data?.conflitos?.length) {
         setConflitoPendente({ conflitos: axiosErr.response.data.conflitos })
       } else {
-        toast.error(
-          axiosErr.response?.data?.error ??
-            'Erro ao salvar a requisição. Verifique os itens e tente novamente.',
-        )
+        toast.error(getApiErrorMessage(err, 'Erro ao salvar a requisição. Verifique os itens e tente novamente.'))
       }
     },
   })

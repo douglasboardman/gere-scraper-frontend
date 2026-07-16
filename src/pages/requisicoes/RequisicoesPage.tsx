@@ -9,6 +9,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { destDespesaLabel } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import { requisicoesApi } from '@/api/requisicoes.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
@@ -103,7 +104,7 @@ export function RequisicoesPage() {
         })
         setActionDialog(null)
       } else {
-        toast.error(axiosErr.response?.data?.error ?? 'Erro inesperado')
+        toast.error(getApiErrorMessage(error))
       }
     },
   })
@@ -129,7 +130,7 @@ export function RequisicoesPage() {
       setActionDialog(null)
     },
     onError: (error: unknown) => {
-      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Erro inesperado')
+      toast.error(getApiErrorMessage(error))
     },
   })
 
@@ -141,7 +142,7 @@ export function RequisicoesPage() {
       setActionDialog(null)
     },
     onError: (error: unknown) => {
-      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Erro inesperado')
+      toast.error(getApiErrorMessage(error))
     },
   })
 
@@ -153,7 +154,7 @@ export function RequisicoesPage() {
       setActionDialog(null)
     },
     onError: (error: unknown) => {
-      toast.error((error as { response?: { data?: { error?: string } } })?.response?.data?.error ?? 'Erro inesperado')
+      toast.error(getApiErrorMessage(error))
     },
   })
 

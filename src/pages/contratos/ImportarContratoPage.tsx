@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { ArrowRight, ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { contratosApi } from '@/api/contratos.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { qk } from '@/lib/query-keys'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -234,8 +235,8 @@ function Step2DadosContrato({
       setSelectedContrato(null)
       if (data.length === 0) toast.warning('Nenhum contrato encontrado com os dados informados.')
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? 'Erro ao consultar dados do contrato.')
+    onError: (err: unknown) => {
+      toast.error(getApiErrorMessage(err, 'Erro ao consultar dados do contrato.'))
     },
   })
 
@@ -379,8 +380,8 @@ function Step3Itens({
       setCarregado(true)
       if (data.length === 0) toast.warning('Nenhum item encontrado para este contrato.')
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? 'Erro ao carregar itens do contrato.')
+    onError: (err: unknown) => {
+      toast.error(getApiErrorMessage(err, 'Erro ao carregar itens do contrato.'))
     },
   })
 
@@ -506,8 +507,8 @@ export function ImportarContratoPage() {
       toast.success(`Contrato importado com sucesso! ${res.fornecimentosCriados} fornecimento(s) criado(s).${aviso}`)
       navigate(`/contratos/detalhe?id=${encodeURIComponent(res.contrato.identificador)}`)
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? 'Erro ao importar contrato.')
+    onError: (err: unknown) => {
+      toast.error(getApiErrorMessage(err, 'Erro ao importar contrato.'))
     },
   })
 

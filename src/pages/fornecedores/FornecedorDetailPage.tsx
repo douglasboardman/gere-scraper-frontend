@@ -6,6 +6,7 @@ import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { ArrowLeft, Pencil, X, Check, ShieldAlert, Loader2, List } from 'lucide-react'
 import { fornecedoresApi } from '@/api/fornecedores.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { qk } from '@/lib/query-keys'
 import { useEditGuard } from '@/hooks/useEditGuard'
 import { UnsavedChangesDialog } from '@/components/shared/UnsavedChangesDialog'
@@ -67,10 +68,7 @@ export function FornecedorDetailPage() {
       setEditMode(false)
     },
     onError: (error: unknown) => {
-      const msg =
-        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Erro ao atualizar fornecedor.'
-      toast.error(msg)
+      toast.error(getApiErrorMessage(error, 'Erro ao atualizar fornecedor.'))
     },
   })
 

@@ -3,6 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { ArrowLeft, ArrowRight, Loader2, Search } from 'lucide-react'
 import { requisicoesApi } from '@/api/requisicoes.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { fornecimentosApi } from '@/api/fornecimentos.api'
 import { contratacoesApi } from '@/api/contratacoes.api'
 import { Button } from '@/components/ui/button'
@@ -48,10 +49,7 @@ export function Step2Contratacao({
       onComplete(req, contratacao)
     },
     onError: (err: unknown) => {
-      const msg =
-        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Erro ao salvar a requisição.'
-      toast.error(msg)
+      toast.error(getApiErrorMessage(err, 'Erro ao salvar a requisição.'))
       setSelectingId(null)
     },
   })

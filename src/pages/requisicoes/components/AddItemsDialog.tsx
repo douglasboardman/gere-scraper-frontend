@@ -6,6 +6,7 @@ import {
   Loader2, Plus, Search, Trash2,
 } from 'lucide-react'
 import { itemRequisicaoApi } from '@/api/itemRequisicao.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { fornecimentosApi } from '@/api/fornecimentos.api'
 import { Button } from '@/components/ui/button'
 import {
@@ -193,10 +194,7 @@ export function AddItemsDialog({
       onOpenChange(false)
     },
     onError: (error: unknown) => {
-      toast.error(
-        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-          'Erro ao adicionar itens.',
-      )
+      toast.error(getApiErrorMessage(error, 'Erro ao adicionar itens.'))
     },
   })
 

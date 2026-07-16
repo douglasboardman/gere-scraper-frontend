@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import type { ColumnDef } from '@tanstack/react-table'
 import { usuariosApi } from '@/api/usuarios.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { unidadesApi } from '@/api/unidades.api'
 import { uorgsApi } from '@/api/uorgs.api'
 import { qk } from '@/lib/query-keys'
@@ -135,10 +136,7 @@ export function UsuariosPage() {
       form.reset()
     },
     onError: (error: unknown) => {
-      const msg =
-        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Erro ao criar usuário.'
-      toast.error(msg)
+      toast.error(getApiErrorMessage(error, 'Erro ao criar usuário.'))
     },
   })
 
@@ -150,11 +148,7 @@ export function UsuariosPage() {
       setDeleteConfirmId(null)
     },
     onError: (error: unknown) => {
-      const msg =
-        (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data?.message ??
-        (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data?.error ??
-        'Erro ao excluir usuário.'
-      toast.error(msg)
+      toast.error(getApiErrorMessage(error, 'Erro ao excluir usuário.'))
       setDeleteConfirmId(null)
     },
   })

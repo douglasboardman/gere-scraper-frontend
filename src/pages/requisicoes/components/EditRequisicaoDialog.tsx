@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { requisicoesApi } from '@/api/requisicoes.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -61,10 +62,7 @@ export function EditRequisicaoDialog({
       onOpenChange(false)
     },
     onError: (error: unknown) => {
-      toast.error(
-        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-          'Erro inesperado',
-      )
+      toast.error(getApiErrorMessage(error))
     },
   })
 

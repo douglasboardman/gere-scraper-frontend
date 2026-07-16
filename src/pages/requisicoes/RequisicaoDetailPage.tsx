@@ -9,6 +9,7 @@ import {
   ArrowLeft, Plus, Send, Pencil, Printer, Trash2,
 } from 'lucide-react'
 import { requisicoesApi } from '@/api/requisicoes.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { itemRequisicaoApi } from '@/api/itemRequisicao.api'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
@@ -92,8 +93,7 @@ export function RequisicaoDetailPage() {
         setConflitoPendente({ conflitos })
         setActionDialog(null)
       } else {
-        const msg = axiosErr.response?.data?.message ?? axiosErr.response?.data?.error ?? 'Erro inesperado'
-        toast.error(msg, { duration: 8000 })
+        toast.error(getApiErrorMessage(error), { duration: 8000 })
         setActionDialog(null)
       }
     },

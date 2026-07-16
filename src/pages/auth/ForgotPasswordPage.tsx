@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Loader2, Mail, CheckCircle2 } from 'lucide-react'
 import { authApi } from '@/api/auth.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { fetchVersion } from '@/api/version.api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -47,10 +48,7 @@ export function ForgotPasswordPage() {
       await authApi.forgotPassword(data.email)
       setSent(true)
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'Erro ao processar solicitação. Tente novamente.'
-      setError(msg)
+      setError(getApiErrorMessage(err, 'Erro ao processar solicitação. Tente novamente.'))
     } finally {
       setIsLoading(false)
     }

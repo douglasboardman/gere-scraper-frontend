@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Loader2, User, Building2, Network } from 'lucide-react'
 import { usuariosApi } from '@/api/usuarios.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { uorgsApi } from '@/api/uorgs.api'
 import { useAuthStore } from '@/store/auth.store'
 import { qk } from '@/lib/query-keys'
@@ -105,10 +106,7 @@ export function PerfilPage() {
       setTimeout(() => setSaved(false), 3000)
     },
     onError: (error: unknown) => {
-      const msg =
-        (error as { response?: { data?: { error?: string } } })?.response?.data?.error ??
-        'Erro ao atualizar perfil.'
-      toast.error(msg)
+      toast.error(getApiErrorMessage(error, 'Erro ao atualizar perfil.'))
     },
   })
 
