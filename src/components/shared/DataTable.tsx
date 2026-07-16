@@ -179,6 +179,7 @@ export function DataTable<TData>({
             variant="outline"
             size="icon"
             className="h-8 w-8"
+            aria-label="Página anterior"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
@@ -188,6 +189,7 @@ export function DataTable<TData>({
             variant="outline"
             size="icon"
             className="h-8 w-8"
+            aria-label="Próxima página"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >

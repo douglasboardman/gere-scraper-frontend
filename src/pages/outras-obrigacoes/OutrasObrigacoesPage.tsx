@@ -227,11 +227,11 @@ function DespesasPanel({ contrato, ano }: { contrato: IContratoOob; ano: string 
               </p>
             </div>
             <div className="flex gap-1">
-              <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditDespesa(f)}>
+              <Button size="icon" variant="ghost" className="h-7 w-7" aria-label="Editar despesa" onClick={() => setEditDespesa(f)}>
                 <Pencil className="h-3 w-3" />
               </Button>
               <Button
-                size="icon" variant="ghost" className="h-7 w-7 text-destructive"
+                size="icon" variant="ghost" className="h-7 w-7 text-destructive" aria-label="Remover despesa"
                 onClick={() => { if (confirm('Remover despesa?')) deletarMutation.mutate(f.identificador) }}
               >
                 <Trash2 className="h-3 w-3" />
@@ -392,11 +392,11 @@ export function OutrasObrigacoesPage() {
                         </p>
                       </div>
                       <div className="flex gap-1 shrink-0 ml-2">
-                        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); setEditContrato(c); setContratoModalOpen(true) }}>
+                        <Button size="icon" variant="ghost" className="h-6 w-6" aria-label="Editar grupo" onClick={(e) => { e.stopPropagation(); setEditContrato(c); setContratoModalOpen(true) }}>
                           <Pencil className="h-3 w-3" />
                         </Button>
                         <Button
-                          size="icon" variant="ghost" className="h-6 w-6 text-destructive"
+                          size="icon" variant="ghost" className="h-6 w-6 text-destructive" aria-label="Remover grupo"
                           onClick={(e) => { e.stopPropagation(); if (confirm('Remover grupo de despesa?')) deletarContratoMutation.mutate(c.identificador) }}
                         >
                           <Trash2 className="h-3 w-3" />

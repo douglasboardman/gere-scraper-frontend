@@ -89,6 +89,7 @@ export function CacheSyncProgressBar() {
               className="h-7 w-7 text-gray-400 hover:text-white hover:bg-white/10 shrink-0"
               onClick={() => setActiveCacheSyncJobId(null)}
               title="Fechar"
+              aria-label="Fechar"
             >
               <X className="h-4 w-4" />
             </Button>

@@ -139,7 +139,7 @@ function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDialogPro
               className={cn('h-8 flex-1 text-sm', toggle.excedeSaldo && 'border-destructive')}
             />
           </div>
-          <p className={cn('text-xs text-right',
+          <p aria-live="polite" className={cn('text-xs text-right',
             toggle.excedeSaldo ? 'text-destructive' : 'text-muted-foreground')}>
             {toggle.modo === 'qtd'
               ? `= ${formatCurrency(toggle.valorTotal)}`
@@ -248,7 +248,7 @@ function AddItemsDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!saveMutation.isPending) { setNewItems(new Map()); setCatalogSearch(''); setCatalogPage(1); onOpenChange(v) } }}>
-      <DialogContent className="max-w-5xl p-0 gap-0 overflow-hidden flex flex-col" style={{ height: '85vh' }}>
+      <DialogContent className="max-w-5xl p-0 gap-0 overflow-hidden flex flex-col" style={{ height: 'min(85vh, calc(100dvh - 2rem))' }}>
         <DialogHeader className="px-6 py-4 border-b shrink-0">
           <DialogTitle>Adicionar Itens à Requisição</DialogTitle>
         </DialogHeader>
@@ -291,7 +291,7 @@ function AddItemsDialog({
                             {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                           </Button>
                           {!noSaldo && !isAlready && (
-                            <Button size="icon" variant={isNew ? 'secondary' : 'default'} className="h-7 w-7" disabled={isNew}
+                            <Button size="icon" variant={isNew ? 'secondary' : 'default'} className="h-7 w-7" disabled={isNew} aria-label="Adicionar item"
                               onClick={() => {
                                 const it = resolveItem(f)
                                 if (!it) return
@@ -318,9 +318,9 @@ function AddItemsDialog({
               </div>
               {totalPages > 1 && (
                 <div className="border-t px-3 py-2 bg-muted/10 shrink-0 flex items-center justify-between">
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setCatalogPage((p) => Math.max(1, p - 1))} disabled={catalogPage === 1}><ChevronLeft className="h-3.5 w-3.5" /></Button>
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setCatalogPage((p) => Math.max(1, p - 1))} disabled={catalogPage === 1} aria-label="Página anterior"><ChevronLeft className="h-3.5 w-3.5" /></Button>
                   <span className="text-xs text-muted-foreground">{catalogPage} / {totalPages}</span>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setCatalogPage((p) => Math.min(totalPages, p + 1))} disabled={catalogPage === totalPages}><ChevronRight className="h-3.5 w-3.5" /></Button>
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setCatalogPage((p) => Math.min(totalPages, p + 1))} disabled={catalogPage === totalPages} aria-label="Próxima página"><ChevronRight className="h-3.5 w-3.5" /></Button>
                 </div>
               )}
             </div>
@@ -340,6 +340,7 @@ function AddItemsDialog({
                       <div className="flex items-start justify-between gap-2">
                         <p className="text-xs font-medium line-clamp-2 flex-1">{descBreve(entry.item)}</p>
                         <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0 text-destructive"
+                          aria-label="Remover item"
                           onClick={() => setNewItems((p) => { const n = new Map(p); n.delete(idForn); return n })}>
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -690,6 +691,7 @@ export function RequisicaoAnalisePage() {
                               <Button
                                 variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground"
                                 title="Editar quantidade"
+                                aria-label="Editar quantidade"
                                 onClick={() => setEditItemTarget(item)}
                               >
                                 <Pencil className="h-3.5 w-3.5" />
@@ -697,6 +699,7 @@ export function RequisicaoAnalisePage() {
                               <Button
                                 variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10"
                                 title="Remover item"
+                                aria-label="Remover item"
                                 disabled={removeItemMutation.isPending}
                                 onClick={() => removeItemMutation.mutate(item.id)}
                               >

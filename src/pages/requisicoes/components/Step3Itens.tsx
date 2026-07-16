@@ -233,6 +233,7 @@ export function Step3Itens({
                               variant={isAdded ? 'secondary' : 'default'}
                               className="h-7 w-7"
                               title={isAdded ? 'Já adicionado' : 'Adicionar item'}
+                              aria-label={isAdded ? 'Já adicionado' : 'Adicionar item'}
                               disabled={isAdded}
                               onClick={() => handleAdd(f)}
                             >
@@ -288,6 +289,7 @@ export function Step3Itens({
                   size="icon"
                   variant="ghost"
                   className="h-7 w-7"
+                  aria-label="Página anterior"
                   onClick={() => setCatalogPage((p) => Math.max(1, p - 1))}
                   disabled={catalogPage === 1}
                 >
@@ -300,6 +302,7 @@ export function Step3Itens({
                   size="icon"
                   variant="ghost"
                   className="h-7 w-7"
+                  aria-label="Próxima página"
                   onClick={() => setCatalogPage((p) => Math.min(totalCatalogPages, p + 1))}
                   disabled={catalogPage === totalCatalogPages}
                 >
@@ -351,6 +354,7 @@ export function Step3Itens({
                           size="icon"
                           variant="ghost"
                           className="h-6 w-6 shrink-0 text-destructive hover:text-destructive"
+                          aria-label="Remover item"
                           onClick={() => map.removeItem(idForn)}
                         >
                           <Trash2 className="h-3 w-3" />
@@ -423,6 +427,7 @@ export function Step3Itens({
                       </div>
 
                       <p
+                        aria-live="polite"
                         className={cn(
                           'text-xs text-right',
                           qtdExcedeSaldo ? 'text-destructive' : 'text-muted-foreground',

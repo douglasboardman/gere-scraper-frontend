@@ -158,7 +158,7 @@ export function ForgotPasswordPage() {
                   />
 
                   {error && (
-                    <div className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3">
+                    <div role="alert" className="rounded-md bg-destructive/10 border border-destructive/20 px-4 py-3">
                       <p className="text-sm text-destructive">{error}</p>
                     </div>
                   )}

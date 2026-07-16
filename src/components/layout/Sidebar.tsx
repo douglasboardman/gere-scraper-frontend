@@ -216,6 +216,7 @@ export function Sidebar() {
             className="h-7 w-7 text-gray-400 hover:text-white hover:bg-white/10 shrink-0 transition-colors duration-150"
             onClick={handleLogout}
             title="Sair do sistema"
+            aria-label="Sair do sistema"
           >
             <LogOut className="h-4 w-4" />
           </Button>

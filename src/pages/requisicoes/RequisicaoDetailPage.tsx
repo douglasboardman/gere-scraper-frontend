@@ -330,6 +330,7 @@ export function RequisicaoDetailPage() {
                               size="icon"
                               className="h-7 w-7 text-muted-foreground hover:text-foreground"
                               title="Editar quantidade"
+                              aria-label="Editar quantidade"
                               onClick={() => setEditItemTarget(item)}
                             >
                               <Pencil className="h-3.5 w-3.5" />
@@ -339,6 +340,7 @@ export function RequisicaoDetailPage() {
                               size="icon"
                               className="h-7 w-7 text-destructive hover:bg-destructive/10"
                               title="Remover item"
+                              aria-label="Remover item"
                               onClick={() => removeItemMutation.mutate(item.id)}
                             >
                               <Trash2 className="h-3.5 w-3.5" />

@@ -178,7 +178,7 @@ export function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDi
                 )}
               />
               {toggle.qtdNum > 0 && (
-                <p className={cn(
+                <p aria-live="polite" className={cn(
                   'text-xs',
                   toggle.excedeSaldo ? 'text-destructive' : 'text-muted-foreground',
                 )}>

@@ -128,7 +128,7 @@ export function AddItemsDialog({
         }
       }}
     >
-      <DialogContent className="max-w-5xl p-0 gap-0 overflow-hidden flex flex-col" style={{ height: '85vh' }}>
+      <DialogContent className="max-w-5xl p-0 gap-0 overflow-hidden flex flex-col" style={{ height: 'min(85vh, calc(100dvh - 2rem))' }}>
         <DialogHeader className="px-6 py-4 border-b shrink-0">
           <DialogTitle>Adicionar Itens à Requisição</DialogTitle>
         </DialogHeader>
@@ -229,6 +229,7 @@ export function AddItemsDialog({
                                 size="icon"
                                 variant={isNewlyAdded ? 'secondary' : 'default'}
                                 className="h-7 w-7"
+                                aria-label="Adicionar item"
                                 disabled={isNewlyAdded}
                                 onClick={() => handleAdd(f)}
                               >
@@ -278,6 +279,7 @@ export function AddItemsDialog({
                     size="icon"
                     variant="ghost"
                     className="h-7 w-7"
+                    aria-label="Página anterior"
                     onClick={() => setCatalogPage((p) => Math.max(1, p - 1))}
                     disabled={catalogPage === 1}
                   >
@@ -290,6 +292,7 @@ export function AddItemsDialog({
                     size="icon"
                     variant="ghost"
                     className="h-7 w-7"
+                    aria-label="Próxima página"
                     onClick={() => setCatalogPage((p) => Math.min(totalCatalogPages, p + 1))}
                     disabled={catalogPage === totalCatalogPages}
                   >
@@ -368,6 +371,7 @@ export function AddItemsDialog({
                               size="icon"
                               variant="ghost"
                               className="h-6 w-6 shrink-0 text-destructive hover:text-destructive"
+                              aria-label="Remover item"
                               onClick={() => map.removeItem(idForn)}
                             >
                               <Trash2 className="h-3 w-3" />
@@ -440,7 +444,7 @@ export function AddItemsDialog({
                                 />
                               </div>
                               {entry.quantidade > 0 && (
-                                <p className={cn(
+                                <p aria-live="polite" className={cn(
                                   'text-xs',
                                   qtdExcedesSaldo ? 'text-destructive' : 'text-muted-foreground',
                                 )}>
