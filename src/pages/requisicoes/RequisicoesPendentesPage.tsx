@@ -5,6 +5,7 @@ import { ptBR } from 'date-fns/locale'
 import { ClipboardCheck, Search } from 'lucide-react'
 import { useState } from 'react'
 import { destDespesaLabel } from '@/lib/utils'
+import { qk } from '@/lib/query-keys'
 import { requisicoesApi } from '@/api/requisicoes.api'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -23,7 +24,7 @@ export function RequisicoesPendentesPage() {
   const [search, setSearch] = useState('')
 
   const { data: todasRequisicoes = [], isLoading } = useQuery({
-    queryKey: ['requisicoes'],
+    queryKey: qk.requisicoes.all,
     queryFn: () => requisicoesApi.listar(),
   })
 

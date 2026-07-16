@@ -10,6 +10,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { usuariosApi } from '@/api/usuarios.api'
 import { unidadesApi } from '@/api/unidades.api'
 import { uorgsApi } from '@/api/uorgs.api'
+import { qk } from '@/lib/query-keys'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable } from '@/components/shared/DataTable'
 import { Button } from '@/components/ui/button'
@@ -88,7 +89,7 @@ export function UsuariosPage() {
   const currentUser = useAuthStore((s) => s.user)
 
   const { data: usuariosRaw = [], isLoading } = useQuery({
-    queryKey: ['usuarios'],
+    queryKey: qk.usuarios.all,
     queryFn: usuariosApi.listar,
   })
 
@@ -99,7 +100,7 @@ export function UsuariosPage() {
     .filter((u) => isAdmin || u.role !== 'admin')
 
   const { data: unidades = [] } = useQuery({
-    queryKey: ['unidades'],
+    queryKey: qk.unidades.all,
     queryFn: unidadesApi.listar,
   })
 
@@ -120,7 +121,7 @@ export function UsuariosPage() {
   const senhaValue = form.watch('senha') ?? ''
 
   const { data: uorgs = [], isLoading: uorgsLoading } = useQuery({
-    queryKey: ['uorgs-unidade', selectedUnidade],
+    queryKey: qk.uorgs.byUnidade(selectedUnidade!),
     queryFn: () => uorgsApi.listarPorUnidade(selectedUnidade!),
     enabled: !!selectedUnidade,
   })
@@ -129,7 +130,7 @@ export function UsuariosPage() {
     mutationFn: (data: NovoUsuarioFormData) => usuariosApi.criar(data),
     onSuccess: () => {
       toast.success('Usuário criado com sucesso.')
-      queryClient.invalidateQueries({ queryKey: ['usuarios'] })
+      queryClient.invalidateQueries({ queryKey: qk.usuarios.all })
       setDialogOpen(false)
       form.reset()
     },
@@ -145,7 +146,7 @@ export function UsuariosPage() {
     mutationFn: (id: string) => usuariosApi.deletar(id),
     onSuccess: () => {
       toast.success('Usuário excluído com sucesso.')
-      queryClient.invalidateQueries({ queryKey: ['usuarios'] })
+      queryClient.invalidateQueries({ queryKey: qk.usuarios.all })
       setDeleteConfirmId(null)
     },
     onError: (error: unknown) => {
@@ -161,9 +162,9 @@ export function UsuariosPage() {
   const toggleAtivoMutation = useMutation({
     mutationFn: (id: string) => usuariosApi.toggleAtivo(id),
     onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ['usuarios'] })
-      const previous = queryClient.getQueryData<IUsuario[]>(['usuarios'])
-      queryClient.setQueryData<IUsuario[]>(['usuarios'], (old) =>
+      await queryClient.cancelQueries({ queryKey: qk.usuarios.all })
+      const previous = queryClient.getQueryData<IUsuario[]>(qk.usuarios.all)
+      queryClient.setQueryData<IUsuario[]>(qk.usuarios.all, (old) =>
         old?.map((u) => u.id === id ? { ...u, ativo: !u.ativo } : u) ?? []
       )
       const toastId = toast.loading('Processando...')
@@ -171,10 +172,10 @@ export function UsuariosPage() {
     },
     onSuccess: (usuario, _id, context) => {
       toast.success(`Usuário ${usuario.ativo ? 'ativado' : 'desativado'} com sucesso.`, { id: context?.toastId })
-      queryClient.invalidateQueries({ queryKey: ['usuarios'] })
+      queryClient.invalidateQueries({ queryKey: qk.usuarios.all })
     },
     onError: (_error, _id, context) => {
-      if (context?.previous) queryClient.setQueryData(['usuarios'], context.previous)
+      if (context?.previous) queryClient.setQueryData(qk.usuarios.all, context.previous)
       toast.error('Erro ao alterar status do usuário.', { id: context?.toastId })
     },
   })

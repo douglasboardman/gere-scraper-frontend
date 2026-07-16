@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import type { ColumnDef } from '@tanstack/react-table'
 import { unidadesApi } from '@/api/unidades.api'
+import { qk } from '@/lib/query-keys'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable } from '@/components/shared/DataTable'
 import { Button } from '@/components/ui/button'
@@ -44,7 +45,7 @@ export function UnidadesPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
 
   const { data: unidades = [], isLoading } = useQuery({
-    queryKey: ['unidades'],
+    queryKey: qk.unidades.all,
     queryFn: unidadesApi.listar,
   })
 
@@ -60,7 +61,7 @@ export function UnidadesPage() {
     mutationFn: (data: UnidadeFormData) => unidadesApi.criar(data),
     onSuccess: () => {
       toast.success('Unidade cadastrada com sucesso.')
-      queryClient.invalidateQueries({ queryKey: ['unidades'] })
+      queryClient.invalidateQueries({ queryKey: qk.unidades.all })
       setDialogOpen(false)
       form.reset()
     },

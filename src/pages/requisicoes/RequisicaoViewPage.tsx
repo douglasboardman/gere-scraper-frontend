@@ -13,6 +13,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { destDespesaLabel, formatQtd } from '@/lib/utils'
+import { qk } from '@/lib/query-keys'
 import { usePermission } from '@/hooks/usePermission'
 import type { IUsuario, IUnidade, IFornecimento, IItem } from '@/types'
 
@@ -27,7 +28,7 @@ export function RequisicaoViewPage() {
     mutationFn: () => requisicoesApi.deletar(id!),
     onSuccess: () => {
       toast.success('Requisição excluída e saldos recalculados.')
-      queryClient.invalidateQueries({ queryKey: ['requisicoes-unidade'] })
+      queryClient.invalidateQueries({ queryKey: qk.requisicoes.unidadeAll })
       navigate('/requisicoes')
     },
     onError: (error: unknown) => {
@@ -39,13 +40,13 @@ export function RequisicaoViewPage() {
   })
 
   const { data: requisicao, isLoading: loadingReq } = useQuery({
-    queryKey: ['requisicao', id],
+    queryKey: qk.requisicoes.detail(id!),
     queryFn: () => requisicoesApi.obter(id!),
     enabled: !!id,
   })
 
   const { data: itens = [], isLoading: loadingItens } = useQuery({
-    queryKey: ['itens-requisicao', id],
+    queryKey: qk.requisicoes.itens(id!),
     queryFn: () => itemRequisicaoApi.listar(id!),
     enabled: !!id,
   })

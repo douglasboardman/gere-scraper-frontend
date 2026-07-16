@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
 import { destDespesaLabel, formatCurrency, formatQtd } from '@/lib/utils'
+import { qk } from '@/lib/query-keys'
 import { MODALIDADE_LABEL } from '@/types'
 import type { IContratacao, IRequisicao, IUnidade } from '@/types'
 import {
@@ -75,7 +76,7 @@ export function Step4Revisao({
   const unidadeNome = userUnidade?.nomeAbrev ?? userUnidade?.nome ?? '—'
 
   const { data: uorg } = useQuery({
-    queryKey: ['uorg', user?.identUorg],
+    queryKey: qk.uorgs.detail(user!.identUorg!),
     queryFn: () => uorgsApi.obter(user!.identUorg!),
     enabled: !!user?.identUorg,
   })
@@ -92,7 +93,7 @@ export function Step4Revisao({
       requisicoesApi.atualizar(requisicao.identificador, { observacoes: novasObservacoes }),
     onSuccess: () => {
       toast.info('Requisição mantida como rascunho. O conflito foi registrado nas observações.')
-      queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
+      queryClient.invalidateQueries({ queryKey: qk.requisicoes.all })
       setConflitoPendente(null)
       navigate('/requisicoes/minhas_requisicoes')
     },
@@ -117,7 +118,7 @@ export function Step4Revisao({
       }
     },
     onSuccess: (_, enviar) => {
-      queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
+      queryClient.invalidateQueries({ queryKey: qk.requisicoes.all })
       toast.success(
         enviar ? 'Requisição enviada para análise.' : 'Requisição salva como rascunho.',
       )

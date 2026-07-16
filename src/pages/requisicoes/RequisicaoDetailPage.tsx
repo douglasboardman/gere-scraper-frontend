@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/table'
 import { useAuthStore } from '@/store/auth.store'
 import { formatCurrency, formatQtd, destDespesaLabel } from '@/lib/utils'
+import { qk } from '@/lib/query-keys'
 import type { IItemRequisicao, IFornecimento, IUnidade, IUorg, IUsuario } from '@/types'
 import { extrairIdContratacao, getItemName, getFornecedorName } from './utils/requisicaoUtils'
 import { EditItemDialog } from './components/EditItemDialog'
@@ -63,13 +64,13 @@ export function RequisicaoDetailPage() {
   const [editReqOpen, setEditReqOpen] = useState(false)
 
   const { data: requisicao, isLoading } = useQuery({
-    queryKey: ['requisicao', id],
+    queryKey: qk.requisicoes.detail(id!),
     queryFn: () => requisicoesApi.obter(id!),
     enabled: !!id,
   })
 
   const { data: itensRequisicao = [], isLoading: loadingItens } = useQuery({
-    queryKey: ['itens-requisicao', requisicao?.identificador],
+    queryKey: qk.requisicoes.itens(requisicao!.identificador),
     queryFn: () => itemRequisicaoApi.listar(requisicao!.identificador),
     enabled: !!requisicao?.identificador,
   })
@@ -78,8 +79,8 @@ export function RequisicaoDetailPage() {
     mutationFn: () => requisicoesApi.enviar(id!),
     onSuccess: () => {
       toast.success('Requisição enviada para aprovação.')
-      queryClient.invalidateQueries({ queryKey: ['requisicao', id] })
-      queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
+      queryClient.invalidateQueries({ queryKey: qk.requisicoes.detail(id!) })
+      queryClient.invalidateQueries({ queryKey: qk.requisicoes.all })
       setActionDialog(null)
       navigate('/requisicoes/minhas_requisicoes')
     },
@@ -103,8 +104,8 @@ export function RequisicaoDetailPage() {
       requisicoesApi.atualizar(id!, { observacoes: novasObservacoes }),
     onSuccess: () => {
       toast.info('Requisição mantida como rascunho. O conflito foi registrado nas observações.')
-      queryClient.invalidateQueries({ queryKey: ['requisicao', id] })
-      queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
+      queryClient.invalidateQueries({ queryKey: qk.requisicoes.detail(id!) })
+      queryClient.invalidateQueries({ queryKey: qk.requisicoes.all })
       setConflitoPendente(null)
     },
     onError: () => {
@@ -116,7 +117,7 @@ export function RequisicaoDetailPage() {
     mutationFn: (itemId: number) => itemRequisicaoApi.deletar(itemId),
     onSuccess: () => {
       toast.success('Item removido.')
-      queryClient.invalidateQueries({ queryKey: ['itens-requisicao', requisicao?.identificador] })
+      queryClient.invalidateQueries({ queryKey: qk.requisicoes.itens(requisicao!.identificador) })
     },
   })
 
@@ -452,7 +453,7 @@ export function RequisicaoDetailPage() {
           open={!!editItemTarget}
           onOpenChange={(v) => { if (!v) setEditItemTarget(null) }}
           onSaved={() => {
-            queryClient.invalidateQueries({ queryKey: ['itens-requisicao', requisicao.identificador] })
+            queryClient.invalidateQueries({ queryKey: qk.requisicoes.itens(requisicao.identificador) })
           }}
         />
       )}
@@ -466,7 +467,7 @@ export function RequisicaoDetailPage() {
           userUasg={userUasg}
           requisicaoIdentificador={requisicao.identificador}
           onSaved={() => {
-            queryClient.invalidateQueries({ queryKey: ['itens-requisicao', requisicao.identificador] })
+            queryClient.invalidateQueries({ queryKey: qk.requisicoes.itens(requisicao.identificador) })
           }}
         />
       )}
@@ -477,7 +478,7 @@ export function RequisicaoDetailPage() {
           open={editReqOpen}
           onOpenChange={setEditReqOpen}
           onSaved={() => {
-            queryClient.invalidateQueries({ queryKey: ['requisicao', id] })
+            queryClient.invalidateQueries({ queryKey: qk.requisicoes.detail(id!) })
           }}
         />
       )}

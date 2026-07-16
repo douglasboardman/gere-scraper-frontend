@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/auth.store'
+import { qk } from '@/lib/query-keys'
 import { useCacheSyncStream } from '@/hooks/useCacheSyncStream'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
@@ -18,7 +19,7 @@ export function CacheSyncProgressBar() {
 
   useEffect(() => {
     if (status === 'completed' || status === 'failed') {
-      queryClient.invalidateQueries({ queryKey: ['contratos-dashboard'] })
+      queryClient.invalidateQueries({ queryKey: qk.contratos.dashboardAll })
       const timer = setTimeout(() => setActiveCacheSyncJobId(null), 5000)
       return () => clearTimeout(timer)
     }

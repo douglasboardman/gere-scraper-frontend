@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { X, Loader2, CheckCircle2, AlertCircle, AlertTriangle } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/auth.store'
+import { qk } from '@/lib/query-keys'
 import { useJobStream } from '@/hooks/useJobStream'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
@@ -45,7 +46,7 @@ export function ScrapingProgressBar() {
 
   useEffect(() => {
     if (status === 'completed' || status === 'failed') {
-      queryClient.invalidateQueries({ queryKey: ['contratacoes'] })
+      queryClient.invalidateQueries({ queryKey: qk.contratacoes.all })
     }
   }, [status, queryClient])
 

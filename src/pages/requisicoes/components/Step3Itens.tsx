@@ -19,6 +19,7 @@ import { itensApi } from '@/api/itens.api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn, formatCurrency, formatQtd } from '@/lib/utils'
+import { qk } from '@/lib/query-keys'
 import type { IContratacao, IFornecimento, IItem } from '@/types'
 import {
   valUnitario,
@@ -57,7 +58,7 @@ export function Step3Itens({
   const [catalogSearch, setCatalogSearch] = useState('')
 
   const { data: fornecimentos = [], isLoading: loadingForn } = useQuery({
-    queryKey: ['fornecimentos-wizard', selectedCompra.identificador, userUasg, identContratoOob],
+    queryKey: qk.fornecimentos.wizard(selectedCompra.identificador, userUasg, identContratoOob),
     queryFn: () =>
       identContratoOob
         ? fornecimentosApi.listar({ identContrato: identContratoOob, status: 'Disponivel' })
@@ -65,7 +66,7 @@ export function Step3Itens({
   })
 
   const { data: itens = [], isLoading: loadingItens } = useQuery({
-    queryKey: ['itens-wizard', selectedCompra.identificador],
+    queryKey: qk.itens.wizard(selectedCompra.identificador),
     queryFn: () => itensApi.listar({ identContratacao: selectedCompra.identificador }),
   })
 

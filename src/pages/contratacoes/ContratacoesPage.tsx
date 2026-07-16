@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { usePermission } from '@/hooks/usePermission'
 import { useAuthStore } from '@/store/auth.store'
 import { ENTITY } from '@/lib/utils'
+import { qk } from '@/lib/query-keys'
 import { displayNumEdital } from '@/lib/identifier-utils'
 import type { IContratacao } from '@/types'
 import {
@@ -36,12 +37,12 @@ export function ContratacoesPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
   const { data: compras = [], isLoading } = useQuery({
-    queryKey: ['contratacoes'],
+    queryKey: qk.contratacoes.all,
     queryFn: contratacoesApi.listar,
   })
 
   const { data: unidades = [] } = useQuery({
-    queryKey: ['unidades'],
+    queryKey: qk.unidades.all,
     queryFn: unidadesApi.listar,
     enabled: isAdmin && !!deleteId,
   })
@@ -58,7 +59,7 @@ export function ContratacoesPage() {
       contratacoesApi.deletar(identificador, uasg),
     onSuccess: () => {
       toast.success('Contratação excluída com sucesso.')
-      queryClient.invalidateQueries({ queryKey: ['contratacoes'] })
+      queryClient.invalidateQueries({ queryKey: qk.contratacoes.all })
       setDeleteId(null)
       setSelectedUasg('')
     },

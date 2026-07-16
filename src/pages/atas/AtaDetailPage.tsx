@@ -8,6 +8,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { ArrowLeft, Pencil, X, Check, Eye } from "lucide-react";
 import { atasApi } from "@/api/atas.api";
+import { qk } from "@/lib/query-keys";
 import type { IAtaRegPrecos, StatusElemContratacaoAlt } from "@/types";
 import { itensApi } from "@/api/itens.api";
 import { useEditGuard } from "@/hooks/useEditGuard";
@@ -63,13 +64,13 @@ export function AtaDetailPage() {
     });
 
   const { data: ata, isLoading } = useQuery({
-    queryKey: ["ata", id],
+    queryKey: qk.atas.detail(id!),
     queryFn: () => atasApi.obter(id!),
     enabled: !!id,
   });
 
   const { data: itens = [] } = useQuery({
-    queryKey: ["itens", { identAta: id }],
+    queryKey: qk.itens.byAtaId(id!),
     queryFn: () => itensApi.listar({ identAta: id! }),
     enabled: !!id,
   });
@@ -78,10 +79,10 @@ export function AtaDetailPage() {
     mutationFn: (data: Partial<IAtaRegPrecos>) => atasApi.atualizar(id!, data),
     onSuccess: () => {
       toast.success("Ata atualizada com sucesso.");
-      queryClient.invalidateQueries({ queryKey: ["ata", id] });
-      queryClient.invalidateQueries({ queryKey: ["atas"] });
-      queryClient.invalidateQueries({ queryKey: ["itens"] });
-      queryClient.invalidateQueries({ queryKey: ["fornecimentos"] });
+      queryClient.invalidateQueries({ queryKey: qk.atas.detail(id!) });
+      queryClient.invalidateQueries({ queryKey: qk.atas.all });
+      queryClient.invalidateQueries({ queryKey: qk.itens.all });
+      queryClient.invalidateQueries({ queryKey: qk.fornecimentos.all });
       setEditMode(false);
     },
     onError: (error: unknown) => {

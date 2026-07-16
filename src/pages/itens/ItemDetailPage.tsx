@@ -8,6 +8,7 @@ import { ArrowLeft, Pencil, X, Check, Eye } from 'lucide-react'
 import { useIdParam } from '@/hooks/useIdParam'
 import { displayContratacaoFull } from '@/lib/identifier-utils'
 import { itensApi } from '@/api/itens.api'
+import { qk } from '@/lib/query-keys'
 import { useEditGuard } from '@/hooks/useEditGuard'
 import { UnsavedChangesDialog } from '@/components/shared/UnsavedChangesDialog'
 import { fornecimentosApi } from '@/api/fornecimentos.api'
@@ -58,13 +59,13 @@ export function ItemDetailPage() {
   const [activeTab, setActiveTab] = useState('informacoes')
 
   const { data: item, isLoading } = useQuery({
-    queryKey: ['item', id],
+    queryKey: qk.itens.detail(id!),
     queryFn: () => itensApi.obter(id!),
     enabled: !!id,
   })
 
   const { data: fornecimentos = [] } = useQuery({
-    queryKey: ['fornecimentos', { identItem: id }],
+    queryKey: qk.fornecimentos.byItem(id!),
     queryFn: () => fornecimentosApi.listar({ identItem: id! }),
     enabled: !!id,
   })
@@ -73,8 +74,8 @@ export function ItemDetailPage() {
     mutationFn: (data: Partial<IItem>) => itensApi.atualizar(item!.identificador, data),
     onSuccess: () => {
       toast.success('Item atualizado com sucesso.')
-      queryClient.invalidateQueries({ queryKey: ['item', id] })
-      queryClient.invalidateQueries({ queryKey: ['itens'] })
+      queryClient.invalidateQueries({ queryKey: qk.itens.detail(id!) })
+      queryClient.invalidateQueries({ queryKey: qk.itens.all })
       setEditMode(false)
     },
     onError: (error: unknown) => {

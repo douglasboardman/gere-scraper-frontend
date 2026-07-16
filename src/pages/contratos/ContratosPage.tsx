@@ -12,6 +12,7 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { formatCurrency, formatCNPJ, ENTITY } from '@/lib/utils'
+import { qk } from '@/lib/query-keys'
 import { usePermission } from '@/hooks/usePermission'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -30,7 +31,7 @@ export function ContratosPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
   const { data: contratos = [], isLoading } = useQuery({
-    queryKey: ['contratos', identContratacao],
+    queryKey: identContratacao ? qk.contratos.listByContratacao(identContratacao) : qk.contratos.all,
     queryFn: () => contratosApi.listar({ identContratacao }),
   })
 
@@ -38,7 +39,7 @@ export function ContratosPage() {
     mutationFn: (identificador: string) => contratosApi.deletar(identificador),
     onSuccess: () => {
       toast.success('Contrato excluído com sucesso.')
-      queryClient.invalidateQueries({ queryKey: ['contratos'] })
+      queryClient.invalidateQueries({ queryKey: qk.contratos.all })
       setDeleteId(null)
     },
     onError: (error: unknown) => {

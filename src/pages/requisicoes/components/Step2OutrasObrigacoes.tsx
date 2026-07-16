@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { outrasObrigacoesApi } from '@/api/outras-obrigacoes.api'
 import { requisicoesApi } from '@/api/requisicoes.api'
 import { formatCurrency } from '@/lib/utils'
+import { qk } from '@/lib/query-keys'
 import type { IContratoOob, IRequisicao, IContratacao } from '@/types'
 
 const anoAtual = String(new Date().getFullYear())
@@ -29,7 +30,7 @@ export function Step2OutrasObrigacoes({
   const [selectedContratoId, setSelectedContratoId] = useState<string | null>(null)
 
   const { data: oob, isLoading } = useQuery({
-    queryKey: ['oob-wizard', userUasg, anoAtual],
+    queryKey: qk.oob.wizard(userUasg, Number(anoAtual)),
     queryFn: () => outrasObrigacoesApi.buscarWizard(anoAtual),
   })
 

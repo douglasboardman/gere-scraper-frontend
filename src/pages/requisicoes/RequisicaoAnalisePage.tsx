@@ -25,6 +25,7 @@ import {
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { cn, formatCurrency, formatQtd, destDespesaLabel } from '@/lib/utils'
+import { qk } from '@/lib/query-keys'
 import type { IItemRequisicao, IFornecimento, IItem, IUsuario, IUnidade, IUorg } from '@/types'
 
 // ---------------------------------------------------------------------------
@@ -184,7 +185,7 @@ function AddItemsDialog({
   const [catalogSearch, setCatalogSearch] = useState('')
 
   const { data: fornecimentos = [], isLoading: loadingForn } = useQuery({
-    queryKey: ['analise-fornecimentos', contratacaoIdStr, userUasg],
+    queryKey: qk.fornecimentos.analise(contratacaoIdStr, userUasg),
     queryFn: () =>
       contratacaoIdStr
         ? fornecimentosApi.listarPorContratacaoUnidade(contratacaoIdStr, userUasg)
@@ -193,7 +194,7 @@ function AddItemsDialog({
   })
 
   const { data: itens = [], isLoading: loadingItens } = useQuery({
-    queryKey: ['analise-itens', contratacaoIdStr],
+    queryKey: qk.itens.analise(contratacaoIdStr),
     queryFn: () => contratacaoIdStr ? itensApi.listar({ identContratacao: contratacaoIdStr }) : Promise.resolve([]),
     enabled: open && !!contratacaoIdStr,
   })
@@ -392,7 +393,7 @@ export function RequisicaoAnalisePage() {
   const [showLeaveAlert, setShowLeaveAlert] = useState(false)
 
   const { data: requisicao, isLoading } = useQuery({
-    queryKey: ['requisicao-analise', id],
+    queryKey: qk.requisicoes.analise(id!),
     queryFn: () => requisicoesApi.obter(id!),
     enabled: !!id,
     select: (data) => {
@@ -406,13 +407,13 @@ export function RequisicaoAnalisePage() {
   const currentObservacoes = observacoes !== null ? observacoes : originalObservacoes
 
   const { data: itensRequisicao = [], isLoading: loadingItens } = useQuery({
-    queryKey: ['itens-analise', requisicao?.identificador],
+    queryKey: qk.requisicoes.itensAnalise(requisicao?.identificador!),
     queryFn: () => itemRequisicaoApi.listar(requisicao!.identificador),
     enabled: !!requisicao?.identificador,
   })
 
   const invalidateItems = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['itens-analise', requisicao?.identificador] })
+    queryClient.invalidateQueries({ queryKey: qk.requisicoes.itensAnalise(requisicao?.identificador!) })
     setItemsMutated(true)
   }, [queryClient, requisicao?.identificador])
 
@@ -428,7 +429,7 @@ export function RequisicaoAnalisePage() {
     },
     onSuccess: () => {
       toast.success('Requisição aprovada.')
-      queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
+      queryClient.invalidateQueries({ queryKey: qk.requisicoes.all })
       navigate('/requisicoes/pendentes')
     },
     onError: (e: unknown) => {
@@ -443,7 +444,7 @@ export function RequisicaoAnalisePage() {
     },
     onSuccess: () => {
       toast.success('Requisição rejeitada.')
-      queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
+      queryClient.invalidateQueries({ queryKey: qk.requisicoes.all })
       navigate('/requisicoes/pendentes')
     },
     onError: (e: unknown) => {

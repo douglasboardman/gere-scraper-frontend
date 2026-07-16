@@ -9,6 +9,7 @@ import { Eye, Search } from "lucide-react";
 import { ManageSearchIcon } from "@/components/icons/ManageSearchIcon";
 import type { ColumnDef } from "@tanstack/react-table";
 import { atasApi } from "@/api/atas.api";
+import { qk } from "@/lib/query-keys";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { DataTable } from "@/components/shared/DataTable";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -23,7 +24,7 @@ export function AtasPage() {
   const [fornecedorFilter, setFornecedorFilter] = useState("");
 
   const { data: atas = [], isLoading } = useQuery({
-    queryKey: ["atas", identContratacao],
+    queryKey: qk.atas.byContratacao(identContratacao!),
     queryFn: () => atasApi.listar(identContratacao),
   });
 

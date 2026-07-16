@@ -9,6 +9,7 @@ import { itemRequisicaoApi } from '@/api/itemRequisicao.api'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn, formatCurrency, formatCNPJ, formatQtd, destDespesaLabel } from '@/lib/utils'
+import { qk } from '@/lib/query-keys'
 import type { IItemRequisicao, IFornecimento, IItem, IUsuario, IUnidade, IUorg } from '@/types'
 
 
@@ -86,13 +87,13 @@ export function RequisicaoImprimirPage() {
   const navigate = useNavigate()
 
   const { data: requisicao, isLoading } = useQuery({
-    queryKey: ['requisicao-imprimir', id],
+    queryKey: qk.requisicoes.imprimir(id!),
     queryFn: () => requisicoesApi.imprimir(id!).then((r) => r.requisicao),
     enabled: !!id,
   })
 
   const { data: itens = [], isLoading: loadingItens } = useQuery({
-    queryKey: ['itens-imprimir', id],
+    queryKey: qk.requisicoes.itensImprimir(id!),
     queryFn: () => itemRequisicaoApi.listar(requisicao!.identificador),
     enabled: !!requisicao?.identificador,
   })

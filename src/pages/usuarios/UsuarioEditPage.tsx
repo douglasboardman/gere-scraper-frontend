@@ -8,6 +8,7 @@ import { ArrowLeft, Loader2, KeyRound, Trash2 } from 'lucide-react'
 import { usuariosApi } from '@/api/usuarios.api'
 import { unidadesApi } from '@/api/unidades.api'
 import { uorgsApi } from '@/api/uorgs.api'
+import { qk } from '@/lib/query-keys'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -68,13 +69,13 @@ export function UsuarioEditPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
 
   const { data: usuario, isLoading } = useQuery({
-    queryKey: ['usuario', id],
+    queryKey: qk.usuarios.detail(id!),
     queryFn: () => usuariosApi.obter(id!),
     enabled: !!id,
   })
 
   const { data: unidades = [] } = useQuery({
-    queryKey: ['unidades'],
+    queryKey: qk.unidades.all,
     queryFn: unidadesApi.listar,
   })
 
@@ -95,7 +96,7 @@ export function UsuarioEditPage() {
   const selectedUnidade = form.watch('unidade')
 
   const { data: uorgs = [], isLoading: uorgsLoading } = useQuery({
-    queryKey: ['uorgs-unidade', selectedUnidade],
+    queryKey: qk.uorgs.byUnidade(selectedUnidade!),
     queryFn: () => uorgsApi.listarPorUnidade(selectedUnidade!),
     enabled: !!selectedUnidade,
   })
@@ -107,8 +108,8 @@ export function UsuarioEditPage() {
         : usuariosApi.gestorUnidadeAtualizar(id!, { identUorg: data.identUorg, role: data.role }),
     onSuccess: () => {
       toast.success('Usuário atualizado com sucesso.')
-      queryClient.invalidateQueries({ queryKey: ['usuarios'] })
-      queryClient.invalidateQueries({ queryKey: ['usuario', id] })
+      queryClient.invalidateQueries({ queryKey: qk.usuarios.all })
+      queryClient.invalidateQueries({ queryKey: qk.usuarios.detail(id!) })
       navigate('/usuarios')
     },
     onError: (error: unknown) => {
@@ -155,9 +156,9 @@ export function UsuarioEditPage() {
   const toggleAtivoMutation = useMutation({
     mutationFn: () => usuariosApi.toggleAtivo(id!),
     onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ['usuario', id] })
-      const previous = queryClient.getQueryData<IUsuario>(['usuario', id])
-      queryClient.setQueryData<IUsuario>(['usuario', id], (old) =>
+      await queryClient.cancelQueries({ queryKey: qk.usuarios.detail(id!) })
+      const previous = queryClient.getQueryData<IUsuario>(qk.usuarios.detail(id!))
+      queryClient.setQueryData<IUsuario>(qk.usuarios.detail(id!), (old) =>
         old ? { ...old, ativo: !old.ativo } : old
       )
       const toastId = toast.loading('Processando...')
@@ -165,11 +166,11 @@ export function UsuarioEditPage() {
     },
     onSuccess: (updated, _vars, context) => {
       toast.success(`Usuário ${updated.ativo ? 'ativado' : 'desativado'} com sucesso.`, { id: context?.toastId })
-      queryClient.invalidateQueries({ queryKey: ['usuario', id] })
-      queryClient.invalidateQueries({ queryKey: ['usuarios'] })
+      queryClient.invalidateQueries({ queryKey: qk.usuarios.detail(id!) })
+      queryClient.invalidateQueries({ queryKey: qk.usuarios.all })
     },
     onError: (_error, _vars, context) => {
-      if (context?.previous) queryClient.setQueryData(['usuario', id], context.previous)
+      if (context?.previous) queryClient.setQueryData(qk.usuarios.detail(id!), context.previous)
       toast.error('Erro ao alterar status do usuário.', { id: context?.toastId })
     },
   })

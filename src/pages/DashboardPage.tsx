@@ -17,6 +17,7 @@ import { contratosApi } from '@/api/contratos.api'
 import { fornecimentosApi } from '@/api/fornecimentos.api'
 import { requisicoesApi } from '@/api/requisicoes.api'
 import { useAuthStore } from '@/store/auth.store'
+import { qk } from '@/lib/query-keys'
 import type { IRequisicao } from '@/types'
 
 interface StatCardProps {
@@ -62,22 +63,22 @@ export function DashboardPage() {
   const user = useAuthStore((s) => s.user)
 
   const { data: contratacoes, isLoading: loadingContratacoes } = useQuery({
-    queryKey: ['contratacoes'],
+    queryKey: qk.contratacoes.all,
     queryFn: contratacoesApi.listar,
   })
 
   const { data: contratos, isLoading: loadingContratos } = useQuery({
-    queryKey: ['contratos'],
+    queryKey: qk.contratos.all,
     queryFn: () => contratosApi.listar(),
   })
 
   const { data: fornecimentos, isLoading: loadingFornecimentos } = useQuery({
-    queryKey: ['fornecimentos'],
+    queryKey: qk.fornecimentos.all,
     queryFn: () => fornecimentosApi.listar(),
   })
 
   const { data: requisicoes, isLoading: loadingRequisicoes } = useQuery({
-    queryKey: ['requisicoes'],
+    queryKey: qk.requisicoes.all,
     queryFn: () => requisicoesApi.listar(),
   })
 

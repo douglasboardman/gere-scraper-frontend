@@ -6,6 +6,7 @@ import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { ArrowLeft, Pencil, X, Check, ShieldAlert, Loader2, List } from 'lucide-react'
 import { fornecedoresApi } from '@/api/fornecedores.api'
+import { qk } from '@/lib/query-keys'
 import { useEditGuard } from '@/hooks/useEditGuard'
 import { UnsavedChangesDialog } from '@/components/shared/UnsavedChangesDialog'
 import { SancoesDialog, useSancoesDialog } from '@/components/shared/SancoesDialog'
@@ -52,7 +53,7 @@ export function FornecedorDetailPage() {
   const [editEndereco, setEditEndereco] = useState('')
 
   const { data: fornecedor, isLoading } = useQuery({
-    queryKey: ['fornecedor', id],
+    queryKey: qk.fornecedores.detail(id!),
     queryFn: () => fornecedoresApi.obter(id!),
     enabled: !!id,
   })
@@ -61,8 +62,8 @@ export function FornecedorDetailPage() {
     mutationFn: (data: Partial<IFornecedor>) => fornecedoresApi.atualizar(fornecedor!.identificador, data),
     onSuccess: () => {
       toast.success('Fornecedor atualizado com sucesso.')
-      queryClient.invalidateQueries({ queryKey: ['fornecedor', id] })
-      queryClient.invalidateQueries({ queryKey: ['fornecedores'] })
+      queryClient.invalidateQueries({ queryKey: qk.fornecedores.detail(id!) })
+      queryClient.invalidateQueries({ queryKey: qk.fornecedores.all })
       setEditMode(false)
     },
     onError: (error: unknown) => {

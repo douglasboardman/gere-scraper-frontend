@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { destDespesaLabel } from '@/lib/utils'
 import { MODALIDADE_LABEL } from '@/types'
+import { qk } from '@/lib/query-keys'
 import type { IContratacao, IRequisicao } from '@/types'
 import { fmtDate, extrairIdContratacao, type Step1Data } from '../utils/requisicaoUtils'
 
@@ -56,7 +57,7 @@ export function Step2Contratacao({
   })
 
   const { data: fornecimentos = [], isLoading: loadingForn } = useQuery({
-    queryKey: ['fornecimentos-unidade', userUasg],
+    queryKey: qk.fornecimentos.byUnidade(userUasg),
     queryFn: () => fornecimentosApi.listarPorUnidade(userUasg),
     enabled: !!userUasg,
   })
@@ -74,7 +75,7 @@ export function Step2Contratacao({
   )
 
   const { data: contratacoes = [], isLoading: loadingContratacoes } = useQuery({
-    queryKey: ['contratacoes-wizard', uniqueContratacaoIds],
+    queryKey: qk.contratacoes.wizard(uniqueContratacaoIds),
     queryFn: async () => {
       if (uniqueContratacaoIds.length === 0) return []
       const results = await Promise.allSettled(

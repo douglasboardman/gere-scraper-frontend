@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { Plus, Eye, Edit, Send, CheckCircle, XCircle, Trash2, Printer } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { destDespesaLabel } from '@/lib/utils'
+import { qk } from '@/lib/query-keys'
 import { requisicoesApi } from '@/api/requisicoes.api'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable } from '@/components/shared/DataTable'
@@ -81,7 +82,7 @@ export function RequisicoesPage() {
   const [conflitoPendente, setConflitoPendente] = useState<ConflitoPendente | null>(null)
 
   const { data: requisicoes = [], isLoading } = useQuery({
-    queryKey: ['requisicoes'],
+    queryKey: qk.requisicoes.all,
     queryFn: () => requisicoesApi.listar(),
   })
 
@@ -89,7 +90,7 @@ export function RequisicoesPage() {
     mutationFn: (id: string) => requisicoesApi.enviar(id),
     onSuccess: () => {
       toast.success('Requisição enviada para aprovação.')
-      queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
+      queryClient.invalidateQueries({ queryKey: qk.requisicoes.all })
       setActionDialog(null)
     },
     onError: (error: unknown) => {
@@ -112,7 +113,7 @@ export function RequisicoesPage() {
       requisicoesApi.atualizar(identificador, { observacoes: novasObservacoes }),
     onSuccess: () => {
       toast.info('Requisição mantida como rascunho. O conflito foi registrado nas observações.')
-      queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
+      queryClient.invalidateQueries({ queryKey: qk.requisicoes.all })
       setConflitoPendente(null)
     },
     onError: () => {
@@ -124,7 +125,7 @@ export function RequisicoesPage() {
     mutationFn: (id: string) => requisicoesApi.aprovar(id),
     onSuccess: () => {
       toast.success('Requisição aprovada.')
-      queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
+      queryClient.invalidateQueries({ queryKey: qk.requisicoes.all })
       setActionDialog(null)
     },
     onError: (error: unknown) => {
@@ -136,7 +137,7 @@ export function RequisicoesPage() {
     mutationFn: (id: string) => requisicoesApi.rejeitar(id),
     onSuccess: () => {
       toast.success('Requisição rejeitada.')
-      queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
+      queryClient.invalidateQueries({ queryKey: qk.requisicoes.all })
       setActionDialog(null)
     },
     onError: (error: unknown) => {
@@ -148,7 +149,7 @@ export function RequisicoesPage() {
     mutationFn: (id: string) => requisicoesApi.deletar(id),
     onSuccess: () => {
       toast.success('Requisição excluída.')
-      queryClient.invalidateQueries({ queryKey: ['requisicoes'] })
+      queryClient.invalidateQueries({ queryKey: qk.requisicoes.all })
       setActionDialog(null)
     },
     onError: (error: unknown) => {

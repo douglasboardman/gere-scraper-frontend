@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Eye, ShieldAlert, Loader2 } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { fornecedoresApi } from '@/api/fornecedores.api'
+import { qk } from '@/lib/query-keys'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { DataTable } from '@/components/shared/DataTable'
 import { SancoesDialog, useSancoesDialog } from '@/components/shared/SancoesDialog'
@@ -21,7 +22,7 @@ import type { IFornecedor } from '@/types'
 export function FornecedoresPage() {
   const navigate = useNavigate()
   const { data: fornecedores = [], isLoading } = useQuery({
-    queryKey: ['fornecedores'],
+    queryKey: qk.fornecedores.all,
     queryFn: () => fornecedoresApi.listar(),
   })
 

@@ -9,6 +9,7 @@ import { contratacoesApi } from '@/api/contratacoes.api'
 import { unidadesApi } from '@/api/unidades.api'
 import type { IContratacao, ModalidadeContratacao, AmparoLegal } from '@/types'
 import { useAuthStore } from '@/store/auth.store'
+import { qk } from '@/lib/query-keys'
 import { usePermission } from '@/hooks/usePermission'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -78,7 +79,7 @@ export function NovaContratacaoPage() {
   const { isAdmin } = usePermission()
 
   const { data: unidades = [] } = useQuery({
-    queryKey: ['unidades'],
+    queryKey: qk.unidades.all,
     queryFn: unidadesApi.listar,
     enabled: isAdmin,
   })
@@ -111,7 +112,7 @@ export function NovaContratacaoPage() {
     onSuccess: (result, variables) => {
       // setQueryData atualiza o cache diretamente, sem network round-trip nem respeito ao staleTime
       if (!result.reimport) {
-        queryClient.setQueryData<IContratacao[]>(['contratacoes'], (old) => [result.contratacao, ...(old ?? [])])
+        queryClient.setQueryData<IContratacao[]>(qk.contratacoes.all, (old) => [result.contratacao, ...(old ?? [])])
       }
       setActiveJobId(result.jobId)
       setActiveJobFormData({

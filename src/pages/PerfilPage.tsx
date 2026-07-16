@@ -8,6 +8,7 @@ import { Loader2, User, Building2, Network } from 'lucide-react'
 import { usuariosApi } from '@/api/usuarios.api'
 import { uorgsApi } from '@/api/uorgs.api'
 import { useAuthStore } from '@/store/auth.store'
+import { qk } from '@/lib/query-keys'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -60,7 +61,7 @@ export function PerfilPage() {
   const [saved, setSaved] = useState(false)
 
   const { data: uorg } = useQuery({
-    queryKey: ['uorg', user?.identUorg],
+    queryKey: qk.uorgs.detail(user?.identUorg ?? ''),
     queryFn: () => uorgsApi.obter(user!.identUorg!),
     enabled: !!user?.identUorg,
   })

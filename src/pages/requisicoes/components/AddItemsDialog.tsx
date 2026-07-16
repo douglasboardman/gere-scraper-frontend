@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { cn, formatCurrency, formatQtd } from '@/lib/utils'
+import { qk } from '@/lib/query-keys'
 import type { IItemRequisicao, IFornecimento, IItem } from '@/types'
 import {
   descBreve, descDetalhada, unMedida, saldoDisp, valUnitario,
@@ -57,7 +58,7 @@ export function AddItemsDialog({
   const [catalogSearch, setCatalogSearch] = useState('')
 
   const { data: fornecimentos = [], isLoading: loadingForn } = useQuery({
-    queryKey: ['add-items-fornecimentos', contratacaoIdStr, userUasg],
+    queryKey: qk.fornecimentos.addItems(contratacaoIdStr, userUasg),
     queryFn: () =>
       contratacaoIdStr
         ? fornecimentosApi.listarPorContratacaoUnidade(contratacaoIdStr, userUasg)

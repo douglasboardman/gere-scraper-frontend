@@ -5,6 +5,7 @@ import { Eye, Search, ArrowLeftRight } from "lucide-react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import type { ColumnDef } from "@tanstack/react-table";
 import { itensApi } from "@/api/itens.api";
+import { qk } from "@/lib/query-keys";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { DataTable } from "@/components/shared/DataTable";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -40,7 +41,7 @@ export function ItensPage() {
     });
 
   const { data: itens = [], isLoading } = useQuery({
-    queryKey: ["itens", identAta, identContratacao],
+    queryKey: qk.itens.byAta(identAta!, identContratacao!),
     queryFn: () => itensApi.listar({ identAta, identContratacao }),
   });
 

@@ -8,6 +8,7 @@ import { ArrowLeft, Pencil, X, Check } from 'lucide-react'
 import { useIdParam } from '@/hooks/useIdParam'
 import { displayNumEdital } from '@/lib/identifier-utils'
 import { fornecimentosApi } from '@/api/fornecimentos.api'
+import { qk } from '@/lib/query-keys'
 import { useEditGuard } from '@/hooks/useEditGuard'
 import { UnsavedChangesDialog } from '@/components/shared/UnsavedChangesDialog'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -50,7 +51,7 @@ export function FornecimentoDetailPage() {
   const [editDestDespesa, setEditDestDespesa] = useState('')
 
   const { data: fornecimento, isLoading } = useQuery({
-    queryKey: ['fornecimento', id],
+    queryKey: qk.fornecimentos.detail(id!),
     queryFn: () => fornecimentosApi.obter(id!),
     enabled: !!id,
   })
@@ -59,8 +60,8 @@ export function FornecimentoDetailPage() {
     mutationFn: (data: Partial<IFornecimento>) => fornecimentosApi.atualizar(fornecimento!.identificador, data),
     onSuccess: () => {
       toast.success('Fornecimento atualizado com sucesso.')
-      queryClient.invalidateQueries({ queryKey: ['fornecimento', id] })
-      queryClient.invalidateQueries({ queryKey: ['fornecimentos'] })
+      queryClient.invalidateQueries({ queryKey: qk.fornecimentos.detail(id!) })
+      queryClient.invalidateQueries({ queryKey: qk.fornecimentos.all })
       setEditMode(false)
     },
     onError: (error: unknown) => {

@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatCNPJ, formatQtd } from '@/lib/utils'
+import { qk } from '@/lib/query-keys'
 import { usePermission } from '@/hooks/usePermission'
 import {
   Select,
@@ -62,13 +63,13 @@ export function ContratoDetailPage() {
   const [activeTab, setActiveTab] = useState('informacoes')
 
   const { data: contrato, isLoading } = useQuery({
-    queryKey: ['contrato', id],
+    queryKey: qk.contratos.detail(id!),
     queryFn: () => contratosApi.obter(id!),
     enabled: !!id,
   })
 
   const { data: fornecimentos = [] } = useQuery({
-    queryKey: ['fornecimentos', 'contrato', id],
+    queryKey: qk.fornecimentos.byContrato(id!),
     queryFn: () => fornecimentosApi.listar({ identContrato: contrato!.identificador }),
     enabled: !!contrato,
   })
@@ -77,8 +78,8 @@ export function ContratoDetailPage() {
     mutationFn: (data: Partial<IContrato>) => contratosApi.atualizar(contrato!.identificador, data),
     onSuccess: () => {
       toast.success('Contrato atualizado com sucesso.')
-      queryClient.invalidateQueries({ queryKey: ['contrato', id] })
-      queryClient.invalidateQueries({ queryKey: ['contratos'] })
+      queryClient.invalidateQueries({ queryKey: qk.contratos.detail(id!) })
+      queryClient.invalidateQueries({ queryKey: qk.contratos.all })
       setEditMode(false)
     },
     onError: (error: unknown) => {

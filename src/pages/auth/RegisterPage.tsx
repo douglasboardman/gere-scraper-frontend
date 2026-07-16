@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { Loader2, UserPlus } from 'lucide-react'
 import { authApi } from '@/api/auth.api'
 import { uorgsApi } from '@/api/uorgs.api'
+import { qk } from '@/lib/query-keys'
 import { fetchVersion } from '@/api/version.api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -61,12 +62,12 @@ export function RegisterPage() {
   const selectedUnidade = form.watch('unidade')
 
   const { data: unidades = [] } = useQuery({
-    queryKey: ['auth-unidades'],
+    queryKey: qk.auth.unidades,
     queryFn: authApi.listarUnidades,
   })
 
   const { data: uorgs = [], isLoading: uorgsLoading } = useQuery({
-    queryKey: ['auth-uorgs', selectedUnidade],
+    queryKey: qk.auth.uorgs(selectedUnidade),
     queryFn: () => uorgsApi.listarPorUnidade(selectedUnidade),
     enabled: !!selectedUnidade,
   })

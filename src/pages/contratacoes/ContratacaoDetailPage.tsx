@@ -25,6 +25,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { formatCNPJ, formatCurrency } from "@/lib/utils";
 import { exportContratacaoExcel } from "@/lib/exportContratacaoExcel";
 import { fornecimentosApi } from "@/api/fornecimentos.api";
+import { qk } from "@/lib/query-keys";
 import {
   Select,
   SelectContent,
@@ -109,25 +110,25 @@ export function ContratacaoDetailPage() {
     });
 
   const { data: contratacao, isLoading } = useQuery({
-    queryKey: ["contratacao", identificador],
+    queryKey: qk.contratacoes.detail(identificador!),
     queryFn: () => contratacoesApi.obter(identificador!),
     enabled: !!identificador,
   });
 
   const { data: atas = [] } = useQuery<IAtaRegPrecos[]>({
-    queryKey: ["atas", { identContratacao: identificador }],
+    queryKey: qk.atas.filtered({ identContratacao: identificador! }),
     queryFn: () => atasApi.listar(identificador!),
     enabled: !!identificador,
   });
 
   const { data: todosContratos = [] } = useQuery<IContrato[]>({
-    queryKey: ["contratos", "contratacao", identificador],
+    queryKey: qk.contratos.byContratacao(identificador!),
     queryFn: () => contratosApi.listarPorContratacao(identificador!),
     enabled: !!identificador,
   });
 
   const { data: itens = [] } = useQuery<IItem[]>({
-    queryKey: ["itens", { identContratacao: identificador }],
+    queryKey: qk.itens.byContratacao(identificador!),
     queryFn: () => itensApi.listar({ identContratacao: identificador! }),
     enabled: !!identificador,
   });
@@ -135,7 +136,7 @@ export function ContratacaoDetailPage() {
   const userUasg = usuario?.unidade?.uasg ?? null
 
   const { data: fornecimentosUnidade = [] } = useQuery<IFornecimento[]>({
-    queryKey: ["fornecimentos", "contratacao", identificador, userUasg],
+    queryKey: qk.fornecimentos.byContratacao(identificador!, userUasg!),
     queryFn: () => fornecimentosApi.listarPorContratacaoUnidade(identificador!, userUasg!),
     enabled: !!identificador && !!userUasg,
   })
@@ -149,10 +150,10 @@ export function ContratacaoDetailPage() {
       contratacoesApi.atualizar(identificador!, data),
     onSuccess: () => {
       toast.success("Contratação atualizada com sucesso.");
-      queryClient.invalidateQueries({ queryKey: ["contratacao", identificador] });
-      queryClient.invalidateQueries({ queryKey: ["contratacoes"] });
-      queryClient.invalidateQueries({ queryKey: ["itens", { identContratacao: identificador }] });
-      queryClient.invalidateQueries({ queryKey: ["fornecimentos"] });
+      queryClient.invalidateQueries({ queryKey: qk.contratacoes.detail(identificador!) });
+      queryClient.invalidateQueries({ queryKey: qk.contratacoes.all });
+      queryClient.invalidateQueries({ queryKey: qk.itens.byContratacao(identificador!) });
+      queryClient.invalidateQueries({ queryKey: qk.fornecimentos.all });
       setEditMode(false);
     },
     onError: (error: unknown) => {

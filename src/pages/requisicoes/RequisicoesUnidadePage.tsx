@@ -6,6 +6,7 @@ import { ptBR } from 'date-fns/locale'
 import { Eye, Filter, X } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { destDespesaLabel } from '@/lib/utils'
+import { qk } from '@/lib/query-keys'
 import { requisicoesApi } from '@/api/requisicoes.api'
 import { unidadesApi } from '@/api/unidades.api'
 import { usuariosApi } from '@/api/usuarios.api'
@@ -64,25 +65,25 @@ export function RequisicoesUnidadePage() {
   const [appliedFilters, setAppliedFilters] = useState<Filtros>(FILTROS_INICIAIS)
 
   const { data: requisicoes = [], isLoading } = useQuery({
-    queryKey: ['requisicoes-unidade', appliedFilters.contratacaoId],
+    queryKey: qk.requisicoes.unidade(appliedFilters.contratacaoId),
     queryFn: () => requisicoesApi.listar(appliedFilters.contratacaoId || undefined),
   })
 
   // Dados para o modal de filtro
   const { data: unidades = [] } = useQuery({
-    queryKey: ['unidades'],
+    queryKey: qk.unidades.all,
     queryFn: unidadesApi.listar,
     enabled: isAdmin,
   })
 
   const { data: todosUsuarios = [] } = useQuery({
-    queryKey: ['usuarios-todos'],
+    queryKey: qk.usuarios.todos,
     queryFn: usuariosApi.listarTodos,
     enabled: filterModalOpen && isAdmin,
   })
 
   const { data: usuariosUnidade = [] } = useQuery({
-    queryKey: ['usuarios-unidade'],
+    queryKey: qk.usuarios.byUnidade,
     queryFn: usuariosApi.listar,
     enabled: filterModalOpen && !isAdmin,
   })
@@ -96,7 +97,7 @@ export function RequisicoesUnidadePage() {
   }, [isAdmin, pendingFilters.unidadeId, unidades, user?.unidade?.uasg])
 
   const { data: contratacoes = [] } = useQuery({
-    queryKey: ['contratacoes-filtro', uasgParaContratacoes],
+    queryKey: qk.contratacoes.filtro(uasgParaContratacoes),
     queryFn: () => contratacoesApi.listarPorUasg(uasgParaContratacoes),
     enabled: filterModalOpen && !!pendingFilters.destDespesa && !!uasgParaContratacoes,
   })

@@ -46,6 +46,7 @@ import { getApiErrorMessage } from '@/lib/api-error'
 import { useAuthStore } from '@/store/auth.store'
 import { usePermission } from '@/hooks/usePermission'
 import { formatCurrency } from '@/lib/utils'
+import { qk } from '@/lib/query-keys'
 import type { IContratoDashboard, IUnidade } from '@/types'
 
 // ─── StatCard ────────────────────────────────────────────────────────────────
@@ -166,7 +167,7 @@ export function ContratoDashboardPage() {
   }
 
   const { data: unidades, isLoading: loadingUnidades } = useQuery<IUnidade[]>({
-    queryKey: ['unidades'],
+    queryKey: qk.unidades.all,
     queryFn: unidadesApi.listar,
     enabled: isAdmin,
     staleTime: 10 * 60 * 1000,
@@ -179,7 +180,7 @@ export function ContratoDashboardPage() {
   const dashboardEnabled = isAdmin ? selectedUnidade !== null : true
 
   const { data, isLoading, isError } = useQuery<IContratoDashboard>({
-    queryKey: ['contratos-dashboard', adminParams],
+    queryKey: qk.contratos.dashboard(adminParams as Record<string, unknown>),
     queryFn: () => contratosApi.dashboard(adminParams),
     enabled: dashboardEnabled,
     staleTime: 5 * 60 * 1000,

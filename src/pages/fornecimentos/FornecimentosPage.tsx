@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Eye, PlusCircle, Search } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { fornecimentosApi } from "@/api/fornecimentos.api";
+import { qk } from "@/lib/query-keys";
 import { useAuthStore } from "@/store/auth.store";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { DataTable } from "@/components/shared/DataTable";
@@ -33,7 +34,7 @@ export function FornecimentosPage() {
   const [itemDescFilter, setItemDescFilter] = useState("");
 
   const { data: fornecimentos = [], isLoading } = useQuery({
-    queryKey: ["fornecimentos", idItemParam, idFornecedorParam, statusParam],
+    queryKey: qk.fornecimentos.byParams(idItemParam!, idFornecedorParam!, statusParam!),
     queryFn: () =>
       fornecimentosApi.listar({
         ...(idItemParam ? { identItem: idItemParam } : {}),

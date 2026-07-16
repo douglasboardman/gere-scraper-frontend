@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { ArrowRight, ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { contratosApi } from '@/api/contratos.api'
+import { qk } from '@/lib/query-keys'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -79,7 +80,7 @@ function Step1SelecionarContratacao({
   onComplete: (contratacao: IContratacao) => void
 }) {
   const { data: lista, isLoading, isError } = useQuery({
-    queryKey: ['contratos', 'importaveis'],
+    queryKey: qk.contratos.importaveis,
     queryFn: () => contratosApi.listarImportaveis(),
   })
 

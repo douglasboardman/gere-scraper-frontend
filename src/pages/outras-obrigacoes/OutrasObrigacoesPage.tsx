@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { outrasObrigacoesApi } from '@/api/outras-obrigacoes.api'
+import { qk } from '@/lib/query-keys'
 import { formatCurrency } from '@/lib/utils'
 import type { IContratoOob, IItemOob, IFornecimentoOob } from '@/types'
 
@@ -63,7 +64,7 @@ function ContratoModal({
         ? outrasObrigacoesApi.atualizarContrato(ano, contrato.identificador, data)
         : outrasObrigacoesApi.criarContrato(ano, data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['oob', ano] })
+      qc.invalidateQueries({ queryKey: qk.oob.byAno(Number(ano)) })
       toast.success(contrato ? 'Grupo de despesa atualizado.' : 'Grupo de despesa criado.')
       onClose()
     },
@@ -129,7 +130,7 @@ function DespesaModal({
         ? outrasObrigacoesApi.atualizarDespesa(ano, contratoId, despesa.identificador, data)
         : outrasObrigacoesApi.criarDespesa(ano, contratoId, data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['oob', ano] })
+      qc.invalidateQueries({ queryKey: qk.oob.byAno(Number(ano)) })
       toast.success(despesa ? 'Despesa atualizada.' : 'Despesa adicionada.')
       onClose()
     },
@@ -196,7 +197,7 @@ function DespesasPanel({ contrato, ano }: { contrato: IContratoOob; ano: string 
     mutationFn: (despesaId: string) =>
       outrasObrigacoesApi.deletarDespesa(ano, contrato.identificador, despesaId),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['oob', ano] })
+      qc.invalidateQueries({ queryKey: qk.oob.byAno(Number(ano)) })
       toast.success('Despesa removida.')
     },
     onError: () => toast.error('Não foi possível remover a despesa.'),
@@ -279,7 +280,7 @@ export function OutrasObrigacoesPage() {
   const qc = useQueryClient()
 
   const { data: oob, isLoading } = useQuery({
-    queryKey: ['oob', ano],
+    queryKey: qk.oob.byAno(Number(ano)),
     queryFn: () => outrasObrigacoesApi.buscar(ano),
   })
 
@@ -291,8 +292,8 @@ export function OutrasObrigacoesPage() {
         ? outrasObrigacoesApi.indisponibilizar(ano)
         : outrasObrigacoesApi.disponibilizar(ano),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['oob', ano] })
-      qc.invalidateQueries({ queryKey: ['oob-wizard'] })
+      qc.invalidateQueries({ queryKey: qk.oob.byAno(Number(ano)) })
+      qc.invalidateQueries({ queryKey: qk.oob.wizardAll })
       toast.success(isDisponivel ? 'Outras Obrigações indisponibilizadas.' : 'Outras Obrigações disponibilizadas.')
       setDisponibilizarConfirm(false)
     },
@@ -303,8 +304,8 @@ export function OutrasObrigacoesPage() {
     mutationFn: ({ contratoId, disponivel }: { contratoId: string; disponivel: boolean }) =>
       outrasObrigacoesApi.toggleContrato(ano, contratoId, disponivel),
     onSuccess: (_, { disponivel }) => {
-      qc.invalidateQueries({ queryKey: ['oob', ano] })
-      qc.invalidateQueries({ queryKey: ['oob-wizard'] })
+      qc.invalidateQueries({ queryKey: qk.oob.byAno(Number(ano)) })
+      qc.invalidateQueries({ queryKey: qk.oob.wizardAll })
       toast.success(disponivel ? 'Grupo de despesa disponibilizado.' : 'Grupo de despesa indisponibilizado.')
     },
     onError: () => toast.error('Erro ao alterar disponibilidade do grupo de despesa.'),
@@ -313,7 +314,7 @@ export function OutrasObrigacoesPage() {
   const deletarContratoMutation = useMutation({
     mutationFn: (contratoId: string) => outrasObrigacoesApi.deletarContrato(ano, contratoId),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['oob', ano] })
+      qc.invalidateQueries({ queryKey: qk.oob.byAno(Number(ano)) })
       setSelectedContratoId(null)
       toast.success('Grupo de despesa removido.')
     },
@@ -355,7 +356,7 @@ export function OutrasObrigacoesPage() {
       />
 
       {!oob && (
-        <EstadoVazio ano={ano} onCreate={() => qc.invalidateQueries({ queryKey: ['oob', ano] })} />
+        <EstadoVazio ano={ano} onCreate={() => qc.invalidateQueries({ queryKey: qk.oob.byAno(Number(ano)) })} />
       )}
 
       {oob && (
