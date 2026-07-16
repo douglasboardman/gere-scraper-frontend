@@ -21,17 +21,9 @@ import { cn, formatCurrency, formatQtd } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import type { IItemRequisicao, IFornecimento, IItem } from '@/types'
 import {
-  descBreve, descDetalhada, unMedida, saldoDisp, valUnitario,
-  formatCurrencyMask, floatToMaskDigits, getItemName,
+  descBreve, descDetalhada, unMedida, saldoDisp, valUnitario, getItemName,
 } from '../utils/requisicaoUtils'
-
-type NewItemEntry = {
-  fornecimento: IFornecimento
-  item: IItem
-  quantidade: number
-  modo: 'qtd' | 'valor'
-  valDigitado: number
-}
+import { useQtdValorMap } from '../hooks/useQtdValorToggle'
 
 interface AddItemsDialogProps {
   open: boolean
@@ -52,8 +44,7 @@ export function AddItemsDialog({
   requisicaoIdentificador,
   onSaved,
 }: AddItemsDialogProps) {
-  const [newItems, setNewItems] = useState<Map<string, NewItemEntry>>(new Map())
-  const [valorRawDigits, setValorRawDigits] = useState<Map<string, string>>(new Map())
+  const map = useQtdValorMap()
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [catalogPage, setCatalogPage] = useState(1)
   const [catalogSearch, setCatalogSearch] = useState('')
@@ -99,85 +90,12 @@ export function AddItemsDialog({
   function handleAdd(f: IFornecimento) {
     const item = resolveItem(f)
     if (!item) return
-    setNewItems((prev) => {
-      if (prev.has(f.identificador)) return prev
-      const next = new Map(prev)
-      next.set(f.identificador, {
-        fornecimento: f,
-        item,
-        quantidade: 1,
-        modo: 'qtd',
-        valDigitado: valUnitario(f),
-      })
-      return next
-    })
+    map.addItem(f, item)
   }
-
-  function handleRemoveNew(idForn: string) {
-    setNewItems((prev) => {
-      const next = new Map(prev)
-      next.delete(idForn)
-      return next
-    })
-  }
-
-  function handleQtd(idForn: string, qtd: number) {
-    setNewItems((prev) => {
-      const entry = prev.get(idForn)
-      if (!entry) return prev
-      const maxSaldo = saldoDisp(entry.fornecimento)
-      if (qtd <= 0) return prev
-      const next = new Map(prev)
-      next.set(idForn, { ...entry, quantidade: Math.min(qtd, maxSaldo) })
-      return next
-    })
-  }
-
-  function handleValor(idForn: string, val: number) {
-    setNewItems((prev) => {
-      const entry = prev.get(idForn)
-      if (!entry) return prev
-      const vUnit = valUnitario(entry.fornecimento)
-      const qtdCalculada = vUnit > 0 ? Math.round((val / vUnit) * 100000) / 100000 : 0
-      const next = new Map(prev)
-      next.set(idForn, { ...entry, valDigitado: val, quantidade: qtdCalculada })
-      return next
-    })
-  }
-
-  function handleModo(idForn: string, novoModo: 'qtd' | 'valor') {
-    if (novoModo === 'valor') {
-      setValorRawDigits((d) => {
-        const nd = new Map(d)
-        nd.set(idForn, '0')
-        return nd
-      })
-      setNewItems((prev) => {
-        const e = prev.get(idForn)
-        if (!e) return prev
-        const next = new Map(prev)
-        next.set(idForn, { ...e, modo: novoModo, valDigitado: 0 })
-        return next
-      })
-    } else {
-      setNewItems((prev) => {
-        const e = prev.get(idForn)
-        if (!e) return prev
-        const next = new Map(prev)
-        next.set(idForn, { ...e, modo: novoModo })
-        return next
-      })
-    }
-  }
-
-  const newTotal = Array.from(newItems.values()).reduce(
-    (sum, e) => sum + (e.modo === 'valor' ? e.valDigitado : valUnitario(e.fornecimento) * e.quantidade),
-    0,
-  )
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      for (const [idForn, entry] of newItems.entries()) {
+      for (const [idForn, entry] of map.items.entries()) {
         await itemRequisicaoApi.criar({
           identRequisicao: requisicaoIdentificador,
           identFornecimento: idForn,
@@ -188,8 +106,8 @@ export function AddItemsDialog({
       }
     },
     onSuccess: () => {
-      toast.success(`${newItems.size} item(s) adicionado(s).`)
-      setNewItems(new Map())
+      toast.success(`${map.items.size} item(s) adicionado(s).`)
+      map.reset()
       onSaved()
       onOpenChange(false)
     },
@@ -203,8 +121,7 @@ export function AddItemsDialog({
       open={open}
       onOpenChange={(v) => {
         if (!saveMutation.isPending) {
-          setNewItems(new Map())
-          setValorRawDigits(new Map())
+          map.reset()
           setCatalogSearch('')
           setCatalogPage(1)
           onOpenChange(v)
@@ -259,7 +176,7 @@ export function AddItemsDialog({
                     const item = resolveItem(f)
                     const isExpanded = expandedId === f.identificador
                     const isAlreadyInReq = existingFornIds.has(f.identificador)
-                    const isNewlyAdded = newItems.has(f.identificador)
+                    const isNewlyAdded = map.items.has(f.identificador)
                     const saldo = saldoDisp(f)
                     const isSaldoZero = saldo <= 0
 
@@ -390,12 +307,12 @@ export function AddItemsDialog({
                     Itens da Requisição{' '}
                     <span className="text-muted-foreground font-normal">
                       ({existingItems.length} existente{existingItems.length !== 1 ? 's' : ''} +{' '}
-                      {newItems.size} novo{newItems.size !== 1 ? 's' : ''})
+                      {map.items.size} novo{map.items.size !== 1 ? 's' : ''})
                     </span>
                   </p>
-                  {newTotal > 0 && (
+                  {map.totalValue > 0 && (
                     <span className="text-sm font-bold text-green-700">
-                      +{formatCurrency(newTotal)}
+                      +{formatCurrency(map.totalValue)}
                     </span>
                   )}
                 </div>
@@ -428,14 +345,14 @@ export function AddItemsDialog({
                   </>
                 )}
 
-                {newItems.size > 0 && (
+                {map.items.size > 0 && (
                   <>
                     <div className="px-3 py-1.5 bg-primary/5">
                       <p className="text-xs text-primary font-semibold uppercase tracking-wide">
                         Novos
                       </p>
                     </div>
-                    {Array.from(newItems.entries()).map(([idForn, entry]) => {
+                    {Array.from(map.items.entries()).map(([idForn, entry]) => {
                       const vUnit = valUnitario(entry.fornecimento)
                       const saldoMax = saldoDisp(entry.fornecimento)
                       const qtdExcedesSaldo = entry.quantidade > saldoMax
@@ -451,7 +368,7 @@ export function AddItemsDialog({
                               size="icon"
                               variant="ghost"
                               className="h-6 w-6 shrink-0 text-destructive hover:text-destructive"
-                              onClick={() => handleRemoveNew(idForn)}
+                              onClick={() => map.removeItem(idForn)}
                             >
                               <Trash2 className="h-3 w-3" />
                             </Button>
@@ -460,7 +377,7 @@ export function AddItemsDialog({
                           <div className="flex rounded-md border overflow-hidden w-fit">
                             <button
                               type="button"
-                              onClick={() => handleModo(idForn, 'qtd')}
+                              onClick={() => map.handleModo(idForn, 'qtd')}
                               className={cn(
                                 'px-2 py-0.5 text-xs',
                                 entry.modo === 'qtd'
@@ -472,7 +389,7 @@ export function AddItemsDialog({
                             </button>
                             <button
                               type="button"
-                              onClick={() => handleModo(idForn, 'valor')}
+                              onClick={() => map.handleModo(idForn, 'valor')}
                               className={cn(
                                 'px-2 py-0.5 text-xs',
                                 entry.modo === 'valor'
@@ -495,7 +412,7 @@ export function AddItemsDialog({
                                 max={saldoMax}
                                 step={1}
                                 value={entry.quantidade}
-                                onChange={(e) => handleQtd(idForn, Number(e.target.value))}
+                                onChange={(e) => map.handleQtd(idForn, Number(e.target.value), saldoMax)}
                                 className={cn('h-7 w-20 text-xs', qtdExcedesSaldo && 'border-destructive')}
                               />
                               <span className="text-xs text-muted-foreground flex-1 text-right">
@@ -512,24 +429,12 @@ export function AddItemsDialog({
                                   type="text"
                                   inputMode="numeric"
                                   autoFocus
-                                  value={formatCurrencyMask(valorRawDigits.get(idForn) ?? floatToMaskDigits(entry.valDigitado))}
+                                  value={map.getValorDisplay(idForn)}
                                   onClick={(e) => {
                                     const t = e.currentTarget
                                     t.selectionStart = t.selectionEnd = t.value.length
                                   }}
-                                  onKeyDown={(e) => {
-                                    e.preventDefault()
-                                    const key = e.key
-                                    if (!/[0-9]/.test(key) && key !== 'Backspace') return
-                                    const current = valorRawDigits.get(idForn) ?? floatToMaskDigits(entry.valDigitado)
-                                    const digits = key === 'Backspace' ? current.slice(0, -1) : current + key
-                                    setValorRawDigits((prev) => {
-                                      const nd = new Map(prev)
-                                      nd.set(idForn, digits)
-                                      return nd
-                                    })
-                                    handleValor(idForn, (parseInt(digits, 10) || 0) / 100)
-                                  }}
+                                  onKeyDown={(e) => map.handleCurrencyKeyDown(idForn, e)}
                                   onChange={() => {}}
                                   className={cn('h-7 w-28 text-xs', qtdExcedesSaldo && 'border-destructive')}
                                 />
@@ -551,7 +456,7 @@ export function AddItemsDialog({
                   </>
                 )}
 
-                {existingItems.length === 0 && newItems.size === 0 && (
+                {existingItems.length === 0 && map.items.size === 0 && (
                   <div className="flex items-center justify-center h-40 text-muted-foreground text-sm text-center px-4">
                     Nenhum item. Use o <span className="mx-1 font-bold">(+)</span> para adicionar.
                   </div>
@@ -571,16 +476,16 @@ export function AddItemsDialog({
           </Button>
           <Button
             disabled={
-              newItems.size === 0 ||
+              map.items.size === 0 ||
               saveMutation.isPending ||
-              Array.from(newItems.values()).some(
+              Array.from(map.items.values()).some(
                 (e) => e.quantidade > saldoDisp(e.fornecimento),
               )
             }
             onClick={() => saveMutation.mutate()}
           >
             {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Adicionar {newItems.size > 0 ? `${newItems.size} item(s)` : 'Itens'}
+            Adicionar {map.items.size > 0 ? `${map.items.size} item(s)` : 'Itens'}
           </Button>
         </DialogFooter>
       </DialogContent>

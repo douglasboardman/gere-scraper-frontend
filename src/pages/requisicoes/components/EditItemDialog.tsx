@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
@@ -16,7 +15,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn, formatCurrency, formatQtd } from '@/lib/utils'
 import type { IItemRequisicao, IFornecimento, IItem } from '@/types'
-import { saldoDisp, valUnitario, formatCurrencyMask } from '../utils/requisicaoUtils'
+import { saldoDisp, valUnitario } from '../utils/requisicaoUtils'
+import { useQtdValorToggle } from '../hooks/useQtdValorToggle'
 
 interface EditItemDialogProps {
   item: IItemRequisicao
@@ -33,18 +33,15 @@ export function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDi
   const saldoMax = f ? saldoDisp(f) : null
   const vUnit = Math.round((item.valUnitario ?? (f ? valUnitario(f) : 0)) * 100) / 100
 
-  const [modo, setModo] = useState<'qtd' | 'valor'>('qtd')
-  const [qty, setQty] = useState(Number(item.qtdSolicitada).toFixed(5))
-  const [valorRawDigits, setValorRawDigits] = useState('0')
+  const toggle = useQtdValorToggle({
+    valorUnitario: vUnit,
+    saldoDisponivel: saldoMax,
+    qtdInicial: Number(item.qtdSolicitada),
+  })
 
   const mutation = useMutation({
     mutationFn: () =>
-      itemRequisicaoApi.atualizar(
-        item.id,
-        modo === 'valor'
-          ? { valDesejado: (parseInt(valorRawDigits, 10) || 0) / 100 }
-          : { qtdSolicitada: Number(qty) },
-      ),
+      itemRequisicaoApi.atualizar(item.id, toggle.mutationPayload),
     onSuccess: () => {
       toast.success('Item atualizado.')
       onSaved()
@@ -55,14 +52,9 @@ export function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDi
     },
   })
 
-  const valFloat = (parseInt(valorRawDigits, 10) || 0) / 100
-  const qtdNum = modo === 'qtd'
-    ? Number(qty)
-    : vUnit > 0 ? Math.round((valFloat / vUnit) * 100000) / 100000 : 0
-  const newTotal = modo === 'valor' ? valFloat : vUnit * qtdNum
   const canSave =
-    qtdNum > 0 &&
-    (saldoMax === null || qtdNum <= saldoMax) &&
+    toggle.qtdNum > 0 &&
+    !toggle.excedeSaldo &&
     !mutation.isPending
 
   return (
@@ -100,7 +92,7 @@ export function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDi
               <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
                 Novo Total
               </p>
-              <p className="text-sm font-bold text-green-700">{formatCurrency(newTotal)}</p>
+              <p className="text-sm font-bold text-green-700">{formatCurrency(toggle.valorTotal)}</p>
             </div>
           </div>
 
@@ -108,10 +100,10 @@ export function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDi
           <div className="flex rounded-md border overflow-hidden w-fit">
             <button
               type="button"
-              onClick={() => setModo('qtd')}
+              onClick={() => toggle.alternarModo('qtd')}
               className={cn(
                 'px-3 py-1 text-xs',
-                modo === 'qtd'
+                toggle.modo === 'qtd'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-background text-muted-foreground hover:bg-muted',
               )}
@@ -120,10 +112,10 @@ export function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDi
             </button>
             <button
               type="button"
-              onClick={() => { setModo('valor'); setValorRawDigits('0') }}
+              onClick={() => toggle.alternarModo('valor')}
               className={cn(
                 'px-3 py-1 text-xs',
-                modo === 'valor'
+                toggle.modo === 'valor'
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-background text-muted-foreground hover:bg-muted',
               )}
@@ -132,7 +124,7 @@ export function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDi
             </button>
           </div>
 
-          {modo === 'qtd' ? (
+          {toggle.modo === 'qtd' ? (
             <div className="space-y-2">
               <Label>
                 Quantidade{' '}
@@ -147,13 +139,13 @@ export function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDi
                 min={1}
                 max={saldoMax ?? undefined}
                 step={1}
-                value={qty}
+                value={toggle.qtdStr}
                 onChange={(e) => {
                   const v = Number(e.target.value)
                   if (saldoMax !== null && v > saldoMax) {
-                    setQty(saldoMax.toFixed(5))
+                    toggle.setQtdStr(saldoMax.toFixed(5))
                   } else {
-                    setQty(e.target.value)
+                    toggle.setQtdStr(e.target.value)
                   }
                 }}
                 className="w-32"
@@ -173,31 +165,25 @@ export function EditItemDialog({ item, open, onOpenChange, onSaved }: EditItemDi
                 type="text"
                 inputMode="numeric"
                 autoFocus
-                value={formatCurrencyMask(valorRawDigits)}
+                value={toggle.valorDisplay}
                 onClick={(e) => {
                   const t = e.currentTarget
                   t.selectionStart = t.selectionEnd = t.value.length
                 }}
-                onKeyDown={(e) => {
-                  e.preventDefault()
-                  const key = e.key
-                  if (!/[0-9]/.test(key) && key !== 'Backspace') return
-                  const digits = key === 'Backspace' ? valorRawDigits.slice(0, -1) : valorRawDigits + key
-                  setValorRawDigits(digits)
-                }}
+                onKeyDown={toggle.handleCurrencyKeyDown}
                 onChange={() => {}}
                 className={cn(
                   'w-36',
-                  saldoMax !== null && qtdNum > saldoMax && 'border-destructive',
+                  toggle.excedeSaldo && 'border-destructive',
                 )}
               />
-              {qtdNum > 0 && (
+              {toggle.qtdNum > 0 && (
                 <p className={cn(
                   'text-xs',
-                  saldoMax !== null && qtdNum > saldoMax ? 'text-destructive' : 'text-muted-foreground',
+                  toggle.excedeSaldo ? 'text-destructive' : 'text-muted-foreground',
                 )}>
-                  Quantidade calculada: {formatQtd(qtdNum)}
-                  {saldoMax !== null && qtdNum > saldoMax && ` — excede saldo (máx. ${saldoMax})`}
+                  Quantidade calculada: {formatQtd(toggle.qtdNum)}
+                  {toggle.excedeSaldo && saldoMax !== null && ` — excede saldo (máx. ${saldoMax})`}
                 </p>
               )}
             </div>

@@ -27,10 +27,9 @@ import {
   descBreve,
   descDetalhada,
   unMedida,
-  floatToMaskDigits,
-  formatCurrencyMask,
   type SelectedItemEntry,
 } from '../utils/requisicaoUtils'
+import { useQtdValorMap } from '../hooks/useQtdValorToggle'
 
 interface Step3ItensProps {
   selectedCompra: IContratacao
@@ -52,8 +51,7 @@ export function Step3Itens({
   onBack,
 }: Step3ItensProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [selectedItems, setSelectedItems] = useState<Map<string, SelectedItemEntry>>(initialItems)
-  const [valorRawDigits, setValorRawDigits] = useState<Map<string, string>>(new Map())
+  const map = useQtdValorMap(initialItems)
   const [catalogPage, setCatalogPage] = useState(1)
   const [catalogSearch, setCatalogSearch] = useState('')
 
@@ -112,95 +110,22 @@ export function Step3Itens({
   function handleAdd(f: IFornecimento) {
     const item = resolveItem(f)
     if (!item) return
-    setSelectedItems((prev) => {
-      if (prev.has(f.identificador)) return prev
-      const next = new Map(prev)
-      next.set(f.identificador, {
-        fornecimento: f,
-        item,
-        quantidade: 1,
-        modo: 'qtd',
-        valDigitado: valUnitario(f),
-      })
-      return next
-    })
+    map.addItem(f, item)
   }
-
-  function handleRemove(idForn: string) {
-    setSelectedItems((prev) => {
-      const next = new Map(prev)
-      next.delete(idForn)
-      return next
-    })
-  }
-
-  function handleQtd(idForn: string, qtd: number) {
-    setSelectedItems((prev) => {
-      const entry = prev.get(idForn)
-      if (!entry) return prev
-      if (qtd <= 0) return prev
-      const next = new Map(prev)
-      next.set(idForn, { ...entry, quantidade: qtd })
-      return next
-    })
-  }
-
-  function handleValor(idForn: string, val: number) {
-    setSelectedItems((prev) => {
-      const entry = prev.get(idForn)
-      if (!entry) return prev
-      const vUnit = valUnitario(entry.fornecimento)
-      const qtdCalculada = vUnit > 0 ? Math.round((val / vUnit) * 100000) / 100000 : 0
-      const next = new Map(prev)
-      next.set(idForn, { ...entry, valDigitado: val, quantidade: qtdCalculada })
-      return next
-    })
-  }
-
-  function handleModo(idForn: string, novoModo: 'qtd' | 'valor') {
-    if (novoModo === 'valor') {
-      setValorRawDigits((d) => {
-        const nd = new Map(d)
-        nd.set(idForn, '0')
-        return nd
-      })
-      setSelectedItems((prev) => {
-        const e = prev.get(idForn)
-        if (!e) return prev
-        const next = new Map(prev)
-        next.set(idForn, { ...e, modo: novoModo, valDigitado: 0 })
-        return next
-      })
-    } else {
-      setSelectedItems((prev) => {
-        const e = prev.get(idForn)
-        if (!e) return prev
-        const next = new Map(prev)
-        next.set(idForn, { ...e, modo: novoModo })
-        return next
-      })
-    }
-  }
-
-  const totalValue = Array.from(selectedItems.values()).reduce(
-    (sum, e) =>
-      sum + (e.modo === 'valor' ? e.valDigitado : valUnitario(e.fornecimento) * e.quantidade),
-    0,
-  )
 
   function handleNext() {
-    if (selectedItems.size === 0) {
+    if (map.items.size === 0) {
       toast.warning('Adicione pelo menos um item antes de prosseguir.')
       return
     }
-    const excedeSaldo = Array.from(selectedItems.values()).some(
+    const excedeSaldo = Array.from(map.items.values()).some(
       (e) => e.quantidade > saldoDisp(e.fornecimento),
     )
     if (excedeSaldo) {
       toast.warning('Um ou mais itens excedem o saldo disponível.')
       return
     }
-    onComplete(selectedItems)
+    onComplete(map.items)
   }
 
   return (
@@ -255,7 +180,7 @@ export function Step3Itens({
                 paginatedFornecimentos.map((f) => {
                   const item = resolveItem(f)
                   const isExpanded = expandedId === f.identificador
-                  const isAdded = selectedItems.has(f.identificador)
+                  const isAdded = map.items.has(f.identificador)
                   const vUnit = valUnitario(f)
                   const saldo = saldoDisp(f)
                   const isSaldoZero = saldo <= 0
@@ -391,23 +316,23 @@ export function Step3Itens({
                 <p className="text-sm font-semibold">
                   Selecionados{' '}
                   <span className="text-muted-foreground font-normal">
-                    ({selectedItems.size})
+                    ({map.items.size})
                   </span>
                 </p>
                 <span className="text-sm font-bold text-green-700">
-                  {formatCurrency(totalValue)}
+                  {formatCurrency(map.totalValue)}
                 </span>
               </div>
             </div>
 
             <div className="flex-1 overflow-y-auto divide-y">
-              {selectedItems.size === 0 ? (
+              {map.items.size === 0 ? (
                 <div className="flex items-center justify-center h-40 text-muted-foreground text-sm text-center px-4">
                   Nenhum item adicionado. Use o{' '}
                   <span className="mx-1 font-bold">(+)</span> para adicionar.
                 </div>
               ) : (
-                Array.from(selectedItems.entries()).map(([idForn, entry]) => {
+                Array.from(map.items.entries()).map(([idForn, entry]) => {
                   const vUnit = valUnitario(entry.fornecimento)
                   const saldoMax = saldoDisp(entry.fornecimento)
                   const uMed = unMedida(entry.item)
@@ -426,7 +351,7 @@ export function Step3Itens({
                           size="icon"
                           variant="ghost"
                           className="h-6 w-6 shrink-0 text-destructive hover:text-destructive"
-                          onClick={() => handleRemove(idForn)}
+                          onClick={() => map.removeItem(idForn)}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -442,7 +367,7 @@ export function Step3Itens({
                         <div className="flex rounded-md border overflow-hidden shrink-0">
                           <button
                             type="button"
-                            onClick={() => handleModo(idForn, 'qtd')}
+                            onClick={() => map.handleModo(idForn, 'qtd')}
                             className={cn(
                               'px-2.5 py-1 text-xs',
                               entry.modo === 'qtd'
@@ -454,7 +379,7 @@ export function Step3Itens({
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleModo(idForn, 'valor')}
+                            onClick={() => map.handleModo(idForn, 'valor')}
                             className={cn(
                               'px-2.5 py-1 text-xs',
                               entry.modo === 'valor'
@@ -471,7 +396,7 @@ export function Step3Itens({
                             min={0}
                             step={1}
                             value={entry.quantidade.toFixed(5)}
-                            onChange={(e) => handleQtd(idForn, Number(e.target.value))}
+                            onChange={(e) => map.handleQtd(idForn, Number(e.target.value))}
                             className={cn(
                               'h-8 flex-1 text-sm',
                               qtdExcedeSaldo && 'border-destructive',
@@ -482,30 +407,12 @@ export function Step3Itens({
                             type="text"
                             inputMode="numeric"
                             autoFocus
-                            value={formatCurrencyMask(
-                              valorRawDigits.get(idForn) ??
-                                floatToMaskDigits(entry.valDigitado),
-                            )}
+                            value={map.getValorDisplay(idForn)}
                             onClick={(e) => {
                               const t = e.currentTarget
                               t.selectionStart = t.selectionEnd = t.value.length
                             }}
-                            onKeyDown={(e) => {
-                              e.preventDefault()
-                              const key = e.key
-                              if (!/[0-9]/.test(key) && key !== 'Backspace') return
-                              const current =
-                                valorRawDigits.get(idForn) ??
-                                floatToMaskDigits(entry.valDigitado)
-                              const digits =
-                                key === 'Backspace' ? current.slice(0, -1) : current + key
-                              setValorRawDigits((prev) => {
-                                const nd = new Map(prev)
-                                nd.set(idForn, digits)
-                                return nd
-                              })
-                              handleValor(idForn, (parseInt(digits, 10) || 0) / 100)
-                            }}
+                            onKeyDown={(e) => map.handleCurrencyKeyDown(idForn, e)}
                             onChange={() => {}}
                             className={cn(
                               'h-8 flex-1 text-sm',
@@ -541,7 +448,7 @@ export function Step3Itens({
           <ArrowLeft className="mr-2 h-4 w-4" />
           Voltar
         </Button>
-        <Button onClick={handleNext} disabled={selectedItems.size === 0 || isLoading}>
+        <Button onClick={handleNext} disabled={map.items.size === 0 || isLoading}>
           Revisar Requisição
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
