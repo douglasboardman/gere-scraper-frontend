@@ -71,7 +71,7 @@ export function RequisicaoDetailPage() {
   })
 
   const { data: itensRequisicao = [], isLoading: loadingItens } = useQuery({
-    queryKey: qk.requisicoes.itens(requisicao!.identificador),
+    queryKey: qk.requisicoes.itens(requisicao?.identificador ?? ''),
     queryFn: () => itemRequisicaoApi.listar(requisicao!.identificador),
     enabled: !!requisicao?.identificador,
   })
