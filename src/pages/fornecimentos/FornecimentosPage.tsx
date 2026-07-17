@@ -75,6 +75,13 @@ export function FornecimentosPage() {
     return identItem.identAta as IAtaRegPrecos;
   };
 
+  const getFimVigencia = (f: IFornecimento): string | null => {
+    if (f.identContrato && typeof f.identContrato !== "string") {
+      return (f.identContrato as IContrato).fimVigencia ?? null;
+    }
+    return getAtaFromItem(f.identItem)?.fimVigencia ?? null;
+  };
+
   const contratacaoIdsComParticipacao = useMemo(() => {
     if (!userUasg || !isGestorUnidadeOrContratacoes) return null;
     const ids = new Set<string>();
@@ -169,18 +176,31 @@ export function FornecimentosPage() {
             <div>
               {contratacao && (
                 <p className="font-mono text-xs text-muted-foreground whitespace-nowrap">
-                  {contratacao.numContratacao}/{contratacao.anoContratacao}
+                  CON {contratacao.numContratacao}/{contratacao.anoContratacao}
                 </p>
               )}
               {contrato ? (
-                <p className="text-sm whitespace-nowrap">C {contrato.numContrato}</p>
+                <p className="text-sm whitespace-nowrap">CTO {contrato.numContrato}</p>
               ) : ata ? (
-                <p className="text-sm whitespace-nowrap">A {ata.numAta}</p>
+                <p className="text-sm whitespace-nowrap">ATA {ata.numAta}</p>
               ) : !contratacao ? (
                 <span className="text-muted-foreground">—</span>
               ) : null}
             </div>
           </div>
+        );
+      },
+    },
+    {
+      id: "fimVigencia",
+      header: "Fim Vigência",
+      cell: ({ row }) => {
+        const fimVig = getFimVigencia(row.original);
+        if (!fimVig) return <span className="text-sm text-muted-foreground">—</span>;
+        return (
+          <span className="text-sm font-mono whitespace-nowrap">
+            {new Date(fimVig).toLocaleDateString("pt-BR")}
+          </span>
         );
       },
     },

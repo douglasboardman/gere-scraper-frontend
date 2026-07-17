@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { IFornecimento, IItem, IFornecedor, IContratacao, DestinacaoDespesa } from '@/types'
+import type { IFornecimento, IItem, IFornecedor, IContratacao, IAtaRegPrecos, IContrato, DestinacaoDespesa } from '@/types'
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -125,6 +125,19 @@ export function FornecimentoDetailPage() {
   const fornecedorInfo = getFornecedorInfo(fornecimento.identFornecedor)
   const isItemObj = typeof fornecimento.identItem !== 'string'
   const isFornecedorObj = typeof fornecimento.identFornecedor !== 'string'
+
+  const fimVigencia = (() => {
+    if (fornecimento.identContrato && typeof fornecimento.identContrato !== 'string') {
+      return (fornecimento.identContrato as IContrato).fimVigencia ?? null;
+    }
+    if (isItemObj) {
+      const ata = (fornecimento.identItem as IItem).identAta;
+      if (ata && typeof ata !== 'string') {
+        return (ata as IAtaRegPrecos).fimVigencia ?? null;
+      }
+    }
+    return null;
+  })();
 
   const contratacaoSuffix = (() => {
     if (!isItemObj) return ''
@@ -274,6 +287,11 @@ export function FornecimentoDetailPage() {
               ) : (
                 <StatusBadge status={fornecimento.status} />
               )}
+            </Field>
+            <Field label="Fim de Vigência">
+              {fimVigencia
+                ? format(new Date(fimVigencia), 'dd/MM/yyyy', { locale: ptBR })
+                : '—'}
             </Field>
           </div>
           {isItemObj && (
