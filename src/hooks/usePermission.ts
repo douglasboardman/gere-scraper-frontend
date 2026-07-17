@@ -47,6 +47,23 @@ const permissions: Record<UserRole, Action[]> = {
     'view:usuarios_unidade',
     'manage:unidades',
   ],
+  gestor_orgao: [
+    'create:contratacoes',
+    'edit:contratacoes',
+    'delete:contratacoes',
+    'edit:atas',
+    'edit:itens',
+    'edit:fornecimentos',
+    'create:fornecimentos',
+    'create:contratos',
+    'edit:contratos',
+    'create:requisicoes',
+    'approve:requisicoes',
+    'manage:requisicoes_unidade',
+    'view:usuarios_unidade',
+    'edit:usuarios_unidade',
+    'manage:unidades',
+  ],
   gestor_unidade: [
     'create:contratacoes',
     'edit:contratacoes',
@@ -105,7 +122,8 @@ export function usePermission() {
   const role = user?.role ?? 'requisitante'
 
   const isAdmin              = role === 'admin'
-  const isGestorUnidade      = role === 'gestor_unidade'
+  const isGestorOrgao        = role === 'gestor_orgao'
+  const isGestorUnidade      = role === 'gestor_unidade' || isGestorOrgao
   const isGestorContratacoes = role === 'gestor_contratacoes'
   const isGestorContratos    = role === 'gestor_contratos'
   const isGestorFinanceiro   = role === 'gestor_financeiro'
@@ -121,6 +139,7 @@ export function usePermission() {
   return {
     isAdmin,
     isGestor,
+    isGestorOrgao,
     isGestorUnidade,
     isGestorContratacoes,
     isGestorContratos,
