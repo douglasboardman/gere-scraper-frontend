@@ -192,19 +192,6 @@ export function FornecimentosPage() {
       },
     },
     {
-      id: "fimVigencia",
-      header: "Fim Vigência",
-      cell: ({ row }) => {
-        const fimVig = getFimVigencia(row.original);
-        if (!fimVig) return <span className="text-sm text-muted-foreground">—</span>;
-        return (
-          <span className="text-sm font-mono whitespace-nowrap">
-            {new Date(fimVig).toLocaleDateString("pt-BR")}
-          </span>
-        );
-      },
-    },
-    {
       id: "item",
       header: "Item",
       cell: ({ row }) => {
@@ -274,6 +261,19 @@ export function FornecimentosPage() {
             : "—"}
         </span>
       ),
+    },
+    {
+      id: "fimVigencia",
+      header: "Fim Vigência",
+      cell: ({ row }) => {
+        const fimVig = getFimVigencia(row.original);
+        if (!fimVig) return <span className="text-sm text-muted-foreground">—</span>;
+        return (
+          <span className="text-sm font-mono whitespace-nowrap">
+            {new Date(fimVig).toLocaleDateString("pt-BR")}
+          </span>
+        );
+      },
     },
     {
       accessorKey: "status",
