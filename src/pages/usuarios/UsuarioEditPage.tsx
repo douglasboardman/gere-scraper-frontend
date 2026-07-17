@@ -95,11 +95,13 @@ export function UsuarioEditPage() {
 
   const selectedRole = form.watch('role')
   const selectedUnidade = form.watch('unidade')
+  // Fallback para identUnidade direto enquanto o form ainda não sincronizou via values/useEffect
+  const queryUnidade = selectedUnidade ?? usuario?.identUnidade ?? ''
 
   const { data: uorgs = [], isLoading: uorgsLoading } = useQuery({
-    queryKey: qk.uorgs.byUnidade(selectedUnidade!),
-    queryFn: () => uorgsApi.listarPorUnidade(selectedUnidade!),
-    enabled: !!selectedUnidade,
+    queryKey: qk.uorgs.byUnidade(queryUnidade),
+    queryFn: () => uorgsApi.listarPorUnidade(queryUnidade),
+    enabled: !!queryUnidade,
   })
 
   const updateMutation = useMutation({
@@ -331,16 +333,16 @@ export function UsuarioEditPage() {
                       <FormItem>
                         <FormLabel>UORG</FormLabel>
                         <Select
-                          key={uorgsLoading ? 'loading' : `loaded-${selectedUnidade}`}
+                          key={uorgsLoading ? 'loading' : `loaded-${queryUnidade}`}
                           onValueChange={field.onChange}
                           value={field.value}
-                          disabled={!selectedUnidade || uorgsLoading}
+                          disabled={!queryUnidade || uorgsLoading}
                         >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue
                                 placeholder={
-                                  !selectedUnidade
+                                  !queryUnidade
                                     ? 'Selecione uma unidade primeiro'
                                     : uorgsLoading
                                       ? 'Carregando...'
