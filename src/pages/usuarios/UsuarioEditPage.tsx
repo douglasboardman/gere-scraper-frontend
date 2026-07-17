@@ -38,7 +38,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { UserRole, IUsuario } from '@/types'
 import { usePermission } from '@/hooks/usePermission'
 
@@ -104,6 +104,15 @@ export function UsuarioEditPage() {
     queryFn: () => uorgsApi.listarPorUnidade(queryUnidade),
     enabled: !!queryUnidade,
   })
+
+  // Garante que identUorg seja aplicado após UORGs carregarem, caso o form.values
+  // tenha sincronizado antes das opções estarem disponíveis no Select (race condition).
+  useEffect(() => {
+    if (!usuario?.identUorg || uorgsLoading || !uorgs.length) return
+    if (!form.getValues('identUorg')) {
+      form.setValue('identUorg', usuario.identUorg, { shouldDirty: false, shouldValidate: false })
+    }
+  }, [usuario?.identUorg, uorgsLoading, uorgs])
 
   const updateMutation = useMutation({
     mutationFn: (data: EditUsuarioFormData) =>
@@ -334,7 +343,7 @@ export function UsuarioEditPage() {
                       <FormItem>
                         <FormLabel>UORG</FormLabel>
                         <Select
-                          key={uorgsLoading ? 'loading' : `loaded-${queryUnidade}`}
+                          key={queryUnidade || 'empty'}
                           onValueChange={field.onChange}
                           value={field.value}
                           disabled={!queryUnidade || uorgsLoading}

@@ -28,8 +28,12 @@ export function RequisicoesPendentesPage() {
     queryFn: () => requisicoesApi.listar(),
   })
 
-  // Apenas as Enviadas aguardando análise
-  const pendentes = todasRequisicoes.filter((r) => r.status === 'Enviada')
+  // Apenas Enviadas cuja contratação esteja Disponivel (ou sem contratação)
+  const pendentes = todasRequisicoes.filter((r) => {
+    if (r.status !== 'Enviada') return false;
+    const sp = (r as any).statusParticipacao as string | null | undefined;
+    return !sp || sp === 'Disponivel';
+  })
 
   const filtered = search.trim()
     ? pendentes.filter((r) =>

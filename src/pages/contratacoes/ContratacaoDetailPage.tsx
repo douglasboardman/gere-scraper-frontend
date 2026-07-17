@@ -154,6 +154,7 @@ export function ContratacaoDetailPage() {
       queryClient.invalidateQueries({ queryKey: qk.contratacoes.all });
       queryClient.invalidateQueries({ queryKey: qk.itens.byContratacao(identificador!) });
       queryClient.invalidateQueries({ queryKey: qk.fornecimentos.all });
+      queryClient.invalidateQueries({ queryKey: qk.requisicoes.all });
       setEditMode(false);
     },
     onError: (error: unknown) => {

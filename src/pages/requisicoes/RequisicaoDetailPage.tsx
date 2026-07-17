@@ -37,7 +37,7 @@ import {
 import { useAuthStore } from '@/store/auth.store'
 import { formatCurrency, formatQtd, destDespesaLabel } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
-import type { IItemRequisicao, IFornecimento, IUnidade, IUorg, IUsuario } from '@/types'
+import type { IItemRequisicao, IFornecimento, IUnidade, IUorg, IUsuario, IContratacao } from '@/types'
 import { extrairIdContratacao, getItemName, getFornecedorName } from './utils/requisicaoUtils'
 import { EditItemDialog } from './components/EditItemDialog'
 import { AddItemsDialog } from './components/AddItemsDialog'
@@ -144,8 +144,15 @@ export function RequisicaoDetailPage() {
   const uorg = requisicao.uorg as IUorg | undefined
   const userUasg = unidade?.uasg ?? ''
 
+  const contratacaoObj = (() => {
+    const ic = requisicao.identContratacao
+    if (ic && typeof ic !== 'string') return ic as IContratacao
+    return null
+  })()
+
   const contratacaoIdStr = (() => {
-    if (requisicao.identContratacao) return requisicao.identContratacao
+    if (contratacaoObj) return contratacaoObj.identificador
+    if (requisicao.identContratacao) return requisicao.identContratacao as string
     if (itensRequisicao.length === 0) return null
     const f = itensRequisicao[0].identFornecimento
     const fIdent = typeof f === 'string' ? f : (f as IFornecimento).identificador
@@ -233,6 +240,14 @@ export function RequisicaoDetailPage() {
               <span className="text-muted-foreground">Tipo</span>
               <p className="font-medium">{destDespesaLabel(requisicao.destDespesa)}</p>
             </div>
+            {contratacaoObj && (
+              <div>
+                <span className="text-muted-foreground">Contratação</span>
+                <p className="font-medium font-mono">
+                  {contratacaoObj.numContratacao}/{contratacaoObj.anoContratacao}
+                </p>
+              </div>
+            )}
             {requisicao.justificativa && (
               <div className="col-span-2">
                 <span className="text-muted-foreground">Justificativa</span>

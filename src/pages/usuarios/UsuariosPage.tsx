@@ -88,7 +88,7 @@ export function UsuariosPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
-  const { isAdmin } = usePermission()
+  const { isAdmin, isGestorOrgao, role } = usePermission()
   const currentUser = useAuthStore((s) => s.user)
 
   const { data: usuariosRaw = [], isLoading } = useQuery({
@@ -214,8 +214,16 @@ export function UsuariosPage() {
     {
       id: 'acoes',
       header: '',
-      cell: ({ row }) => (
+      cell: ({ row }) => {
+        const targetRole = row.original.role
+        const rolesAcimaGestorUnidade = ['admin', 'gestor_orgao', 'gestor_unidade']
+        const podeEditar =
+          isAdmin ||
+          isGestorOrgao ||
+          (role === 'gestor_unidade' && !rolesAcimaGestorUnidade.includes(targetRole))
+        return (
         <div className="flex gap-1">
+          {podeEditar && (
           <Button
             variant="ghost"
             size="sm"
@@ -223,6 +231,7 @@ export function UsuariosPage() {
           >
             <Pencil className="h-4 w-4" />
           </Button>
+          )}
           {isAdmin && (
             <Button
               variant="ghost"
@@ -234,7 +243,8 @@ export function UsuariosPage() {
             </Button>
           )}
         </div>
-      ),
+      )
+      },
     },
   ]
 

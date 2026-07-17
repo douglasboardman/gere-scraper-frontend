@@ -83,6 +83,7 @@ export function AtaDetailPage() {
       queryClient.invalidateQueries({ queryKey: qk.atas.all });
       queryClient.invalidateQueries({ queryKey: qk.itens.all });
       queryClient.invalidateQueries({ queryKey: qk.fornecimentos.all });
+      queryClient.invalidateQueries({ queryKey: qk.requisicoes.all });
       setEditMode(false);
     },
     onError: (error: unknown) => {
