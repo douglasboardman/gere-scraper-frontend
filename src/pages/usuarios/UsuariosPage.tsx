@@ -55,7 +55,7 @@ const novoUsuarioSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('E-mail inválido'),
   senha: strongPasswordSchema,
-  role: z.enum(['admin', 'gestor_unidade', 'gestor_contratos', 'gestor_financeiro', 'gestor_contratacoes', 'requisitante'] as const),
+  role: z.enum(['admin', 'gestor_orgao', 'gestor_unidade', 'gestor_contratos', 'gestor_financeiro', 'gestor_contratacoes', 'requisitante'] as const),
   unidade: z.string().optional(),
   identUorg: z.string().optional(),
 })
@@ -64,6 +64,7 @@ type NovoUsuarioFormData = z.infer<typeof novoUsuarioSchema>
 
 const roleLabels: Record<UserRole, string> = {
   admin:               'Administrador',
+  gestor_orgao:        'Gestor do Órgão',
   gestor_unidade:      'Gestor de Unidade',
   gestor_contratos:    'Gestor de Contratos',
   gestor_financeiro:   'Gestor Financeiro',
@@ -73,6 +74,7 @@ const roleLabels: Record<UserRole, string> = {
 
 const roleBadgeVariants: Record<UserRole, BadgeVariant> = {
   admin:               'default',
+  gestor_orgao:        'destructive',
   gestor_unidade:      'success',
   gestor_contratos:    'info',
   gestor_financeiro:   'purple',

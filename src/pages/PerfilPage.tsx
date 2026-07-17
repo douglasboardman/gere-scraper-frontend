@@ -50,6 +50,7 @@ type PerfilFormData = z.infer<typeof perfilSchema>
 
 const roleLabels: Record<string, string> = {
   admin:               'Administrador',
+  gestor_orgao:        'Gestor do Órgão',
   gestor_unidade:      'Gestor de Unidade',
   gestor_contratos:    'Gestor de Contratos',
   gestor_financeiro:   'Gestor Financeiro',

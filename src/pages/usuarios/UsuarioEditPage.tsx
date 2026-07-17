@@ -45,7 +45,7 @@ import { usePermission } from '@/hooks/usePermission'
 const editUsuarioSchema = z.object({
   nome: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
   email: z.string().email('E-mail inválido'),
-  role: z.enum(['admin', 'gestor_unidade', 'gestor_contratos', 'gestor_financeiro', 'gestor_contratacoes', 'requisitante'] as const),
+  role: z.enum(['admin', 'gestor_orgao', 'gestor_unidade', 'gestor_contratos', 'gestor_financeiro', 'gestor_contratacoes', 'requisitante'] as const),
   unidade: z.string().optional(),
   identUorg: z.string().optional(),
 })
@@ -54,6 +54,7 @@ type EditUsuarioFormData = z.infer<typeof editUsuarioSchema>
 
 const roleLabels: Record<UserRole, string> = {
   admin:               'Administrador',
+  gestor_orgao:        'Gestor do Órgão',
   gestor_unidade:      'Gestor de Unidade',
   gestor_contratos:    'Gestor de Contratos',
   gestor_financeiro:   'Gestor Financeiro',

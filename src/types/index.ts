@@ -9,6 +9,7 @@ export type StatusJob = 'running' | 'completed' | 'failed'
 
 export type UserRole =
   | 'admin'
+  | 'gestor_orgao'
   | 'gestor_unidade'
   | 'gestor_contratos'
   | 'gestor_financeiro'
