@@ -5,13 +5,12 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
 import { StepIndicatorAtas } from './components/StepIndicatorAtas'
 import { Step1Selecao } from './components/Step1Selecao'
+import { Step2ExtrairPDF } from './components/Step2ExtrairPDF'
+import { Step3Quantitativos } from './components/Step3Quantitativos'
 import { Step4Descricoes } from './components/Step4Descricoes'
 import { Step5GerarAtas } from './components/Step5GerarAtas'
 import { Step6GerarPDF } from './components/Step6GerarPDF'
 import type { ContratacaoPrevia, ResultadoPregao } from './types'
-
-// Steps 2 e 3 serão adicionados em Task 9 após implementação do parser PDF
-// Por ora o wizard vai 1 → 4 → 5 → 6 com resultado placeholder
 
 export function WizardAtasPage() {
   const navigate = useNavigate()
@@ -40,9 +39,27 @@ export function WizardAtasPage() {
         <Step1Selecao
           onComplete={(c) => {
             setContratacao(c)
-            setResultado({ itens: [] }) // placeholder até Task 9 (parser PDF)
-            setStep(4)
+            setStep(2)
           }}
+        />
+      )}
+
+      {step === 2 && contratacao && (
+        <Step2ExtrairPDF
+          identContratacao={contratacao.identificador}
+          onComplete={(r) => {
+            setResultado(r)
+            setStep(3)
+          }}
+          onBack={() => setStep(1)}
+        />
+      )}
+
+      {step === 3 && contratacao && resultado && (
+        <Step3Quantitativos
+          resultado={resultado}
+          onComplete={() => setStep(4)}
+          onBack={() => setStep(2)}
         />
       )}
 
@@ -50,7 +67,7 @@ export function WizardAtasPage() {
         <Step4Descricoes
           identContratacao={contratacao.identificador}
           onComplete={() => setStep(5)}
-          onBack={() => setStep(1)}
+          onBack={() => setStep(3)}
         />
       )}
 
