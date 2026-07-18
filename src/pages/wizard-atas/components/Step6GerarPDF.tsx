@@ -14,13 +14,20 @@ interface Props {
 }
 
 export function Step6GerarPDF({ identContratacao, atas }: Props) {
-  const downloadPdf = (identAta: string, numAta: string) => {
+  const downloadPdf = async (identAta: string, numAta: string) => {
     const token = localStorage.getItem('gere_token')
     const url = `${API_BASE_URL}/pregao-atas/${identContratacao}/atas/${identAta}/pdf`
+    const response = await fetch(url, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (!response.ok) return
+    const blob = await response.blob()
+    const objectUrl = URL.createObjectURL(blob)
     const a = document.createElement('a')
-    a.href = `${url}${token ? `?token=${token}` : ''}`
+    a.href = objectUrl
     a.download = `ata-${numAta}.pdf`
     a.click()
+    URL.revokeObjectURL(objectUrl)
   }
 
   return (
