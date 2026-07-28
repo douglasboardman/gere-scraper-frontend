@@ -45,37 +45,44 @@ interface InfoCardProps {
   status: string
   identUnidade: unknown
   identUorg: string | undefined
+  contratacao?: { numContratacao: string; anoContratacao: string | number } | null
 }
 
-function InfoCard({ requisitante, unidade, uorg, tipo, justificativa, observacoes, status, identUnidade, identUorg }: InfoCardProps) {
+function InfoCard({ requisitante, unidade, uorg, tipo, justificativa, status, identUnidade, identUorg, contratacao }: InfoCardProps) {
   return (
-    <div className="grid grid-cols-2 gap-x-8 gap-y-2 border rounded-md p-3 text-xs">
+    <div className="grid grid-cols-2 gap-x-8 gap-y-1.5 border rounded-md p-3 text-[11px]">
       <div>
-        <p className="text-muted-foreground uppercase font-semibold mb-0.5">Requisitante</p>
+        <p className="text-muted-foreground uppercase font-semibold mb-0.5 text-[10px]">Requisitante</p>
         <p className="font-medium">{requisitante?.nome ?? '—'}</p>
       </div>
       <div>
-        <p className="text-muted-foreground uppercase font-semibold mb-0.5">Unidade (UASG)</p>
+        <p className="text-muted-foreground uppercase font-semibold mb-0.5 text-[10px]">Unidade (UASG)</p>
         <p className="font-medium">
-          {unidade ? `${unidade.uasg} — ${unidade.nomeAbrev ?? unidade.nome}` : (identUnidade as string)}
+          {unidade ? (unidade.nomeAbrev ?? unidade.nome) : (identUnidade as string)}
         </p>
       </div>
       <div>
-        <p className="text-muted-foreground uppercase font-semibold mb-0.5">Setor / UORG</p>
+        <p className="text-muted-foreground uppercase font-semibold mb-0.5 text-[10px]">Setor / UORG</p>
         <p className="font-medium">
           {uorg ? `${uorg.sigla ? uorg.sigla + ' — ' : ''}${uorg.nome}` : (identUorg ?? '—')}
         </p>
       </div>
       <div>
-        <p className="text-muted-foreground uppercase font-semibold mb-0.5">Tipo</p>
+        <p className="text-muted-foreground uppercase font-semibold mb-0.5 text-[10px]">Tipo</p>
         <p className="font-medium">{destDespesaLabel(tipo)}</p>
       </div>
+      {contratacao && (
+        <div className="col-span-2">
+          <p className="text-muted-foreground uppercase font-semibold mb-0.5 text-[10px]">Contratação</p>
+          <p className="font-medium">{contratacao.numContratacao}/{contratacao.anoContratacao}</p>
+        </div>
+      )}
       <div className="col-span-2">
-        <p className="text-muted-foreground uppercase font-semibold mb-0.5">Justificativa</p>
+        <p className="text-muted-foreground uppercase font-semibold mb-0.5 text-[10px]">Justificativa</p>
         <p className="whitespace-pre-wrap">{justificativa ?? '—'}</p>
       </div>
       <div className="col-span-2 flex items-center justify-between pt-1.5 border-t">
-        <p className="text-muted-foreground uppercase font-semibold">Status</p>
+        <p className="text-muted-foreground uppercase font-semibold text-[10px]">Status</p>
         <p className="font-bold text-green-700">{status}</p>
       </div>
     </div>
@@ -107,6 +114,13 @@ export function RequisicaoImprimirPage() {
   const requisitante = requisicao && typeof requisicao.requisitante !== 'string'
     ? (requisicao.requisitante as IUsuario)
     : null
+  const contratacao = (() => {
+    const raw = requisicao?.identContratacao
+    if (!raw || typeof raw !== 'string') return null
+    const parts = raw.split('.')
+    if (parts.length < 2) return null
+    return { numContratacao: parts[parts.length - 2], anoContratacao: parts[parts.length - 1] }
+  })()
 
   const observacoes = requisicao?.observacoes ?? (requisicao as unknown as { observacao?: string })?.observacao
 
@@ -141,6 +155,7 @@ export function RequisicaoImprimirPage() {
     status: requisicao.status,
     identUnidade: requisicao.identUnidade,
     identUorg: requisicao.identUorg,
+    contratacao,
   }
 
   return (
@@ -158,13 +173,13 @@ export function RequisicaoImprimirPage() {
       </div>
 
       {/* Conteúdo imprimível */}
-      <div className="p-8 max-w-4xl mx-auto print:p-6 print:max-w-none text-sm print:text-xs">
+      <div className="p-8 max-w-4xl mx-auto print:p-4 print:max-w-none text-xs print:text-[10px]">
 
         {/* Cabeçalho da requisição — aparece uma única vez no topo */}
-        <div className="text-center border-b pb-4 mb-5">
-          <h1 className="text-xl font-bold uppercase tracking-wide">Requisição de Empenho</h1>
-          <p className="text-lg font-mono mt-1">{requisicao.identificador}</p>
-          <p className="text-sm text-muted-foreground mt-0.5">
+        <div className="text-center border-b pb-3 mb-4">
+          <h1 className="text-lg font-bold uppercase tracking-wide">Requisição de Empenho</h1>
+          <p className="text-base font-mono mt-1">{requisicao.identificador}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
             Criada em {format(new Date(requisicao.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
             {requisicao.dataEnvio && (
               <> · Enviada em {format(new Date(requisicao.dataEnvio), 'dd/MM/yyyy', { locale: ptBR })}</>
@@ -181,7 +196,7 @@ export function RequisicaoImprimirPage() {
           const cnpj = getFornecedorCnpj(itensForn)
 
           return (
-            <div key={fornecedor} className={cn(idx > 0 && 'break-before-page')}>
+            <div key={fornecedor} className={cn(idx > 0 && 'break-before-page pt-10')}>
               {/* Card de info da requisição — no primeiro doc segue o cabeçalho; nos demais abre a página */}
               <InfoCard {...infoCardProps} />
 
@@ -195,10 +210,10 @@ export function RequisicaoImprimirPage() {
               </div>
 
               <div className="border rounded-md overflow-hidden">
-                <table className="w-full text-sm">
+                <table className="w-full text-xs">
                   <thead className="bg-muted/20">
                     <tr>
-                      <th className="text-left px-3 py-2 font-medium text-muted-foreground w-14">Nº Pregão</th>
+                      <th className="text-left px-3 py-2 font-medium text-muted-foreground w-14">Nº Item</th>
                       <th className="text-left px-3 py-2 font-medium text-muted-foreground">Descrição</th>
                       <th className="text-left px-3 py-2 font-medium text-muted-foreground w-16">Tipo</th>
                       <th className="text-right px-3 py-2 font-medium text-muted-foreground w-10">Qtd</th>

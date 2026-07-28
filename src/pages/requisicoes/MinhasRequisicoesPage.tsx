@@ -210,7 +210,7 @@ export function MinhasRequisicoesPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 px-2 text-xs text-blue-600"
+                    className="h-7 px-2 text-xs text-blue-600 hover:bg-blue-600 hover:text-white"
                     title="Enviar para aprovação"
                     onClick={() =>
                       setActionDialog({ type: 'enviar', id: req.identificador, label: req.identificador, observacoes: req.observacoes ?? '' })
@@ -222,7 +222,7 @@ export function MinhasRequisicoesPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-2 text-xs text-destructive"
+                  className="h-7 px-2 text-xs text-destructive hover:bg-destructive hover:text-white"
                   title="Excluir"
                   onClick={() =>
                     setActionDialog({ type: 'deletar', id: req.identificador, label: req.identificador })
@@ -237,7 +237,7 @@ export function MinhasRequisicoesPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                className="h-7 px-2 text-xs text-muted-foreground"
                 title="Imprimir PDF"
                 onClick={() => navigate(`/requisicoes/imprimir?id=${encodeURIComponent(req.identificador)}`)}
               >

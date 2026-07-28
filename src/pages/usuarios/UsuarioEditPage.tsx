@@ -117,7 +117,13 @@ export function UsuarioEditPage() {
   const updateMutation = useMutation({
     mutationFn: (data: EditUsuarioFormData) =>
       isAdmin
-        ? usuariosApi.atualizar(id!, data)
+        ? usuariosApi.atualizar(id!, {
+            nome: data.nome,
+            email: data.email,
+            role: data.role,
+            identUnidade: data.unidade,
+            identUorg: data.identUorg,
+          })
         : usuariosApi.gestorUnidadeAtualizar(id!, { identUorg: data.identUorg, role: data.role }),
     onSuccess: () => {
       toast.success('Usuário atualizado com sucesso.')

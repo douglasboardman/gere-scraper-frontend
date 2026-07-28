@@ -236,7 +236,7 @@ export function UsuariosPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              className="text-destructive hover:bg-destructive hover:text-white"
               onClick={() => setDeleteConfirmId(row.original.id)}
             >
               <Trash2 className="h-4 w-4" />
