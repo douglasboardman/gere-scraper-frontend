@@ -244,7 +244,7 @@ export function RequisicoesUnidadePage() {
             size="sm"
             className="h-7 px-2 text-xs"
             title="Visualizar"
-            onClick={() => navigate(`/requisicoes/${req.identificador}/visualizar`)}
+            onClick={() => navigate(`/requisicoes/visualizar?id=${encodeURIComponent(req.identificador)}`)}
           >
             <Eye className="h-3.5 w-3.5 mr-1" />
             Visualizar

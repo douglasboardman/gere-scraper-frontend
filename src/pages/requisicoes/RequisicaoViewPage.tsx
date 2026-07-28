@@ -75,6 +75,24 @@ export function RequisicaoViewPage() {
         (requisicao.identUnidade as IUnidade)?.nome ??
         '—'
 
+  const contratacao = (() => {
+    const raw = requisicao?.identContratacao
+    if (!raw) return null
+    if (typeof raw === 'object' && raw !== null) {
+      const c = raw as { numContratacao?: string | number; anoContratacao?: string | number }
+      if (c.numContratacao && c.anoContratacao)
+        return { numContratacao: String(c.numContratacao), anoContratacao: String(c.anoContratacao) }
+    }
+    if (typeof raw === 'string') {
+      const parts = raw.split('.')
+      if (parts.length >= 2)
+        return { numContratacao: parts[parts.length - 2], anoContratacao: parts[parts.length - 1] }
+    }
+    return null
+  })()
+
+  const uorgNome = (requisicao as any).uorg?.nome ?? null
+
   const canPrint = requisicao.status === 'Aprovada' || requisicao.status === 'Empenhada'
   const canDelete = isAdmin && (requisicao.status === 'Aprovada' || requisicao.status === 'Empenhada')
 
@@ -131,6 +149,18 @@ export function RequisicaoViewPage() {
             <p className="text-xs text-muted-foreground mb-0.5">Unidade</p>
             <p className="text-sm font-medium">{unidadeNome}</p>
           </div>
+          {uorgNome && (
+            <div>
+              <p className="text-xs text-muted-foreground mb-0.5">UORG</p>
+              <p className="text-sm font-medium">{uorgNome}</p>
+            </div>
+          )}
+          {contratacao && (
+            <div>
+              <p className="text-xs text-muted-foreground mb-0.5">Contratação</p>
+              <p className="text-sm font-medium">{contratacao.numContratacao}/{contratacao.anoContratacao}</p>
+            </div>
+          )}
           <div>
             <p className="text-xs text-muted-foreground mb-0.5">Tipo</p>
             <p className="text-sm font-medium">{destDespesaLabel(requisicao.destDespesa)}</p>
