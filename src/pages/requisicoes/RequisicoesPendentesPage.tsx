@@ -1,13 +1,16 @@
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { ClipboardCheck, Search } from 'lucide-react'
+import { ClipboardCheck, Search, Undo2 } from 'lucide-react'
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { destDespesaLabel } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import { requisicoesApi } from '@/api/requisicoes.api'
+import { getApiErrorMessage } from '@/lib/api-error'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -21,11 +24,26 @@ function getRequisitanteName(req: IRequisicao): string {
 
 export function RequisicoesPendentesPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
+  const [confirmDevolver, setConfirmDevolver] = useState<string | null>(null)
 
   const { data: todasRequisicoes = [], isLoading } = useQuery({
     queryKey: qk.requisicoes.all,
     queryFn: () => requisicoesApi.listar(),
+  })
+
+  const devolverMutation = useMutation({
+    mutationFn: (identificador: string) => requisicoesApi.devolver(identificador),
+    onSuccess: () => {
+      toast.success('Requisição devolvida para edição.')
+      queryClient.invalidateQueries({ queryKey: qk.requisicoes.all })
+      setConfirmDevolver(null)
+    },
+    onError: (e: unknown) => {
+      toast.error(getApiErrorMessage(e, 'Erro ao devolver requisição.'))
+      setConfirmDevolver(null)
+    },
   })
 
   // Apenas Enviadas cuja contratação esteja Disponivel (ou sem contratação)
@@ -81,9 +99,24 @@ export function RequisicoesPendentesPage() {
               key={req.identificador}
               req={req}
               onAnalisar={() => navigate(`/requisicoes/analise?id=${encodeURIComponent(req.identificador)}`)}
+              onDevolver={() => setConfirmDevolver(req.identificador)}
+              isDevolverPending={devolverMutation.isPending && confirmDevolver === req.identificador}
             />
           ))}
         </div>
+      )}
+
+      {confirmDevolver && (
+        <ConfirmDialog
+          open
+          title="Devolver Requisição para Edição"
+          description={`Deseja devolver a requisição "${confirmDevolver}" para rascunho? O requisitante poderá editá-la e reenviar.`}
+          confirmLabel="Devolver"
+          variant="default"
+          isLoading={devolverMutation.isPending}
+          onConfirm={() => devolverMutation.mutate(confirmDevolver)}
+          onCancel={() => setConfirmDevolver(null)}
+        />
       )}
     </div>
   )
@@ -92,9 +125,11 @@ export function RequisicoesPendentesPage() {
 interface CardProps {
   req: IRequisicao
   onAnalisar: () => void
+  onDevolver: () => void
+  isDevolverPending: boolean
 }
 
-function RequisicaoPendenteCard({ req, onAnalisar }: CardProps) {
+function RequisicaoPendenteCard({ req, onAnalisar, onDevolver, isDevolverPending }: CardProps) {
   return (
     <div className="border rounded-lg p-5 bg-card hover:shadow-sm transition-shadow">
       <div className="flex items-start justify-between gap-4">
@@ -138,14 +173,24 @@ function RequisicaoPendenteCard({ req, onAnalisar }: CardProps) {
           )}
         </div>
 
-        {/* Botão Analisar */}
-        <div className="shrink-0">
+        {/* Botões de ação */}
+        <div className="shrink-0 flex flex-col gap-2">
           <Button
             onClick={onAnalisar}
             className="gap-2 bg-[#2a593a] hover:bg-[#1e4229] text-white"
           >
             <ClipboardCheck className="h-4 w-4" />
             Analisar
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 text-amber-700 border-amber-400 hover:bg-amber-50"
+            disabled={isDevolverPending}
+            onClick={onDevolver}
+          >
+            <Undo2 className="h-4 w-4" />
+            Devolver para Edição
           </Button>
         </div>
       </div>
