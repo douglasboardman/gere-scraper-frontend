@@ -43,6 +43,13 @@ export const requisicoesApi = {
     return data
   },
 
+  async devolver(identificador: string): Promise<IRequisicao> {
+    const { data } = await apiClient.patch<IRequisicao>(
+      `/requisicoes/${encodeURIComponent(identificador)}/devolver`
+    )
+    return data
+  },
+
   async imprimir(identificador: string): Promise<{ requisicao: IRequisicao; itens: unknown[] }> {
     const { data } = await apiClient.get<{ requisicao: IRequisicao; itens: unknown[] }>(`/requisicoes/${encodeURIComponent(identificador)}/imprimir`)
     return data
