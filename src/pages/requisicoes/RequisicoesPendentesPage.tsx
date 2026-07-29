@@ -185,7 +185,7 @@ function RequisicaoPendenteCard({ req, onAnalisar, onDevolver, isDevolverPending
           <Button
             variant="outline"
             size="sm"
-            className="gap-2 text-amber-700 border-amber-400 hover:bg-amber-50"
+            className="gap-2 text-amber-700 border-amber-400 hover:bg-amber-50 hover:text-amber-800"
             disabled={isDevolverPending}
             onClick={onDevolver}
           >
