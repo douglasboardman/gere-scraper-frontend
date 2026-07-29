@@ -42,6 +42,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { IContratacao, IAtaRegPrecos, IContrato, IItem, IFornecimento } from "@/types";
+import { ConfiguracaoContratacaoTab } from "./components/ConfiguracaoContratacaoTab";
 
 function buildComprasNetUrl(identificador: string): string {
   const parts = identificador.replace('CON-', '').split('.');
@@ -262,6 +263,7 @@ export function ContratacaoDetailPage() {
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="configuracoes">Configurações</TabsTrigger>
         </TabsList>
 
         {/* ─── ABA: Informações ─────────────────────────── */}
@@ -609,6 +611,11 @@ export function ContratacaoDetailPage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ─── ABA: Configurações ──────────────────────────── */}
+        <TabsContent value="configuracoes">
+          <ConfiguracaoContratacaoTab identContratacao={identificador!} />
         </TabsContent>
       </Tabs>
       <UnsavedChangesDialog

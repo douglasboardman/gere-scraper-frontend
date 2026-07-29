@@ -89,4 +89,8 @@ export const qk = {
     byUnidade: ['usuarios-unidade'] as const,
     detail: (id: string) => ['usuario', id] as const,
   },
+
+  configContratacao: {
+    byContratacao: (identContratacao: string) => ['config-contratacao', identContratacao] as const,
+  },
 } as const

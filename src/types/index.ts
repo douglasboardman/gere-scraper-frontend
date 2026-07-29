@@ -88,6 +88,26 @@ export interface IContratacao {
   _count?: { atas: number; contratos: number }
 }
 
+export interface IFornecSaldoReservado {
+  identFornecimento: string
+  saldoReservado: number
+}
+
+export interface IConfigContratacao {
+  identContratacao: string
+  identUnidade: string
+  usuarioRequerente: string | null
+  permitirReqFornecNaoVigentes: boolean
+  valorMinimoRequisicao: number | null
+  fornecSaldoReservado: IFornecSaldoReservado[] | null
+  createdAt: string
+  updatedAt: string
+}
+
+export type AtualizarConfigContratacaoData = Partial<Pick<IConfigContratacao,
+  'permitirReqFornecNaoVigentes' | 'valorMinimoRequisicao' | 'usuarioRequerente' | 'fornecSaldoReservado'
+>>
+
 export interface IAtaRegPrecos {
   identificador: string
   numAta: string
