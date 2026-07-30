@@ -615,7 +615,10 @@ export function ContratacaoDetailPage() {
 
         {/* ─── ABA: Configurações ──────────────────────────── */}
         <TabsContent value="configuracoes">
-          <ConfiguracaoContratacaoTab identContratacao={identificador!} />
+          <ConfiguracaoContratacaoTab
+            identContratacao={identificador!}
+            fornecimentosUnidade={fornecimentosUnidade}
+          />
         </TabsContent>
       </Tabs>
       <UnsavedChangesDialog
