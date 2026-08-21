@@ -98,9 +98,9 @@ export function ScrapingProgressBar() {
             </DialogDescription>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            A participação em uma contratação legada é confirmada somente quando a unidade possui
-            contratos firmados nessa contratação nas bases dos Dados Abertos do Governo Federal.
-            Verifique se a unidade realmente aderiu a esta contratação antes de tentar novamente.
+            A participação é confirmada quando a unidade possui fornecimentos ou contratos
+            registrados nesta contratação. Se a contratação for recente, os dados podem ainda
+            não estar disponíveis nas fontes consultadas — tente novamente em algumas horas.
           </p>
           <DialogFooter>
             <Button onClick={handleNaoParticipanteDialogClose}>
