@@ -62,7 +62,6 @@ const permissions: Record<UserRole, Action[]> = {
     'manage:requisicoes_unidade',
     'view:usuarios_unidade',
     'edit:usuarios_unidade',
-    'manage:unidades',
   ],
   gestor_unidade: [
     'create:contratacoes',
@@ -79,7 +78,6 @@ const permissions: Record<UserRole, Action[]> = {
     'manage:requisicoes_unidade',
     'view:usuarios_unidade',
     'edit:usuarios_unidade',
-    'manage:unidades',
   ],
   gestor_contratacoes: [
     'create:contratacoes',
@@ -89,7 +87,6 @@ const permissions: Record<UserRole, Action[]> = {
     'edit:fornecimentos',
     'create:fornecimentos',
     'edit:fornecedores',
-    'delete:fornecedores',
     'create:contratos',
     'edit:contratos',
     'create:requisicoes',

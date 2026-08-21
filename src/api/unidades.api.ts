@@ -7,8 +7,10 @@ export const unidadesApi = {
     return data
   },
 
-  async obter(id: number): Promise<IUnidade> {
-    const { data } = await apiClient.get<IUnidade>(`/unidades/${id}`)
+  async obter(identificador: string): Promise<IUnidade> {
+    const { data } = await apiClient.get<IUnidade>(
+      `/unidades/${encodeURIComponent(identificador)}`,
+    )
     return data
   },
 
@@ -17,8 +19,14 @@ export const unidadesApi = {
     return data
   },
 
-  async atualizar(id: number, unidadeData: Partial<CriarUnidadeData>): Promise<IUnidade> {
-    const { data } = await apiClient.put<IUnidade>(`/unidades/${id}`, unidadeData)
+  async atualizar(
+    identificador: string,
+    unidadeData: Partial<Pick<IUnidade, 'nome' | 'nomeAbrev' | 'localidade'>>,
+  ): Promise<IUnidade> {
+    const { data } = await apiClient.put<IUnidade>(
+      `/unidades/${encodeURIComponent(identificador)}`,
+      unidadeData,
+    )
     return data
   },
 }
