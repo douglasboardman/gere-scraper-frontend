@@ -88,10 +88,6 @@ Há páginas para requisições próprias, da unidade, análise, detalhe, visual
 
 Gestores de unidade e administradores preparam uma contratação sintética anual para despesas fora das contratações importadas. A tela administra itens, contratos, fornecimentos, despesas e disponibilidade.
 
-### Wizard de atas
-
-Permite selecionar contratação, extrair resultado de pregão em PDF, ajustar quantitativos e descrições, gerar atas e emitir PDFs.
-
 ### Administração
 
 - Administradores gerenciam unidades e todos os usuários.
@@ -170,7 +166,6 @@ Zustand mantém usuário, JWT, autenticação e jobs ativos. Token e usuário s�
 | `/requisicoes` | requisições da unidade/global |
 | `/requisicoes/pendentes` | fila de análise |
 | `/outras-obrigacoes` | outras obrigações anuais |
-| `/wizard-atas` | geração de atas |
 | `/usuarios` | usuários |
 | `/unidades` | unidades |
 | `/perfil` | perfil atual |
@@ -193,7 +188,7 @@ Sem a variável, usa `/api` relativo. Em desenvolvimento, o Vite encaminha `/api
 
 ## Instalação e execução
 
-Pré-requisitos: Node.js 18+, npm e `gere-api` configurado e em execução. Node.js 22 é recomendado para alinhar os projetos.
+Pré-requisitos: Node.js 18+, npm e `gere-api` configurado e em execução. Node.js 24.14.1 é recomendado para alinhar os projetos.
 
 ```bash
 npm install

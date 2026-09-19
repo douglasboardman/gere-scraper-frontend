@@ -43,7 +43,6 @@ import { UsuarioEditPage } from '@/pages/usuarios/UsuarioEditPage'
 import { PerfilPage } from '@/pages/PerfilPage'
 import { SobrePage } from '@/pages/SobrePage'
 import { OutrasObrigacoesPage } from '@/pages/outras-obrigacoes/OutrasObrigacoesPage'
-import { WizardAtasPage } from '@/pages/wizard-atas/WizardAtasPage'
 
 // Protected route component
 function PrivateRoute({
@@ -297,11 +296,6 @@ export const router = createBrowserRouter([
                 element: <OutrasObrigacoesPage />,
               },
             ],
-          },
-          {
-            path: 'wizard-atas',
-            element: <PrivateRoute requireGestorOrAdmin />,
-            children: [{ index: true, element: <WizardAtasPage /> }],
           },
           {
             path: 'perfil',
