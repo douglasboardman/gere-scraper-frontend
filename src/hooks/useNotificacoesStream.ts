@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/auth.store'
 
 const RETRY_BASE_MS = 3_000
 const RETRY_MAX_MS = 30_000
+const POLLING_FALLBACK_MS = 60_000
 
 export function useNotificacoesStream() {
   const userId = useAuthStore((state) => state.user?.id ?? null)
@@ -21,6 +22,7 @@ export function useNotificacoesStream() {
     const invalidar = () => {
       void queryClient.invalidateQueries({ queryKey: ['notificacoes'] })
     }
+    const pollingFallback = setInterval(invalidar, POLLING_FALLBACK_MS)
 
     const conectar = async () => {
       if (cancelado) return
@@ -80,6 +82,7 @@ export function useNotificacoesStream() {
       cancelado = true
       controlador?.abort()
       if (reconexao) clearTimeout(reconexao)
+      clearInterval(pollingFallback)
     }
   }, [queryClient, userId])
 }
