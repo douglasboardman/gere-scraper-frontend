@@ -93,7 +93,7 @@ export interface AtualizarNotificacaoModeloRascunhoInput {
 }
 
 export interface NotificacoesDiagnostico {
-  captura: {
+  captura?: {
     habilitada: boolean
   }
   contexto: {

@@ -222,6 +222,7 @@ export function NotificacoesAdminPage() {
     queryFn: () => notificacoesAdminApi.obterDisparo(selectedDisparoId!),
     enabled: !!selectedDisparoId,
   })
+  const capturaHabilitada = diagnosticoQuery.data?.captura?.habilitada
 
   const invalidateAdmin = async () => {
     await Promise.all([
@@ -429,8 +430,8 @@ export function NotificacoesAdminPage() {
         <div className="mb-6 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
           <Card>
             <CardContent className="flex items-center justify-between gap-3 p-4">
-              <div><p className="text-xs uppercase text-muted-foreground">Captura</p><p className="mt-1 text-sm font-semibold">{diagnosticoQuery.data.captura.habilitada ? 'Habilitada' : 'Desabilitada'}</p><p className="mt-1 text-xs text-muted-foreground">Eventos novos</p></div>
-              <Radio className={diagnosticoQuery.data.captura.habilitada ? 'h-5 w-5 text-emerald-600' : 'h-5 w-5 text-muted-foreground'} />
+              <div><p className="text-xs uppercase text-muted-foreground">Captura</p><p className="mt-1 text-sm font-semibold">{capturaHabilitada === undefined ? 'Indisponível' : capturaHabilitada ? 'Habilitada' : 'Desabilitada'}</p><p className="mt-1 text-xs text-muted-foreground">Eventos novos</p></div>
+              <Radio className={capturaHabilitada === true ? 'h-5 w-5 text-emerald-600' : 'h-5 w-5 text-muted-foreground'} />
             </CardContent>
           </Card>
           <Card>
