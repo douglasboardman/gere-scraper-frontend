@@ -185,6 +185,17 @@ export interface NotificacaoDisparoDetalhe extends NotificacaoDisparoResumo {
   }>
 }
 
+export interface NotificacaoSimulacao {
+  origem: 'SINTETICA'
+  modelo: { id: string; codigo: string; nome: string }
+  evento: { codigo: string; nome: string; versao: number }
+  versao: { id: string; numero: number; status: string }
+  conteudo: { titulo: string; corpo: unknown; acoes: unknown }
+  destinatarios: unknown[]
+  envio: { agendadoPara: string; expiraEm: string; condicaoEnvio: string; notificarNoLogin: boolean; replicarPorEmail: boolean }
+  alertas: string[]
+}
+
 const revision = (revisaoEsperada: number) => ({ revisaoEsperada })
 
 export const notificacoesAdminApi = {
@@ -285,6 +296,11 @@ export const notificacoesAdminApi = {
 
   async reprocessarDisparo(id: string, input: { motivo: string; idempotencyKey: string }) {
     const { data } = await apiClient.post(`/admin/notificacoes/disparos/${encodeURIComponent(id)}/reprocessar`, input)
+    return data
+  },
+
+  async simular(input: { modeloId: string; versaoId?: string }): Promise<NotificacaoSimulacao> {
+    const { data } = await apiClient.post('/admin/notificacoes/simulacoes', { ...input, origem: 'SINTETICA' })
     return data
   },
 }

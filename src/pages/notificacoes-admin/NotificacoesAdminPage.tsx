@@ -24,6 +24,7 @@ import type {
   NotificacaoDisparoDetalhe,
   NotificacaoModeloDetalhe,
   NotificacaoModeloResumo,
+  NotificacaoSimulacao,
   NotificacoesRetencaoDiagnostico,
 } from '@/api/notificacoes-admin.api'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -81,6 +82,7 @@ export function NotificacoesAdminPage() {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null)
   const [selectedDisparoId, setSelectedDisparoId] = useState<string | null>(null)
+  const [simulacao, setSimulacao] = useState<NotificacaoSimulacao | null>(null)
   const [eventCode, setEventCode] = useState('')
   const [eventName, setEventName] = useState('')
   const [modelCode, setModelCode] = useState('')
@@ -504,8 +506,26 @@ export function NotificacoesAdminPage() {
               onPublish={() => modelPublishMutation.mutate({ id: modeloQuery.data!.id, revisao: modeloQuery.data!.revisao })}
               onPromote={(versaoId) => modelPromoteMutation.mutate({ id: modeloQuery.data!.id, versaoId, revisao: modeloQuery.data!.revisao })}
               onActivate={() => modelActivateMutation.mutate({ id: modeloQuery.data!.id, ativo: !modeloQuery.data!.ativo, revisao: modeloQuery.data!.revisao })}
+              onSimulate={async () => {
+                try {
+                  const versao = modeloQuery.data!.versoes.find((item) => item.status === 'RASCUNHO') ?? modeloQuery.data!.versoes.find((item) => item.id === modeloQuery.data!.versaoAtiva?.id)
+                  setSimulacao(await notificacoesAdminApi.simular({ modeloId: modeloQuery.data!.id, versaoId: versao?.id }))
+                } catch (error) {
+                  toast.error(getApiErrorMessage(error, 'Não foi possível simular o modelo.'))
+                }
+              }}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!simulacao} onOpenChange={(open) => !open && setSimulacao(null)}>
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Simulação sintética</DialogTitle>
+            <DialogDescription>Nenhum dado real foi consultado, nenhum disparo foi criado e nenhum e-mail foi enviado.</DialogDescription>
+          </DialogHeader>
+          {simulacao && <div className="space-y-4"><div className="grid gap-4 sm:grid-cols-2"><div><p className="text-xs uppercase text-muted-foreground">Título</p><p className="mt-1 text-sm font-medium">{simulacao.conteudo.titulo}</p></div><div><p className="text-xs uppercase text-muted-foreground">Destinatários estimados</p><p className="mt-1 text-sm">{simulacao.destinatarios.length}</p></div></div><pre className="max-h-80 overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(simulacao.conteudo.corpo, null, 2)}</pre><div className="space-y-1 text-xs text-muted-foreground">{simulacao.alertas.map((alerta) => <p key={alerta}>{alerta}</p>)}</div></div>}
         </DialogContent>
       </Dialog>
 
@@ -694,6 +714,7 @@ function ModelDetail({
   onPublish,
   onPromote,
   onActivate,
+  onSimulate,
 }: {
   modelo: NotificacaoModeloDetalhe
   disabled: boolean
@@ -701,6 +722,7 @@ function ModelDetail({
   onPublish: () => void
   onPromote: (versaoId: string) => void
   onActivate: () => void
+  onSimulate: () => Promise<void>
 }) {
   const draft = modelo.versoes.find((versao) => versao.status === 'RASCUNHO') ?? modelo.versoes[0]
   const [title, setTitle] = useState(draft?.tituloTemplate ?? '')
@@ -780,6 +802,7 @@ function ModelDetail({
           </div>
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => void save()} disabled={disabled || saving}>{saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Salvar rascunho</Button>
+            <Button variant="outline" onClick={() => void onSimulate()} disabled={disabled}><Eye className="mr-2 h-4 w-4" /> Simular</Button>
             {draft.status === 'RASCUNHO' && <Button variant="outline" onClick={onPublish} disabled={disabled}><CheckCircle2 className="mr-2 h-4 w-4" /> Publicar versão</Button>}
             {modelo.versoes.filter((versao) => versao.status === 'PUBLICADA' && modelo.versaoAtiva?.id !== versao.id).map((versao) => <Button key={versao.id} variant="outline" onClick={() => onPromote(versao.id)} disabled={disabled}><Rocket className="mr-2 h-4 w-4" /> Promover v{versao.numero}</Button>)}
           </div>
