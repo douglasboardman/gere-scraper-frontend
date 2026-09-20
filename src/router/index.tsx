@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { usePermission } from '@/hooks/usePermission'
 import { AppLayout } from '@/components/layout/AppLayout'
+import { RouteErrorBoundary } from '@/components/shared/RouteErrorBoundary'
 
 // Pages
 import { LoginPage } from '@/pages/LoginPage'
@@ -93,26 +94,32 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/registro',
     element: <RegisterPage />,
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/esqueci-senha',
     element: <ForgotPasswordPage />,
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/redefinir-senha',
     element: <ResetPasswordPage />,
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/sobre',
     element: <SobrePage />,
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/',
     element: <PrivateRoute />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       {
         path: '/',
