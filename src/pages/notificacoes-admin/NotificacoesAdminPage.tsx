@@ -18,6 +18,7 @@ import {
 import { notificacoesAdminApi } from '@/api/notificacoes-admin.api'
 import type {
   AtualizarNotificacaoModeloRascunhoInput,
+  NotificacaoCatalogoEvento,
   NotificacaoEventoDetalhe,
   NotificacaoEventoResumo,
   NotificacaoDisparoResumo,
@@ -524,6 +525,7 @@ export function NotificacoesAdminPage() {
           {modeloQuery.data && (
             <ModelDetail
               modelo={modeloQuery.data}
+              catalogo={catalogoQuery.data?.eventos.find((evento) => evento.codigo === modeloQuery.data?.evento.codigo)}
               disabled={anyMutationPending}
               onSave={(input) => notificacoesAdminApi.atualizarModeloRascunho(modeloQuery.data!.id, input).then(async () => { await invalidateAdmin(); toast.success('Rascunho salvo.') })}
               onPublish={() => modelPublishMutation.mutate({ id: modeloQuery.data!.id, revisao: modeloQuery.data!.revisao })}
@@ -732,6 +734,7 @@ function EventDetail({
 
 function ModelDetail({
   modelo,
+  catalogo,
   disabled,
   onSave,
   onPublish,
@@ -740,6 +743,7 @@ function ModelDetail({
   onSimulate,
 }: {
   modelo: NotificacaoModeloDetalhe
+  catalogo?: NotificacaoCatalogoEvento
   disabled: boolean
   onSave: (input: AtualizarNotificacaoModeloRascunhoInput) => Promise<void>
   onPublish: () => void
@@ -764,6 +768,26 @@ function ModelDetail({
   const [scheduleTime, setScheduleTime] = useState(agendamentoInicial.tipo === 'PROXIMO_HORARIO' ? agendamentoInicial.hora : '09:00')
   const [scheduleTimezone, setScheduleTimezone] = useState(agendamentoInicial.tipo === 'PROXIMO_HORARIO' ? agendamentoInicial.fuso : 'America/Sao_Paulo')
   const [saving, setSaving] = useState(false)
+  const [campoVariavel, setCampoVariavel] = useState('')
+
+  const inserirVariavelNoTitulo = () => {
+    if (!campoVariavel) return
+    setTitle((valor) => `${valor}${valor && !valor.endsWith(' ') ? ' ' : ''}{{${campoVariavel}}}`)
+  }
+
+  const inserirVariavelNoCorpo = () => {
+    if (!campoVariavel) return
+    try {
+      const documento = parseJson(body, 'Conteúdo') as { versao?: number; blocos?: Array<{ tipo: 'paragrafo'; conteudo: unknown[] }> }
+      const blocos = Array.isArray(documento.blocos) && documento.blocos.length > 0
+        ? documento.blocos
+        : [{ tipo: 'paragrafo' as const, conteudo: [] }]
+      blocos[0].conteudo = [...(blocos[0].conteudo ?? []), { tipo: 'variavel', campo: campoVariavel }]
+      setBody(JSON.stringify({ ...documento, versao: 1, blocos }, null, 2))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Não foi possível inserir a variável.')
+    }
+  }
 
   useEffect(() => {
     setTitle(draft?.tituloTemplate ?? '')
@@ -831,6 +855,20 @@ function ModelDetail({
             <label className="block space-y-1.5 text-sm font-medium">Agendamento<select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm font-normal" value={scheduleType} onChange={(event) => setScheduleType(event.target.value as AgendamentoEditor['tipo'])}><option value="IMEDIATO">Imediato</option><option value="APOS_INTERVALO">Após intervalo</option><option value="PROXIMO_HORARIO">Próximo horário diário</option></select></label>
             {scheduleType === 'APOS_INTERVALO' && <div className="grid gap-3 sm:grid-cols-2"><label className="space-y-1.5 text-sm font-medium">Intervalo<Input type="number" min={1} max={43200} value={scheduleValue} onChange={(event) => setScheduleValue(event.target.value)} /></label><label className="space-y-1.5 text-sm font-medium">Unidade<select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm font-normal" value={scheduleUnit} onChange={(event) => setScheduleUnit(event.target.value as 'MINUTOS' | 'HORAS')}><option value="MINUTOS">Minutos</option><option value="HORAS">Horas</option></select></label></div>}
             {scheduleType === 'PROXIMO_HORARIO' && <div className="grid gap-3 sm:grid-cols-2"><label className="space-y-1.5 text-sm font-medium">Horário<Input type="time" value={scheduleTime} onChange={(event) => setScheduleTime(event.target.value)} /></label><label className="space-y-1.5 text-sm font-medium">Fuso IANA<Input value={scheduleTimezone} onChange={(event) => setScheduleTimezone(event.target.value)} placeholder="America/Sao_Paulo" /></label></div>}
+          </div>
+          <div className="space-y-3 rounded-md border p-3">
+            <div>
+              <p className="text-sm font-medium">Variáveis do evento</p>
+              <p className="text-xs text-muted-foreground">Insira campos aprovados no título ou no primeiro parágrafo do corpo.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <select className="h-10 min-w-56 flex-1 rounded-md border bg-background px-3 text-sm" value={campoVariavel} onChange={(event) => setCampoVariavel(event.target.value)}>
+                <option value="">Selecione um campo...</option>
+                {(catalogo?.camposContexto ?? []).map((campo) => <option key={campo} value={campo}>{campo}</option>)}
+              </select>
+              <Button type="button" variant="outline" onClick={inserirVariavelNoTitulo} disabled={!campoVariavel}>Inserir no título</Button>
+              <Button type="button" variant="outline" onClick={inserirVariavelNoCorpo} disabled={!campoVariavel}>Inserir no corpo</Button>
+            </div>
           </div>
           <label className="block space-y-1.5 text-sm font-medium">Conteúdo estruturado (JSON)<Textarea className="min-h-36 font-mono text-xs" value={body} onChange={(event) => setBody(event.target.value)} /></label>
           <div className="grid gap-4 lg:grid-cols-2">

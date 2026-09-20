@@ -5,6 +5,7 @@ export interface NotificacaoCatalogoEvento {
   schemaVersao: number
   viewCodigo: string
   referencias: string[]
+  camposContexto: string[]
   condicoes: string[]
 }
 
