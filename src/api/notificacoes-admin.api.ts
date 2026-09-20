@@ -92,6 +92,11 @@ export interface AtualizarNotificacaoModeloRascunhoInput {
 }
 
 export interface NotificacoesDiagnostico {
+  contexto: {
+    configurado: boolean
+    disponivel: boolean
+    erro: string | null
+  }
   processador: {
     habilitado: boolean
     versaoAplicacao: string
