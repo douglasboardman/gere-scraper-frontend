@@ -4,6 +4,7 @@ import { Header } from './Header'
 import { ScrapingProgressBar } from './ScrapingProgressBar'
 import { CacheSyncProgressBar } from './CacheSyncProgressBar'
 import { useAuthStore } from '@/store/auth.store'
+import { AvisoNotificacoesLogin } from '@/components/notificacoes/AvisoNotificacoesLogin'
 
 export function AppLayout() {
   const activeJobId = useAuthStore((s) => s.activeJobId)
@@ -30,6 +31,7 @@ export function AppLayout() {
       {/* Progress bars fixed at bottom */}
       <ScrapingProgressBar />
       <CacheSyncProgressBar />
+      <AvisoNotificacoesLogin />
     </div>
   )
 }

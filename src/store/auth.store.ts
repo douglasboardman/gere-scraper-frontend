@@ -18,6 +18,7 @@ interface AuthState {
   activeJobId: string | null
   activeJobFormData: ActiveJobFormData | null
   activeCacheSyncJobId: string | null
+  loginNonce: number | null
 }
 
 interface AuthActions {
@@ -41,15 +42,16 @@ export const useAuthStore = create<AuthStore>()(
       activeJobId: null,
       activeJobFormData: null,
       activeCacheSyncJobId: null,
+      loginNonce: null,
 
       // Actions
       login: (token: string, user: IUsuario) => {
-        set({ token, user, isAuthenticated: true })
+        set({ token, user, isAuthenticated: true, loginNonce: Date.now() })
       },
 
       logout: () => {
         queryClient.clear()
-        set({ token: null, user: null, isAuthenticated: false, activeJobId: null, activeCacheSyncJobId: null })
+        set({ token: null, user: null, isAuthenticated: false, activeJobId: null, activeCacheSyncJobId: null, loginNonce: null })
       },
 
       setUser: (user: IUsuario) => {
