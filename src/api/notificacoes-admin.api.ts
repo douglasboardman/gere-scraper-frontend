@@ -267,4 +267,9 @@ export const notificacoesAdminApi = {
     const { data } = await apiClient.post(`/admin/notificacoes/emails/${encodeURIComponent(id)}/reprocessar`, input)
     return data
   },
+
+  async reprocessarDisparo(id: string, input: { motivo: string; idempotencyKey: string }) {
+    const { data } = await apiClient.post(`/admin/notificacoes/disparos/${encodeURIComponent(id)}/reprocessar`, input)
+    return data
+  },
 }

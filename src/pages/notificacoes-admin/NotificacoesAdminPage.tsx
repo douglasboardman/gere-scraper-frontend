@@ -509,6 +509,13 @@ export function NotificacoesAdminPage() {
               queryClient.invalidateQueries({ queryKey: qk.notificacoes.adminDisparos }),
               queryClient.invalidateQueries({ queryKey: qk.notificacoes.adminDiagnostico }),
             ])
+          }} onDispatchReprocessed={async (input) => {
+            await notificacoesAdminApi.reprocessarDisparo(disparoQuery.data!.id, input)
+            await Promise.all([
+              queryClient.invalidateQueries({ queryKey: qk.notificacoes.adminDisparo(disparoQuery.data!.id) }),
+              queryClient.invalidateQueries({ queryKey: qk.notificacoes.adminDisparos }),
+              queryClient.invalidateQueries({ queryKey: qk.notificacoes.adminDiagnostico }),
+            ])
           }} />}
         </DialogContent>
       </Dialog>
@@ -516,9 +523,11 @@ export function NotificacoesAdminPage() {
   )
 }
 
-function DisparoDetail({ disparo, onReprocessed }: { disparo: NotificacaoDisparoDetalhe; onReprocessed: (emailId: string, input: { motivo: string; idempotencyKey: string; confirmarResultadoIncerto: boolean }) => Promise<void> }) {
+function DisparoDetail({ disparo, onReprocessed, onDispatchReprocessed }: { disparo: NotificacaoDisparoDetalhe; onReprocessed: (emailId: string, input: { motivo: string; idempotencyKey: string; confirmarResultadoIncerto: boolean }) => Promise<void>; onDispatchReprocessed: (input: { motivo: string; idempotencyKey: string }) => Promise<void> }) {
   const [emailSelecionado, setEmailSelecionado] = useState<NotificacaoDisparoDetalhe['destinatarios'][number]['entregaEmail'] & { destinatarioId: string } | null>(null)
   const [motivo, setMotivo] = useState('')
+  const [reprocessarDisparo, setReprocessarDisparo] = useState(false)
+  const [motivoDisparo, setMotivoDisparo] = useState('')
   const [enviando, setEnviando] = useState(false)
 
   const confirmarReprocessamento = async () => {
@@ -543,6 +552,24 @@ function DisparoDetail({ disparo, onReprocessed }: { disparo: NotificacaoDisparo
     }
   }
 
+  const confirmarReprocessamentoDisparo = async () => {
+    if (motivoDisparo.trim().length < 10) {
+      toast.error('Informe um motivo com pelo menos 10 caracteres.')
+      return
+    }
+    try {
+      setEnviando(true)
+      await onDispatchReprocessed({ motivo: motivoDisparo.trim(), idempotencyKey: crypto.randomUUID() })
+      setReprocessarDisparo(false)
+      setMotivoDisparo('')
+      toast.success('Disparo recolocado na fila.')
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Não foi possível reprocessar o disparo.'))
+    } finally {
+      setEnviando(false)
+    }
+  }
+
   return (
     <>
       <div className="space-y-5">
@@ -553,6 +580,7 @@ function DisparoDetail({ disparo, onReprocessed }: { disparo: NotificacaoDisparo
         <div><p className="text-xs uppercase text-muted-foreground">Destinatários</p><p className="text-sm">{disparo.totalDisponibilizados}/{disparo.totalDestinatarios}</p></div>
       </div>
       <Separator />
+      {disparo.status === 'FALHA_FINAL' && disparo.destinatarios.length === 0 && <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-amber-200 bg-amber-50 p-3"><div><p className="text-sm font-medium">Nenhuma entrega interna foi criada</p><p className="text-xs text-muted-foreground">O disparo pode ser reprocessado após correção da configuração.</p></div><Button size="sm" variant="outline" onClick={() => setReprocessarDisparo(true)}><RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Reprocessar disparo</Button></div>}
       <div><p className="text-xs uppercase text-muted-foreground">Título resolvido</p><p className="mt-1 text-sm font-medium">{disparo.tituloResolvido ?? '—'}</p></div>
       <div>
         <p className="text-xs uppercase text-muted-foreground">Corpo estruturado</p>
@@ -580,6 +608,18 @@ function DisparoDetail({ disparo, onReprocessed }: { disparo: NotificacaoDisparo
         isLoading={enviando}
       >
         <label className="block space-y-1.5 text-sm font-medium">Motivo<Textarea value={motivo} onChange={(event) => setMotivo(event.target.value)} placeholder="Descreva por que a réplica deve ser reprocessada." /></label>
+      </ConfirmDialog>
+      <ConfirmDialog
+        open={reprocessarDisparo}
+        onCancel={() => { if (!enviando) { setReprocessarDisparo(false); setMotivoDisparo('') } }}
+        onConfirm={() => void confirmarReprocessamentoDisparo()}
+        title="Reprocessar disparo"
+        description="O disparo será reavaliado com a mesma ocorrência e versão. Nenhuma entrega interna existente será repetida."
+        confirmLabel="Reprocessar disparo"
+        variant="default"
+        isLoading={enviando}
+      >
+        <label className="block space-y-1.5 text-sm font-medium">Motivo<Textarea value={motivoDisparo} onChange={(event) => setMotivoDisparo(event.target.value)} placeholder="Descreva a correção realizada antes do reprocessamento." /></label>
       </ConfirmDialog>
     </>
   )
