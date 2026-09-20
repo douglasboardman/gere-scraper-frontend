@@ -38,6 +38,7 @@ import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 
 type AdminTab = 'eventos' | 'modelos' | 'disparos'
 
@@ -501,16 +502,50 @@ export function NotificacoesAdminPage() {
             <DialogDescription>Histórico administrativo; a visualização não altera leitura dos destinatários.</DialogDescription>
           </DialogHeader>
           {disparoQuery.isLoading && <Loader2 className="h-5 w-5 animate-spin" />}
-          {disparoQuery.data && <DisparoDetail disparo={disparoQuery.data} />}
+          {disparoQuery.data && <DisparoDetail disparo={disparoQuery.data} onReprocessed={async (emailId, input) => {
+            await notificacoesAdminApi.reprocessarEmail(emailId, input)
+            await Promise.all([
+              queryClient.invalidateQueries({ queryKey: qk.notificacoes.adminDisparo(disparoQuery.data!.id) }),
+              queryClient.invalidateQueries({ queryKey: qk.notificacoes.adminDisparos }),
+              queryClient.invalidateQueries({ queryKey: qk.notificacoes.adminDiagnostico }),
+            ])
+          }} />}
         </DialogContent>
       </Dialog>
     </div>
   )
 }
 
-function DisparoDetail({ disparo }: { disparo: NotificacaoDisparoDetalhe }) {
+function DisparoDetail({ disparo, onReprocessed }: { disparo: NotificacaoDisparoDetalhe; onReprocessed: (emailId: string, input: { motivo: string; idempotencyKey: string; confirmarResultadoIncerto: boolean }) => Promise<void> }) {
+  const [emailSelecionado, setEmailSelecionado] = useState<NotificacaoDisparoDetalhe['destinatarios'][number]['entregaEmail'] & { destinatarioId: string } | null>(null)
+  const [motivo, setMotivo] = useState('')
+  const [enviando, setEnviando] = useState(false)
+
+  const confirmarReprocessamento = async () => {
+    if (!emailSelecionado || motivo.trim().length < 10) {
+      toast.error('Informe um motivo com pelo menos 10 caracteres.')
+      return
+    }
+    try {
+      setEnviando(true)
+      await onReprocessed(emailSelecionado.id, {
+        motivo: motivo.trim(),
+        idempotencyKey: crypto.randomUUID(),
+        confirmarResultadoIncerto: emailSelecionado.status === 'RESULTADO_INCERTO',
+      })
+      setEmailSelecionado(null)
+      setMotivo('')
+      toast.success('Réplica recolocada na fila.')
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Não foi possível reprocessar a réplica.'))
+    } finally {
+      setEnviando(false)
+    }
+  }
+
   return (
-    <div className="space-y-5">
+    <>
+      <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
         <div><p className="text-xs uppercase text-muted-foreground">Estado</p><Badge variant={disparo.status === 'CONCLUIDO' ? 'success' : 'outline'}>{disparo.status}</Badge></div>
         <div><p className="text-xs uppercase text-muted-foreground">Evento</p><p className="font-mono text-sm">{disparo.evento.codigo} · v{disparo.evento.versao}</p></div>
@@ -528,12 +563,25 @@ function DisparoDetail({ disparo }: { disparo: NotificacaoDisparoDetalhe }) {
         {disparo.destinatarios.map((destinatario) => (
           <div key={destinatario.id} className="rounded-md border p-3 text-sm">
             <div className="flex flex-wrap items-center justify-between gap-2"><span>{destinatario.usuario?.nome ?? 'Usuário removido'} <span className="text-xs text-muted-foreground">({destinatario.usuario?.email ?? '—'})</span></span><span className="text-xs text-muted-foreground">{destinatario.lidaEm ? 'Lida' : 'Não lida'}</span></div>
-            {destinatario.entregaEmail && <div className="mt-2 text-xs text-muted-foreground">E-mail: {destinatario.entregaEmail.status} · {destinatario.entregaEmail.emailDestino ?? 'endereço ainda não fixado'}{destinatario.entregaEmail.tentativasLog.length > 0 ? ` · ${destinatario.entregaEmail.tentativasLog.length} tentativa(s)` : ''}</div>}
+            {destinatario.entregaEmail && <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground"><span>E-mail: {destinatario.entregaEmail.status} · {destinatario.entregaEmail.emailDestino ?? 'endereço ainda não fixado'}{destinatario.entregaEmail.tentativasLog.length > 0 ? ` · ${destinatario.entregaEmail.tentativasLog.length} tentativa(s)` : ''}</span>{(['FALHA_FINAL', 'RESULTADO_INCERTO'] as string[]).includes(destinatario.entregaEmail.status) && <Button size="sm" variant="outline" onClick={() => setEmailSelecionado({ ...destinatario.entregaEmail!, destinatarioId: destinatario.id })}><RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Reprocessar</Button>}</div>}
           </div>
         ))}
         {!disparo.destinatarios.length && <p className="text-sm text-muted-foreground">Nenhum destinatário disponibilizado.</p>}
       </div>
-    </div>
+      </div>
+      <ConfirmDialog
+        open={!!emailSelecionado}
+        onCancel={() => { if (!enviando) { setEmailSelecionado(null); setMotivo('') } }}
+        onConfirm={() => void confirmarReprocessamento()}
+        title={emailSelecionado?.status === 'RESULTADO_INCERTO' ? 'Confirmar risco de duplicidade' : 'Reprocessar réplica de e-mail'}
+        description={emailSelecionado?.status === 'RESULTADO_INCERTO' ? 'O provedor não confirmou o resultado anterior. Uma nova tentativa pode gerar duplicidade.' : 'A réplica será revalidada e recolocada na fila de e-mail.'}
+        confirmLabel="Reprocessar"
+        variant="default"
+        isLoading={enviando}
+      >
+        <label className="block space-y-1.5 text-sm font-medium">Motivo<Textarea value={motivo} onChange={(event) => setMotivo(event.target.value)} placeholder="Descreva por que a réplica deve ser reprocessada." /></label>
+      </ConfirmDialog>
+    </>
   )
 }
 
