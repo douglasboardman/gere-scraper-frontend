@@ -29,6 +29,7 @@ const routeTitles: Record<string, string> = {
   '/unidades': 'Unidades',
   '/usuarios': 'Usuários',
   '/perfil': 'Meu Perfil',
+  '/notificacoes/admin': 'Notificações',
 }
 
 function getBreadcrumb(pathname: string): Array<{ label: string; to?: string }> {

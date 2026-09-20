@@ -43,6 +43,7 @@ import { UsuarioEditPage } from '@/pages/usuarios/UsuarioEditPage'
 import { PerfilPage } from '@/pages/PerfilPage'
 import { SobrePage } from '@/pages/SobrePage'
 import { OutrasObrigacoesPage } from '@/pages/outras-obrigacoes/OutrasObrigacoesPage'
+import { NotificacoesAdminPage } from '@/pages/notificacoes-admin/NotificacoesAdminPage'
 
 // Protected route component
 function PrivateRoute({
@@ -300,6 +301,11 @@ export const router = createBrowserRouter([
           {
             path: 'perfil',
             element: <PerfilPage />,
+          },
+          {
+            path: 'notificacoes/admin',
+            element: <PrivateRoute requireAdmin />,
+            children: [{ index: true, element: <NotificacoesAdminPage /> }],
           },
         ],
       },

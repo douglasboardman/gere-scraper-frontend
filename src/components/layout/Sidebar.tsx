@@ -17,6 +17,7 @@ import {
   Layers,
   Handshake,
   Upload,
+  BellRing,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth.store'
@@ -105,6 +106,7 @@ export function Sidebar() {
         ...(can('create:contratacoes') ? [{ label: 'Importar Contratação', to: '/contratacoes/nova', icon: Upload }] : []),
         ...(isGestorUnidade ? [{ label: 'Outras Obrigações', to: '/outras-obrigacoes', icon: Layers }] : []),
         ...((isAdmin || isGestaoContratos) ? [{ label: 'Gestão de Contratos', to: '/contratos/dashboard', icon: LayoutDashboard }] : []),
+        ...(isAdmin ? [{ label: 'Notificações', to: '/notificacoes/admin', icon: BellRing }] : []),
         ...(canApprove && !isAdmin ? [{ label: 'Analisar Requisições', to: '/requisicoes/pendentes', icon: ClipboardCheck }] : []),
         ...(canManageUsuarios ? [{ label: 'Gerenciar Usuários', to: '/usuarios', icon: Users }] : []),
         ...(isAdmin ? [{ label: 'Gerenciar Unidades', to: '/unidades', icon: Building2 }] : []),
