@@ -813,6 +813,7 @@ function ModelDetail({
   const [scheduleTimezone, setScheduleTimezone] = useState(agendamentoInicial.tipo === 'PROXIMO_HORARIO' ? agendamentoInicial.fuso : 'America/Sao_Paulo')
   const [saving, setSaving] = useState(false)
   const [campoVariavel, setCampoVariavel] = useState('')
+  const [estiloVariavel, setEstiloVariavel] = useState<'normal' | 'negrito' | 'italico' | 'negrito-italico'>('normal')
   const [novoSeletor, setNovoSeletor] = useState<GrupoDestinatarioEditor['seletor']>('PERFIS_DA_UNIDADE')
   const [novaReferencia, setNovaReferencia] = useState(catalogo?.referencias[0] ?? '')
   const [novoPerfil, setNovoPerfil] = useState('gestor_unidade')
@@ -836,7 +837,12 @@ function ModelDetail({
       const blocos = Array.isArray(documento.blocos) && documento.blocos.length > 0
         ? documento.blocos
         : [{ tipo: 'paragrafo' as const, conteudo: [] }]
-      blocos[0].conteudo = [...(blocos[0].conteudo ?? []), { tipo: 'variavel', campo: campoVariavel }]
+      blocos[0].conteudo = [...(blocos[0].conteudo ?? []), {
+        tipo: 'variavel',
+        campo: campoVariavel,
+        ...(estiloVariavel === 'negrito' || estiloVariavel === 'negrito-italico' ? { negrito: true } : {}),
+        ...(estiloVariavel === 'italico' || estiloVariavel === 'negrito-italico' ? { italico: true } : {}),
+      }]
       setBody(JSON.stringify({ ...documento, versao: 1, blocos }, null, 2))
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Não foi possível inserir a variável.')
@@ -962,6 +968,12 @@ function ModelDetail({
               <select className="h-10 min-w-56 flex-1 rounded-md border bg-background px-3 text-sm" value={campoVariavel} onChange={(event) => setCampoVariavel(event.target.value)}>
                 <option value="">Selecione um campo...</option>
                 {(catalogo?.camposContexto ?? []).map((campo) => <option key={campo} value={campo}>{campo}</option>)}
+              </select>
+              <select className="h-10 rounded-md border bg-background px-3 text-sm" value={estiloVariavel} onChange={(event) => setEstiloVariavel(event.target.value as typeof estiloVariavel)} aria-label="Formatação da variável">
+                <option value="normal">Normal</option>
+                <option value="negrito">Negrito</option>
+                <option value="italico">Itálico</option>
+                <option value="negrito-italico">Negrito e itálico</option>
               </select>
               <Button type="button" variant="outline" onClick={inserirVariavelNoTitulo} disabled={!campoVariavel}>Inserir no título</Button>
               <Button type="button" variant="outline" onClick={inserirVariavelNoCorpo} disabled={!campoVariavel}>Inserir no corpo</Button>

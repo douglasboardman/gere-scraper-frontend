@@ -23,7 +23,7 @@ function referenciaId(referencias: unknown, chave: string) {
 }
 
 function CorpoEstruturado({ corpo }: { corpo: unknown }) {
-  const documento = corpo as { blocos?: Array<{ conteudo?: Array<{ tipo?: string; valor?: string; campo?: string; codigo?: string }> }> } | null
+  const documento = corpo as { blocos?: Array<{ conteudo?: Array<{ tipo?: string; valor?: string; campo?: string; codigo?: string; negrito?: boolean; italico?: boolean }> }> } | null
   if (!documento?.blocos?.length) return <p className="text-sm text-muted-foreground">Sem conteúdo disponível.</p>
 
   return (
@@ -31,9 +31,16 @@ function CorpoEstruturado({ corpo }: { corpo: unknown }) {
       {documento.blocos.map((bloco, blocoIndex) => (
         <p key={blocoIndex}>
           {(bloco.conteudo ?? []).map((item, itemIndex) => {
-            if (item.tipo === 'texto') return <span key={itemIndex}>{item.valor}</span>
-            if (item.tipo === 'variavel') return <span key={itemIndex} className="font-medium">{item.valor ?? item.campo ?? ''}</span>
-            return <span key={itemIndex} className="font-medium text-primary">[{item.codigo ?? 'ação'}]</span>
+            const conteudo = item.tipo === 'texto'
+              ? item.valor
+              : item.tipo === 'variavel'
+                ? item.valor ?? item.campo ?? ''
+                : `[${item.codigo ?? 'ação'}]`
+            const elemento = <span className={item.tipo === 'acao' || item.tipo === 'variavel' ? 'font-medium' : undefined}>{conteudo}</span>
+            if (item.negrito && item.italico) return <strong key={itemIndex}><em>{elemento}</em></strong>
+            if (item.negrito) return <strong key={itemIndex}>{elemento}</strong>
+            if (item.italico) return <em key={itemIndex}>{elemento}</em>
+            return <span key={itemIndex} className={item.tipo === 'acao' ? 'font-medium text-primary' : undefined}>{elemento}</span>
           })}
         </p>
       ))}
