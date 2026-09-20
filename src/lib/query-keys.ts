@@ -107,4 +107,10 @@ export const qk = {
       ["config-contratacao", identContratacao] as const,
     wizardBatch: (ids: string[]) => ["config-contratacao-wizard", ids] as const,
   },
+
+  notificacoes: {
+    resumo: ['notificacoes', 'resumo'] as const,
+    lista: (estado: string) => ['notificacoes', estado] as const,
+    detalhe: (id: string) => ['notificacao', id] as const,
+  },
 } as const;

@@ -1,6 +1,7 @@
 import { useLocation, Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
-import { User, LogOut } from 'lucide-react'
+import { Bell, User, LogOut } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +13,8 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/store/auth.store'
+import { notificacoesApi } from '@/api/notificacoes.api'
+import { qk } from '@/lib/query-keys'
 
 const routeTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -51,6 +54,14 @@ export function Header() {
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
 
+  const { data: resumo } = useQuery({
+    queryKey: qk.notificacoes.resumo,
+    queryFn: () => notificacoesApi.resumo(),
+    enabled: !!user,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  })
+
   const crumbs = getBreadcrumb(location.pathname)
 
   const handleLogout = () => {
@@ -81,8 +92,41 @@ export function Header() {
         ))}
       </div>
 
-      {/* Right: user menu */}
-      <DropdownMenu>
+      {/* Right: notifications and user menu */}
+      <div className="flex items-center gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={resumo?.naoLidas ? `${resumo.naoLidas} notificações não lidas` : 'Notificações'}
+              className="relative h-9 w-9 hover:bg-muted/60 hover:text-foreground transition-colors duration-150"
+            >
+              <Bell className="h-4 w-4" />
+              {!!resumo?.naoLidas && (
+                <span className="absolute -right-0.5 -top-0.5 min-w-4 h-4 rounded-full bg-primary px-1 text-[10px] leading-4 text-primary-foreground">
+                  {resumo.naoLidas > 99 ? '99+' : resumo.naoLidas}
+                </span>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-72">
+            <DropdownMenuLabel className="font-normal">
+              <p className="text-sm font-semibold">Notificações</p>
+              <p className="text-xs text-muted-foreground">
+                {resumo?.naoLidas ? `${resumo.naoLidas} não lida(s)` : 'Nenhuma não lida'}
+                {resumo?.importantesNaoLidas ? ` · ${resumo.importantesNaoLidas} importante(s)` : ''}
+              </p>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate('/perfil?aba=notificacoes')}>
+              <Bell className="mr-2 h-4 w-4" />
+              Abrir central de notificações
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="flex items-center gap-2 h-9 px-2 hover:bg-muted/60 hover:text-foreground transition-colors duration-150">
             <Avatar className="h-7 w-7 ring-1 ring-border">
@@ -113,7 +157,8 @@ export function Header() {
             Sair
           </DropdownMenuItem>
         </DropdownMenuContent>
-      </DropdownMenu>
+        </DropdownMenu>
+      </div>
     </header>
   )
 }

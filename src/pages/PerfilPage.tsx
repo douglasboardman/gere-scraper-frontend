@@ -27,6 +27,7 @@ import {
 import { PasswordInput } from '@/components/ui/password-input'
 import { PasswordStrengthIndicator } from '@/components/shared/PasswordStrengthIndicator'
 import { optionalStrongPasswordSchema, meetsPasswordRules } from '@/lib/password'
+import { NotificacoesPanel } from '@/components/notificacoes/NotificacoesPanel'
 
 const perfilSchema = z
   .object({
@@ -290,6 +291,10 @@ export function PerfilPage() {
           </Form>
         </CardContent>
       </Card>
+
+      <div className="mt-6">
+        <NotificacoesPanel />
+      </div>
     </div>
   )
 }
