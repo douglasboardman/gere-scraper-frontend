@@ -16,6 +16,12 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value))
 }
 
+function referenciaId(referencias: unknown, chave: string) {
+  if (!referencias || typeof referencias !== 'object' || Array.isArray(referencias)) return null
+  const valor = (referencias as Record<string, unknown>)[chave]
+  return typeof valor === 'string' && valor.length > 0 ? valor : null
+}
+
 function CorpoEstruturado({ corpo }: { corpo: unknown }) {
   const documento = corpo as { blocos?: Array<{ conteudo?: Array<{ tipo?: string; valor?: string; campo?: string; codigo?: string }> }> } | null
   if (!documento?.blocos?.length) return <p className="text-sm text-muted-foreground">Sem conteúdo disponível.</p>
@@ -133,6 +139,30 @@ export function NotificacoesPanel() {
     const detalhe: NotificacaoDetalhe = detalheQuery.data
     const acoes = Array.isArray(detalhe.acoes) ? detalhe.acoes as Array<{ codigo?: string; rotulo?: string }> : []
     const acaoAprovar = acoes.find((acao) => acao.codigo === 'APROVAR_REQUISICAO')
+    const requisicaoId = detalhe.acaoContexto?.requisicaoId ?? referenciaId(detalhe.referencias, 'requisicaoId')
+    const acoesNavegacao = acoes.filter((acao) => acao.codigo !== 'APROVAR_REQUISICAO').filter((acao) => {
+      if (acao.codigo === 'ABRIR_USUARIO') return !!referenciaId(detalhe.referencias, 'usuarioSolicitante')
+      if (acao.codigo === 'ABRIR_REQUISICAO' || acao.codigo === 'ANALISAR_REQUISICAO') return !!requisicaoId
+      if (acao.codigo === 'ABRIR_RESULTADO_IMPORTACAO') return !!referenciaId(detalhe.referencias, 'contratacaoId')
+      return false
+    })
+
+    const abrirAcao = (codigo: string) => {
+      if (codigo === 'ABRIR_USUARIO') {
+        const usuarioId = referenciaId(detalhe.referencias, 'usuarioSolicitante')
+        if (usuarioId) navigate(`/usuarios/${encodeURIComponent(usuarioId)}`)
+      }
+      if (codigo === 'ABRIR_REQUISICAO' && requisicaoId) {
+        navigate(`/requisicoes/detalhe?id=${encodeURIComponent(requisicaoId)}`)
+      }
+      if (codigo === 'ANALISAR_REQUISICAO' && requisicaoId) {
+        navigate(`/requisicoes/analise?id=${encodeURIComponent(requisicaoId)}`)
+      }
+      if (codigo === 'ABRIR_RESULTADO_IMPORTACAO') {
+        const contratacaoId = referenciaId(detalhe.referencias, 'contratacaoId')
+        if (contratacaoId) navigate(`/contratacoes/detalhe?id=${encodeURIComponent(contratacaoId)}`)
+      }
+    }
     return (
       <Card>
         <CardHeader>
@@ -144,6 +174,14 @@ export function NotificacoesPanel() {
         </CardHeader>
         <CardContent className="space-y-5">
           <CorpoEstruturado corpo={detalhe.corpo} />
+          {acoesNavegacao.length > 0 && (
+            <div className="rounded-md border bg-muted/30 p-4">
+              <p className="text-sm font-medium">Ações disponíveis</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {acoesNavegacao.map((acao, indice) => <Button key={`${acao.codigo}-${indice}`} variant="outline" onClick={() => abrirAcao(acao.codigo ?? '')}>{acao.rotulo ?? 'Abrir recurso'}</Button>)}
+              </div>
+            </div>
+          )}
           {acaoAprovar && detalhe.acaoContexto?.requisicaoId && (
             <div className="rounded-md border bg-muted/30 p-4">
               <p className="text-sm font-medium">Ações disponíveis</p>
