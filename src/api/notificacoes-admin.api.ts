@@ -96,6 +96,9 @@ export interface NotificacoesDiagnostico {
   captura?: {
     habilitada: boolean
   }
+  sse?: {
+    habilitado: boolean
+  }
   contexto: {
     configurado: boolean
     disponivel: boolean
