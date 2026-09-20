@@ -24,6 +24,7 @@ import type {
   NotificacaoDisparoDetalhe,
   NotificacaoModeloDetalhe,
   NotificacaoModeloResumo,
+  NotificacoesRetencaoDiagnostico,
 } from '@/api/notificacoes-admin.api'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { qk } from '@/lib/query-keys'
@@ -102,6 +103,11 @@ export function NotificacoesAdminPage() {
     queryKey: qk.notificacoes.adminDiagnostico,
     queryFn: notificacoesAdminApi.diagnostico,
     refetchInterval: 30_000,
+  })
+  const retencaoQuery = useQuery<NotificacoesRetencaoDiagnostico>({
+    queryKey: qk.notificacoes.adminRetencao,
+    queryFn: notificacoesAdminApi.diagnosticoRetencao,
+    refetchInterval: 60_000,
   })
   const disparosQuery = useQuery({
     queryKey: qk.notificacoes.adminDisparos,
@@ -353,6 +359,14 @@ export function NotificacoesAdminPage() {
             </CardContent>
           </Card>
         </div>
+      )}
+      {retencaoQuery.data && (
+        <Card className="mb-6">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+            <div><p className="text-xs uppercase text-muted-foreground">Retenção</p><p className="mt-1 text-sm font-semibold">{retencaoQuery.data.purgaHabilitada ? 'Purga habilitada' : 'Purga desabilitada'}</p><p className="mt-1 text-xs text-muted-foreground">Diagnóstico sem escrita · {Object.values(retencaoQuery.data.candidatos).reduce((total, valor) => total + valor, 0)} candidato(s) estimado(s)</p></div>
+            <div className="text-right text-xs text-muted-foreground">{retencaoQuery.data.bloqueios.disparosPendentes} disparo(s) pendente(s) · {retencaoQuery.data.bloqueios.emailsPendentes} e-mail(s) pendente(s)</div>
+          </CardContent>
+        </Card>
       )}
 
       <Card>

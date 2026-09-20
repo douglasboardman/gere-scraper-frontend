@@ -127,6 +127,16 @@ export interface NotificacoesDiagnostico {
   atualizadoEm: string
 }
 
+export interface NotificacoesRetencaoDiagnostico {
+  modo: string
+  purgaHabilitada: boolean
+  limiteLote: number
+  prazosOperacionaisDias: { conteudo: number; tecnico: number; semRegras: number; auditoria: number }
+  candidatos: Record<string, number>
+  bloqueios: { disparosPendentes: number; emailsPendentes: number }
+  atualizadoEm: string
+}
+
 export interface NotificacaoDisparoResumo {
   id: string
   status: string
@@ -250,6 +260,11 @@ export const notificacoesAdminApi = {
 
   async diagnostico(): Promise<NotificacoesDiagnostico> {
     const { data } = await apiClient.get('/admin/notificacoes/diagnostico')
+    return data
+  },
+
+  async diagnosticoRetencao(): Promise<NotificacoesRetencaoDiagnostico> {
+    const { data } = await apiClient.get('/admin/notificacoes/retencao/diagnostico')
     return data
   },
 

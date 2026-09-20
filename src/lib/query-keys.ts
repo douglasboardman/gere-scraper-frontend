@@ -119,6 +119,7 @@ export const qk = {
     adminModelos: ['notificacoes-admin', 'modelos'] as const,
     adminModelo: (id: string) => ['notificacoes-admin', 'modelo', id] as const,
     adminDiagnostico: ['notificacoes-admin', 'diagnostico'] as const,
+    adminRetencao: ['notificacoes-admin', 'retencao'] as const,
     adminDisparos: ['notificacoes-admin', 'disparos'] as const,
     adminDisparo: (id: string) => ['notificacoes-admin', 'disparo', id] as const,
   },
