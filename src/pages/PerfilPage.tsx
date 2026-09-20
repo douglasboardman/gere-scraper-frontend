@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -28,6 +29,7 @@ import { PasswordInput } from '@/components/ui/password-input'
 import { PasswordStrengthIndicator } from '@/components/shared/PasswordStrengthIndicator'
 import { optionalStrongPasswordSchema, meetsPasswordRules } from '@/lib/password'
 import { NotificacoesPanel } from '@/components/notificacoes/NotificacoesPanel'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const perfilSchema = z
   .object({
@@ -61,6 +63,8 @@ const roleLabels: Record<string, string> = {
 
 export function PerfilPage() {
   const { user, setUser } = useAuthStore()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const abaAtual = searchParams.get('aba') === 'notificacoes' ? 'notificacoes' : 'dados'
   const [saved, setSaved] = useState(false)
 
   const { data: uorg } = useQuery({
@@ -116,7 +120,14 @@ export function PerfilPage() {
     <div className="max-w-2xl">
       <PageHeader title="Meu Perfil" subtitle="Gerencie suas informações pessoais e senha" />
 
-      {/* Profile summary */}
+      <Tabs value={abaAtual} onValueChange={(value) => { const params = new URLSearchParams(searchParams); params.set('aba', value); if (value !== 'notificacoes') params.delete('mensagem'); setSearchParams(params) }}>
+        <TabsList className="mb-5">
+          <TabsTrigger value="dados">Dados pessoais</TabsTrigger>
+          <TabsTrigger value="notificacoes">Notificações</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dados">
+
       <Card className="mb-6">
         <CardContent className="pt-6">
           <div className="flex items-center gap-4">
@@ -291,10 +302,12 @@ export function PerfilPage() {
           </Form>
         </CardContent>
       </Card>
+        </TabsContent>
 
-      <div className="mt-6">
-        <NotificacoesPanel />
-      </div>
+        <TabsContent value="notificacoes">
+          <NotificacoesPanel />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Archive, ArrowLeft, Bell, Check, Loader2 } from 'lucide-react'
 import { notificacoesApi } from '@/api/notificacoes.api'
@@ -33,8 +34,9 @@ function CorpoEstruturado({ corpo }: { corpo: unknown }) {
 
 export function NotificacoesPanel() {
   const queryClient = useQueryClient()
-  const [estado, setEstado] = useState<EstadoCaixaNotificacoes>('todas')
-  const [selecionada, setSelecionada] = useState<string | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [estado, setEstado] = useState<EstadoCaixaNotificacoes>((searchParams.get('filtro') as EstadoCaixaNotificacoes) || 'todas')
+  const [selecionada, setSelecionada] = useState<string | null>(searchParams.get('mensagem'))
 
   const listaQuery = useQuery({
     queryKey: qk.notificacoes.lista(estado),
@@ -58,12 +60,34 @@ export function NotificacoesPanel() {
     },
   })
 
+  useEffect(() => {
+    const mensagem = searchParams.get('mensagem')
+    if (mensagem && mensagem !== selecionada) setSelecionada(mensagem)
+  }, [searchParams, selecionada])
+
+  const escolherEstado = (novoEstado: EstadoCaixaNotificacoes) => {
+    setEstado(novoEstado)
+    const params = new URLSearchParams(searchParams)
+    params.set('aba', 'notificacoes')
+    params.set('filtro', novoEstado)
+    params.delete('mensagem')
+    setSearchParams(params)
+  }
+
+  const abrirMensagem = (id: string) => {
+    setSelecionada(id)
+    const params = new URLSearchParams(searchParams)
+    params.set('aba', 'notificacoes')
+    params.set('mensagem', id)
+    setSearchParams(params)
+  }
+
   if (selecionada && detalheQuery.data) {
     const detalhe: NotificacaoDetalhe = detalheQuery.data
     return (
       <Card>
         <CardHeader>
-          <Button variant="ghost" className="w-fit px-0" onClick={() => setSelecionada(null)}>
+          <Button variant="ghost" className="w-fit px-0" onClick={() => { setSelecionada(null); const params = new URLSearchParams(searchParams); params.delete('mensagem'); setSearchParams(params) }}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para mensagens
           </Button>
           <CardTitle className="text-base">{detalhe.titulo ?? 'Notificação'}</CardTitle>
@@ -96,7 +120,7 @@ export function NotificacoesPanel() {
           </div>
           <select
             value={estado}
-            onChange={(event) => setEstado(event.target.value as EstadoCaixaNotificacoes)}
+            onChange={(event) => escolherEstado(event.target.value as EstadoCaixaNotificacoes)}
             className="h-9 rounded-md border bg-background px-2 text-sm"
             aria-label="Filtrar notificações"
           >
@@ -115,7 +139,7 @@ export function NotificacoesPanel() {
         )}
         <div className="divide-y">
           {listaQuery.data?.itens.map((item) => (
-            <button key={item.id} type="button" onClick={() => setSelecionada(item.id)} className="flex w-full items-start justify-between gap-4 py-3 text-left hover:bg-muted/40">
+            <button key={item.id} type="button" onClick={() => abrirMensagem(item.id)} className="flex w-full items-start justify-between gap-4 py-3 text-left hover:bg-muted/40">
               <span className="min-w-0">
                 <span className="flex items-center gap-2">
                   <span className={`truncate text-sm ${item.lida ? 'font-normal' : 'font-semibold'}`}>{item.titulo ?? 'Notificação'}</span>

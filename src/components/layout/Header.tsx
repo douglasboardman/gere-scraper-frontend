@@ -1,6 +1,6 @@
 import { useLocation, Link } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
-import { Bell, User, LogOut } from 'lucide-react'
+import { Bell, User, LogOut, Loader2 } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import {
   DropdownMenu,
@@ -62,6 +62,12 @@ export function Header() {
     staleTime: 30_000,
     refetchInterval: 60_000,
   })
+  const recentesQuery = useQuery({
+    queryKey: qk.notificacoes.recentes,
+    queryFn: () => notificacoesApi.listar({ estado: 'todas', limite: 10 }),
+    enabled: !!user,
+    staleTime: 30_000,
+  })
 
   const crumbs = getBreadcrumb(location.pathname)
 
@@ -119,6 +125,23 @@ export function Header() {
                 {resumo?.importantesNaoLidas ? ` · ${resumo.importantesNaoLidas} importante(s)` : ''}
               </p>
             </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {recentesQuery.isLoading && (
+              <DropdownMenuItem disabled><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Carregando mensagens...</DropdownMenuItem>
+            )}
+            {!recentesQuery.isLoading && !recentesQuery.isError && !recentesQuery.data?.itens.length && (
+              <DropdownMenuItem disabled>Nenhuma mensagem recente</DropdownMenuItem>
+            )}
+            {recentesQuery.data?.itens.filter((item) => !item.arquivada).slice(0, 10).map((item) => (
+              <DropdownMenuItem key={item.id} onClick={() => navigate(`/perfil?aba=notificacoes&mensagem=${encodeURIComponent(item.id)}`)} className="items-start gap-2 py-2">
+                <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${item.lida ? 'bg-muted-foreground/30' : 'bg-primary'}`} />
+                <span className="min-w-0">
+                  <span className={`block truncate text-sm ${item.lida ? 'font-normal' : 'font-semibold'}`}>{item.titulo ?? 'Notificação'}</span>
+                  <span className="block text-xs text-muted-foreground">{new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(item.disponibilizadaEm))}</span>
+                </span>
+              </DropdownMenuItem>
+            ))}
+            {recentesQuery.isError && <DropdownMenuItem disabled>Não foi possível carregar as mensagens.</DropdownMenuItem>}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => navigate('/perfil?aba=notificacoes')}>
               <Bell className="mr-2 h-4 w-4" />
