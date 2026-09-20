@@ -5,8 +5,10 @@ import { ScrapingProgressBar } from './ScrapingProgressBar'
 import { CacheSyncProgressBar } from './CacheSyncProgressBar'
 import { useAuthStore } from '@/store/auth.store'
 import { AvisoNotificacoesLogin } from '@/components/notificacoes/AvisoNotificacoesLogin'
+import { useNotificacoesStream } from '@/hooks/useNotificacoesStream'
 
 export function AppLayout() {
+  useNotificacoesStream()
   const activeJobId = useAuthStore((s) => s.activeJobId)
   const activeCacheSyncJobId = useAuthStore((s) => s.activeCacheSyncJobId)
   const hasBottomBar = !!(activeJobId || activeCacheSyncJobId)
