@@ -93,6 +93,9 @@ export interface AtualizarNotificacaoModeloRascunhoInput {
 }
 
 export interface NotificacoesDiagnostico {
+  captura: {
+    habilitada: boolean
+  }
   contexto: {
     configurado: boolean
     disponivel: boolean
