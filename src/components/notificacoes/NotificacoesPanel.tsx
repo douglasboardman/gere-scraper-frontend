@@ -46,13 +46,14 @@ export function NotificacoesPanel() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [estado, setEstado] = useState<EstadoCaixaNotificacoes>((searchParams.get('filtro') as EstadoCaixaNotificacoes) || 'todas')
+  const [somenteImportantes, setSomenteImportantes] = useState(searchParams.get('importantes') === 'true')
   const [selecionada, setSelecionada] = useState<string | null>(searchParams.get('mensagem'))
   const [acaoConfirmar, setAcaoConfirmar] = useState<{ chave: string; rotulo: string } | null>(null)
   const leituraAutomaticaId = useRef<string | null>(null)
 
   const listaQuery = useQuery({
-    queryKey: qk.notificacoes.lista(estado),
-    queryFn: () => notificacoesApi.listar({ estado }),
+    queryKey: qk.notificacoes.lista(estado, somenteImportantes ? true : undefined),
+    queryFn: () => notificacoesApi.listar({ estado, importantes: somenteImportantes ? true : undefined }),
   })
   const detalheQuery = useQuery({
     queryKey: qk.notificacoes.detalhe(selecionada ?? ''),
@@ -100,6 +101,7 @@ export function NotificacoesPanel() {
   useEffect(() => {
     const mensagem = searchParams.get('mensagem')
     if (mensagem && mensagem !== selecionada) setSelecionada(mensagem)
+    setSomenteImportantes(searchParams.get('importantes') === 'true')
   }, [searchParams, selecionada])
 
   useEffect(() => {
@@ -124,6 +126,15 @@ export function NotificacoesPanel() {
     params.set('aba', 'notificacoes')
     params.set('filtro', novoEstado)
     params.delete('mensagem')
+    setSearchParams(params)
+  }
+
+  const escolherImportantes = (ativo: boolean) => {
+    setSomenteImportantes(ativo)
+    const params = new URLSearchParams(searchParams)
+    params.set('aba', 'notificacoes')
+    if (ativo) params.set('importantes', 'true')
+    else params.delete('importantes')
     setSearchParams(params)
   }
 
@@ -241,6 +252,9 @@ export function NotificacoesPanel() {
               <option value="lidas">Lidas</option>
               <option value="arquivadas">Arquivadas</option>
             </select>
+            <Button size="sm" variant={somenteImportantes ? 'default' : 'outline'} onClick={() => escolherImportantes(!somenteImportantes)}>
+              {somenteImportantes ? 'Todas as mensagens' : 'Somente importantes'}
+            </Button>
             <Button size="sm" variant="outline" onClick={() => lerTodasMutation.mutate()} disabled={lerTodasMutation.isPending}>
               <CheckCheck className="mr-2 h-4 w-4" /> Marcar todas como lidas
             </Button>

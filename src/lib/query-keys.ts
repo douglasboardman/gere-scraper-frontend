@@ -110,7 +110,7 @@ export const qk = {
 
   notificacoes: {
     resumo: ['notificacoes', 'resumo'] as const,
-    lista: (estado: string) => ['notificacoes', estado] as const,
+    lista: (estado: string, importantes?: boolean) => ['notificacoes', estado, importantes ?? null] as const,
     recentes: ['notificacoes', 'recentes'] as const,
     detalhe: (id: string) => ['notificacao', id] as const,
     adminCatalogo: ['notificacoes-admin', 'catalogo'] as const,
