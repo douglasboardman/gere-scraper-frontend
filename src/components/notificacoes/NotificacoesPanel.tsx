@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Archive, ArrowLeft, Bell, Check, CheckCircle2, ExternalLink, Loader2 } from 'lucide-react'
+import { Archive, ArrowLeft, Bell, Check, CheckCheck, CheckCircle2, ExternalLink, Loader2 } from 'lucide-react'
 import { notificacoesApi } from '@/api/notificacoes.api'
 import { qk } from '@/lib/query-keys'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -42,6 +42,7 @@ export function NotificacoesPanel() {
   const [estado, setEstado] = useState<EstadoCaixaNotificacoes>((searchParams.get('filtro') as EstadoCaixaNotificacoes) || 'todas')
   const [selecionada, setSelecionada] = useState<string | null>(searchParams.get('mensagem'))
   const [acaoConfirmar, setAcaoConfirmar] = useState<{ chave: string; rotulo: string } | null>(null)
+  const leituraAutomaticaId = useRef<string | null>(null)
 
   const listaQuery = useQuery({
     queryKey: qk.notificacoes.lista(estado),
@@ -63,6 +64,14 @@ export function NotificacoesPanel() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['notificacoes'] })
     },
+  })
+  const lerTodasMutation = useMutation({
+    mutationFn: () => notificacoesApi.lerTodas(new Date().toISOString()),
+    onSuccess: async (resultado) => {
+      await queryClient.invalidateQueries({ queryKey: ['notificacoes'] })
+      toast.success(`${resultado.alteradas} mensagem(ns) marcada(s) como lida(s).`)
+    },
+    onError: (error: unknown) => toast.error(getApiErrorMessage(error, 'Não foi possível marcar as mensagens.')),
   })
   const acaoMutation = useMutation({
     mutationFn: () => {
@@ -86,6 +95,22 @@ export function NotificacoesPanel() {
     const mensagem = searchParams.get('mensagem')
     if (mensagem && mensagem !== selecionada) setSelecionada(mensagem)
   }, [searchParams, selecionada])
+
+  useEffect(() => {
+    if (!selecionada) {
+      leituraAutomaticaId.current = null
+      return
+    }
+    const detalhe = detalheQuery.data
+    if (!detalhe || detalhe.id !== selecionada || detalhe.lida || leituraAutomaticaId.current === detalhe.id) return
+
+    // O detalhe já foi obtido e renderizado; a leitura é um comando separado
+    // para manter o GET sem efeito colateral.
+    leituraAutomaticaId.current = detalhe.id
+    void notificacoesApi.marcarLeitura(detalhe.id, true)
+      .then(() => queryClient.invalidateQueries({ queryKey: ['notificacoes'] }))
+      .catch(() => { leituraAutomaticaId.current = null })
+  }, [detalheQuery.data, selecionada, queryClient])
 
   const escolherEstado = (novoEstado: EstadoCaixaNotificacoes) => {
     setEstado(novoEstado)
@@ -166,17 +191,22 @@ export function NotificacoesPanel() {
             <CardTitle className="text-base flex items-center gap-2"><Bell className="h-4 w-4" /> Notificações</CardTitle>
             <CardDescription>Mensagens operacionais destinadas a você</CardDescription>
           </div>
-          <select
-            value={estado}
-            onChange={(event) => escolherEstado(event.target.value as EstadoCaixaNotificacoes)}
-            className="h-9 rounded-md border bg-background px-2 text-sm"
-            aria-label="Filtrar notificações"
-          >
-            <option value="todas">Todas</option>
-            <option value="nao_lidas">Não lidas</option>
-            <option value="lidas">Lidas</option>
-            <option value="arquivadas">Arquivadas</option>
-          </select>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <select
+              value={estado}
+              onChange={(event) => escolherEstado(event.target.value as EstadoCaixaNotificacoes)}
+              className="h-9 rounded-md border bg-background px-2 text-sm"
+              aria-label="Filtrar notificações"
+            >
+              <option value="todas">Todas</option>
+              <option value="nao_lidas">Não lidas</option>
+              <option value="lidas">Lidas</option>
+              <option value="arquivadas">Arquivadas</option>
+            </select>
+            <Button size="sm" variant="outline" onClick={() => lerTodasMutation.mutate()} disabled={lerTodasMutation.isPending}>
+              <CheckCheck className="mr-2 h-4 w-4" /> Marcar todas como lidas
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
