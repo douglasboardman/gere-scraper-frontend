@@ -91,6 +91,31 @@ export interface AtualizarNotificacaoModeloRascunhoInput {
   validadeHoras?: number
 }
 
+export interface NotificacoesDiagnostico {
+  processador: {
+    habilitado: boolean
+    versaoAplicacao: string
+    alertaHeartbeat: boolean
+  }
+  fila: {
+    devidos: number
+    maisAntigo: { id: string; agendadoPara: string; expiraEm: string } | null
+    idadeMaisAntigoMs: number
+    alertaAtraso: boolean
+    leasesExpirados: number
+  }
+  estados: Record<string, number>
+  processadores: Array<{
+    instanciaId: string
+    versaoAplicacao: string
+    iniciadoEm: string
+    ultimoHeartbeatEm: string
+    estado: string
+    saudavel: boolean
+  }>
+  atualizadoEm: string
+}
+
 const revision = (revisaoEsperada: number) => ({ revisaoEsperada })
 
 export const notificacoesAdminApi = {
@@ -164,7 +189,7 @@ export const notificacoesAdminApi = {
     return data
   },
 
-  async diagnostico() {
+  async diagnostico(): Promise<NotificacoesDiagnostico> {
     const { data } = await apiClient.get('/admin/notificacoes/diagnostico')
     return data
   },

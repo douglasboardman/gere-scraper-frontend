@@ -93,6 +93,11 @@ export function NotificacoesAdminPage() {
     queryKey: qk.notificacoes.adminModelos,
     queryFn: notificacoesAdminApi.listarModelos,
   })
+  const diagnosticoQuery = useQuery({
+    queryKey: qk.notificacoes.adminDiagnostico,
+    queryFn: notificacoesAdminApi.diagnostico,
+    refetchInterval: 30_000,
+  })
   const eventoQuery = useQuery({
     queryKey: qk.notificacoes.adminEvento(selectedEventId ?? ''),
     queryFn: () => notificacoesAdminApi.obterEvento(selectedEventId!),
@@ -271,6 +276,29 @@ export function NotificacoesAdminPage() {
           </div>
         }
       />
+
+      {diagnosticoQuery.data && (
+        <div className="mb-6 grid gap-3 md:grid-cols-3">
+          <Card>
+            <CardContent className="flex items-center justify-between gap-3 p-4">
+              <div><p className="text-xs uppercase text-muted-foreground">Processador</p><p className="mt-1 text-sm font-semibold">{diagnosticoQuery.data.processador.habilitado ? 'Habilitado' : 'Desabilitado'}</p></div>
+              <Activity className={diagnosticoQuery.data.processador.habilitado && !diagnosticoQuery.data.processador.alertaHeartbeat ? 'h-5 w-5 text-emerald-600' : 'h-5 w-5 text-muted-foreground'} />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center justify-between gap-3 p-4">
+              <div><p className="text-xs uppercase text-muted-foreground">Fila devida</p><p className="mt-1 text-sm font-semibold">{diagnosticoQuery.data.fila.devidos} disparo(s)</p></div>
+              <Megaphone className={diagnosticoQuery.data.fila.alertaAtraso ? 'h-5 w-5 text-amber-600' : 'h-5 w-5 text-muted-foreground'} />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center justify-between gap-3 p-4">
+              <div><p className="text-xs uppercase text-muted-foreground">Falhas finais</p><p className="mt-1 text-sm font-semibold">{diagnosticoQuery.data.estados.FALHA_FINAL ?? 0}</p></div>
+              <Power className={(diagnosticoQuery.data.estados.FALHA_FINAL ?? 0) > 0 ? 'h-5 w-5 text-destructive' : 'h-5 w-5 text-muted-foreground'} />
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <Card>
         <CardHeader>
