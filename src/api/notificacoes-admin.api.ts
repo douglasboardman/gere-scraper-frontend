@@ -104,6 +104,17 @@ export interface NotificacoesDiagnostico {
     alertaAtraso: boolean
     leasesExpirados: number
   }
+  email: {
+    habilitado: boolean
+    devidos: number
+    processando: number
+    aceitos: number
+    falhaFinal: number
+    incertos: number
+    cancelados: number
+    expirados: number
+    leasesExpirados: number
+  }
   estados: Record<string, number>
   processadores: Array<{
     instanciaId: string
