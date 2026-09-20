@@ -127,6 +127,54 @@ export interface NotificacoesDiagnostico {
   atualizadoEm: string
 }
 
+export interface NotificacaoDisparoResumo {
+  id: string
+  status: string
+  evento: { codigo: string; nome: string; versao: number }
+  modelo: { codigo: string; nome: string; versao: number }
+  agendadoPara: string
+  expiraEm: string
+  createdAt: string
+  concluidoEm: string | null
+  totalDestinatarios: number
+  totalDisponibilizados: number
+  totalFalhas: number
+  ultimoErroCodigo: string | null
+  ultimoErroSeguro: string | null
+  emails: Record<string, number>
+}
+
+export interface NotificacaoDisparoDetalhe extends NotificacaoDisparoResumo {
+  tentativas: number
+  tituloResolvido: string | null
+  corpoResolvido: unknown
+  acoesResolvidas: unknown
+  contextoResolvido: unknown
+  referenciasResolvidas: unknown
+  ocorrencia: unknown
+  destinatarios: Array<{
+    id: string
+    usuario: { id: string; nome: string; email: string; ativo: boolean; identUnidade: string | null; identUorg: string | null } | null
+    escopoAcesso: unknown
+    disponibilizadaEm: string
+    lidaEm: string | null
+    arquivadaEm: string | null
+    expiraEm: string
+    entregaEmail: {
+      id: string
+      status: string
+      emailDestino: string | null
+      messageId: string | null
+      tentativas: number
+      aceitoPeloProvedorEm: string | null
+      proximaTentativaEm: string | null
+      ultimoErroCodigo: string | null
+      ultimoErroSeguro: string | null
+      tentativasLog: Array<{ numero: number; resultado: string; codigoErro: string | null; diagnosticoSeguro: string | null; iniciadoEm: string; concluidoEm: string | null }>
+    } | null
+  }>
+}
+
 const revision = (revisaoEsperada: number) => ({ revisaoEsperada })
 
 export const notificacoesAdminApi = {
@@ -202,6 +250,16 @@ export const notificacoesAdminApi = {
 
   async diagnostico(): Promise<NotificacoesDiagnostico> {
     const { data } = await apiClient.get('/admin/notificacoes/diagnostico')
+    return data
+  },
+
+  async listarDisparos(params: { estado?: string; cursor?: string; limite?: number } = {}): Promise<{ itens: NotificacaoDisparoResumo[]; proximoCursor: string | null }> {
+    const { data } = await apiClient.get('/admin/notificacoes/disparos', { params })
+    return data
+  },
+
+  async obterDisparo(id: string): Promise<NotificacaoDisparoDetalhe> {
+    const { data } = await apiClient.get(`/admin/notificacoes/disparos/${encodeURIComponent(id)}`)
     return data
   },
 }

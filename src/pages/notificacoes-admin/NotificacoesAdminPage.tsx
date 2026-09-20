@@ -20,6 +20,8 @@ import type {
   AtualizarNotificacaoModeloRascunhoInput,
   NotificacaoEventoDetalhe,
   NotificacaoEventoResumo,
+  NotificacaoDisparoResumo,
+  NotificacaoDisparoDetalhe,
   NotificacaoModeloDetalhe,
   NotificacaoModeloResumo,
 } from '@/api/notificacoes-admin.api'
@@ -37,7 +39,7 @@ import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 
-type AdminTab = 'eventos' | 'modelos'
+type AdminTab = 'eventos' | 'modelos' | 'disparos'
 
 const DEFAULT_BODY = {
   versao: 1,
@@ -76,6 +78,7 @@ export function NotificacoesAdminPage() {
   const [createType, setCreateType] = useState<AdminTab>('eventos')
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null)
+  const [selectedDisparoId, setSelectedDisparoId] = useState<string | null>(null)
   const [eventCode, setEventCode] = useState('')
   const [eventName, setEventName] = useState('')
   const [modelCode, setModelCode] = useState('')
@@ -99,6 +102,11 @@ export function NotificacoesAdminPage() {
     queryFn: notificacoesAdminApi.diagnostico,
     refetchInterval: 30_000,
   })
+  const disparosQuery = useQuery({
+    queryKey: qk.notificacoes.adminDisparos,
+    queryFn: () => notificacoesAdminApi.listarDisparos({ limite: 50 }),
+    enabled: tab === 'disparos',
+  })
   const eventoQuery = useQuery({
     queryKey: qk.notificacoes.adminEvento(selectedEventId ?? ''),
     queryFn: () => notificacoesAdminApi.obterEvento(selectedEventId!),
@@ -109,11 +117,17 @@ export function NotificacoesAdminPage() {
     queryFn: () => notificacoesAdminApi.obterModelo(selectedModelId!),
     enabled: !!selectedModelId,
   })
+  const disparoQuery = useQuery({
+    queryKey: qk.notificacoes.adminDisparo(selectedDisparoId ?? ''),
+    queryFn: () => notificacoesAdminApi.obterDisparo(selectedDisparoId!),
+    enabled: !!selectedDisparoId,
+  })
 
   const invalidateAdmin = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: qk.notificacoes.adminEventos }),
       queryClient.invalidateQueries({ queryKey: qk.notificacoes.adminModelos }),
+      queryClient.invalidateQueries({ queryKey: qk.notificacoes.adminDisparos }),
       selectedEventId
         ? queryClient.invalidateQueries({ queryKey: qk.notificacoes.adminEvento(selectedEventId) })
         : Promise.resolve(),
@@ -255,6 +269,39 @@ export function NotificacoesAdminPage() {
     },
   ], [])
 
+  const disparoColumns = useMemo<ColumnDef<NotificacaoDisparoResumo, unknown>[]>(() => [
+    {
+      id: 'evento',
+      header: 'Evento',
+      cell: ({ row }) => <div><p className="font-mono text-xs">{row.original.evento.codigo}</p><p className="text-xs text-muted-foreground">{row.original.modelo.codigo}</p></div>,
+    },
+    {
+      accessorKey: 'status',
+      header: 'Estado',
+      cell: ({ row }) => <Badge variant={row.original.status === 'CONCLUIDO' ? 'success' : row.original.status === 'FALHA_FINAL' ? 'destructive' : 'outline'}>{row.original.status}</Badge>,
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Criado em',
+      cell: ({ row }) => <span className="text-sm">{formatDate(row.original.createdAt)}</span>,
+    },
+    {
+      id: 'destinatarios',
+      header: 'Destinatários',
+      cell: ({ row }) => <span className="text-sm">{row.original.totalDisponibilizados}/{row.original.totalDestinatarios}</span>,
+    },
+    {
+      id: 'email',
+      header: 'E-mail',
+      cell: ({ row }) => <span className="text-xs text-muted-foreground">{Object.entries(row.original.emails).map(([estado, total]) => `${estado}: ${total}`).join(' · ') || '—'}</span>,
+    },
+    {
+      id: 'actions',
+      header: 'Ações',
+      cell: ({ row }) => <Button size="sm" variant="outline" onClick={() => setSelectedDisparoId(row.original.id)}><Eye className="mr-2 h-4 w-4" /> Detalhes</Button>,
+    },
+  ], [])
+
   const openCreate = (type: AdminTab) => {
     setCreateType(type)
     setCreateOpen(true)
@@ -271,7 +318,7 @@ export function NotificacoesAdminPage() {
             <Button variant="outline" onClick={() => void invalidateAdmin()} disabled={anyMutationPending}>
               <RefreshCw className="mr-2 h-4 w-4" /> Atualizar
             </Button>
-            <Button onClick={() => openCreate(tab)}>
+            <Button onClick={() => openCreate(tab)} disabled={tab === 'disparos'}>
               <FilePlus2 className="mr-2 h-4 w-4" /> Novo {tab === 'eventos' ? 'evento' : 'modelo'}
             </Button>
           </div>
@@ -317,6 +364,7 @@ export function NotificacoesAdminPage() {
             <TabsList>
               <TabsTrigger value="eventos">Eventos ({eventosQuery.data?.length ?? 0})</TabsTrigger>
               <TabsTrigger value="modelos">Modelos ({modelosQuery.data?.length ?? 0})</TabsTrigger>
+              <TabsTrigger value="disparos">Histórico</TabsTrigger>
             </TabsList>
             <TabsContent value="eventos" className="mt-5">
               <DataTable
@@ -334,6 +382,15 @@ export function NotificacoesAdminPage() {
                 isLoading={modelosQuery.isLoading}
                 searchPlaceholder="Buscar modelo..."
                 emptyMessage="Nenhum modelo configurado."
+              />
+            </TabsContent>
+            <TabsContent value="disparos" className="mt-5">
+              <DataTable
+                columns={disparoColumns}
+                data={disparosQuery.data?.itens ?? []}
+                isLoading={disparosQuery.isLoading}
+                searchPlaceholder="Buscar disparo..."
+                emptyMessage="Nenhum disparo registrado."
               />
             </TabsContent>
           </Tabs>
@@ -436,6 +493,46 @@ export function NotificacoesAdminPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!selectedDisparoId} onOpenChange={(open) => !open && setSelectedDisparoId(null)}>
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalhe do disparo</DialogTitle>
+            <DialogDescription>Histórico administrativo; a visualização não altera leitura dos destinatários.</DialogDescription>
+          </DialogHeader>
+          {disparoQuery.isLoading && <Loader2 className="h-5 w-5 animate-spin" />}
+          {disparoQuery.data && <DisparoDetail disparo={disparoQuery.data} />}
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
+function DisparoDetail({ disparo }: { disparo: NotificacaoDisparoDetalhe }) {
+  return (
+    <div className="space-y-5">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div><p className="text-xs uppercase text-muted-foreground">Estado</p><Badge variant={disparo.status === 'CONCLUIDO' ? 'success' : 'outline'}>{disparo.status}</Badge></div>
+        <div><p className="text-xs uppercase text-muted-foreground">Evento</p><p className="font-mono text-sm">{disparo.evento.codigo} · v{disparo.evento.versao}</p></div>
+        <div><p className="text-xs uppercase text-muted-foreground">Modelo</p><p className="font-mono text-sm">{disparo.modelo.codigo} · v{disparo.modelo.versao}</p></div>
+        <div><p className="text-xs uppercase text-muted-foreground">Destinatários</p><p className="text-sm">{disparo.totalDisponibilizados}/{disparo.totalDestinatarios}</p></div>
+      </div>
+      <Separator />
+      <div><p className="text-xs uppercase text-muted-foreground">Título resolvido</p><p className="mt-1 text-sm font-medium">{disparo.tituloResolvido ?? '—'}</p></div>
+      <div>
+        <p className="text-xs uppercase text-muted-foreground">Corpo estruturado</p>
+        <pre className="mt-1 max-h-48 overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(disparo.corpoResolvido, null, 2)}</pre>
+      </div>
+      <div className="space-y-2">
+        <p className="text-xs uppercase text-muted-foreground">Entregas individuais</p>
+        {disparo.destinatarios.map((destinatario) => (
+          <div key={destinatario.id} className="rounded-md border p-3 text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2"><span>{destinatario.usuario?.nome ?? 'Usuário removido'} <span className="text-xs text-muted-foreground">({destinatario.usuario?.email ?? '—'})</span></span><span className="text-xs text-muted-foreground">{destinatario.lidaEm ? 'Lida' : 'Não lida'}</span></div>
+            {destinatario.entregaEmail && <div className="mt-2 text-xs text-muted-foreground">E-mail: {destinatario.entregaEmail.status} · {destinatario.entregaEmail.emailDestino ?? 'endereço ainda não fixado'}{destinatario.entregaEmail.tentativasLog.length > 0 ? ` · ${destinatario.entregaEmail.tentativasLog.length} tentativa(s)` : ''}</div>}
+          </div>
+        ))}
+        {!disparo.destinatarios.length && <p className="text-sm text-muted-foreground">Nenhum destinatário disponibilizado.</p>}
+      </div>
     </div>
   )
 }
