@@ -43,6 +43,23 @@ import { Textarea } from '@/components/ui/textarea'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 
 type AdminTab = 'eventos' | 'modelos' | 'disparos'
+type AgendamentoEditor =
+  | { tipo: 'IMEDIATO' }
+  | { tipo: 'APOS_INTERVALO'; valor: number; unidade: 'MINUTOS' | 'HORAS' }
+  | { tipo: 'PROXIMO_HORARIO'; hora: string; fuso: string }
+
+function normalizarAgendamento(raw: unknown): AgendamentoEditor {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    const valor = raw as Record<string, unknown>
+    if (valor.tipo === 'APOS_INTERVALO' && typeof valor.valor === 'number' && (valor.unidade === 'MINUTOS' || valor.unidade === 'HORAS')) {
+      return { tipo: 'APOS_INTERVALO', valor: valor.valor, unidade: valor.unidade }
+    }
+    if (valor.tipo === 'PROXIMO_HORARIO' && typeof valor.hora === 'string' && typeof valor.fuso === 'string') {
+      return { tipo: 'PROXIMO_HORARIO', hora: valor.hora, fuso: valor.fuso }
+    }
+  }
+  return { tipo: 'IMEDIATO' }
+}
 
 const DEFAULT_BODY = {
   versao: 1,
@@ -725,6 +742,7 @@ function ModelDetail({
   onSimulate: () => Promise<void>
 }) {
   const draft = modelo.versoes.find((versao) => versao.status === 'RASCUNHO') ?? modelo.versoes[0]
+  const agendamentoInicial = normalizarAgendamento(draft?.agendamento)
   const [title, setTitle] = useState(draft?.tituloTemplate ?? '')
   const [body, setBody] = useState(JSON.stringify(draft?.corpoTemplate ?? DEFAULT_BODY, null, 2))
   const [recipients, setRecipients] = useState(JSON.stringify(draft?.destinatarios ?? DEFAULT_RECIPIENTS, null, 2))
@@ -734,6 +752,11 @@ function ModelDetail({
   const [notifyOnLogin, setNotifyOnLogin] = useState(draft?.notificarNoLogin ?? false)
   const [replicateEmail, setReplicateEmail] = useState(draft?.replicarPorEmail ?? false)
   const [validity, setValidity] = useState(String(draft?.validadeHoras ?? 720))
+  const [scheduleType, setScheduleType] = useState<AgendamentoEditor['tipo']>(agendamentoInicial.tipo)
+  const [scheduleValue, setScheduleValue] = useState(String(agendamentoInicial.tipo === 'APOS_INTERVALO' ? agendamentoInicial.valor : 1))
+  const [scheduleUnit, setScheduleUnit] = useState<'MINUTOS' | 'HORAS'>(agendamentoInicial.tipo === 'APOS_INTERVALO' ? agendamentoInicial.unidade : 'MINUTOS')
+  const [scheduleTime, setScheduleTime] = useState(agendamentoInicial.tipo === 'PROXIMO_HORARIO' ? agendamentoInicial.hora : '09:00')
+  const [scheduleTimezone, setScheduleTimezone] = useState(agendamentoInicial.tipo === 'PROXIMO_HORARIO' ? agendamentoInicial.fuso : 'America/Sao_Paulo')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -746,19 +769,30 @@ function ModelDetail({
     setNotifyOnLogin(draft?.notificarNoLogin ?? false)
     setReplicateEmail(draft?.replicarPorEmail ?? false)
     setValidity(String(draft?.validadeHoras ?? 720))
+    const agendamento = normalizarAgendamento(draft?.agendamento)
+    setScheduleType(agendamento.tipo)
+    setScheduleValue(agendamento.tipo === 'APOS_INTERVALO' ? String(agendamento.valor) : '1')
+    setScheduleUnit(agendamento.tipo === 'APOS_INTERVALO' ? agendamento.unidade : 'MINUTOS')
+    setScheduleTime(agendamento.tipo === 'PROXIMO_HORARIO' ? agendamento.hora : '09:00')
+    setScheduleTimezone(agendamento.tipo === 'PROXIMO_HORARIO' ? agendamento.fuso : 'America/Sao_Paulo')
   }, [modelo.id, draft?.id, draft?.updatedAt])
 
   const save = async () => {
     if (!draft) return
     try {
       setSaving(true)
+      const agendamento: AgendamentoEditor = scheduleType === 'IMEDIATO'
+        ? { tipo: 'IMEDIATO' }
+        : scheduleType === 'APOS_INTERVALO'
+          ? { tipo: 'APOS_INTERVALO', valor: Number(scheduleValue), unidade: scheduleUnit }
+          : { tipo: 'PROXIMO_HORARIO', hora: scheduleTime, fuso: scheduleTimezone.trim() }
       await onSave({
         revisaoEsperada: modelo.revisao,
         tituloTemplate: title.trim(),
         corpoTemplate: parseJson(body, 'Conteúdo'),
         destinatarios: parseJson(recipients, 'Destinatários'),
         acoes: parseJson(actions, 'Ações'),
-        agendamento: draft.agendamento,
+        agendamento,
         condicaoEnvio: condition,
         filtroEvento: filter || null,
         notificarNoLogin: notifyOnLogin,
@@ -786,6 +820,11 @@ function ModelDetail({
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-1.5 text-sm font-medium">Título<input className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm font-normal" value={title} onChange={(event) => setTitle(event.target.value)} /></label>
             <label className="space-y-1.5 text-sm font-medium">Validade (horas)<Input type="number" min={1} max={8760} value={validity} onChange={(event) => setValidity(event.target.value)} /></label>
+          </div>
+          <div className="space-y-3 rounded-md border p-3">
+            <label className="block space-y-1.5 text-sm font-medium">Agendamento<select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm font-normal" value={scheduleType} onChange={(event) => setScheduleType(event.target.value as AgendamentoEditor['tipo'])}><option value="IMEDIATO">Imediato</option><option value="APOS_INTERVALO">Após intervalo</option><option value="PROXIMO_HORARIO">Próximo horário diário</option></select></label>
+            {scheduleType === 'APOS_INTERVALO' && <div className="grid gap-3 sm:grid-cols-2"><label className="space-y-1.5 text-sm font-medium">Intervalo<Input type="number" min={1} max={43200} value={scheduleValue} onChange={(event) => setScheduleValue(event.target.value)} /></label><label className="space-y-1.5 text-sm font-medium">Unidade<select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm font-normal" value={scheduleUnit} onChange={(event) => setScheduleUnit(event.target.value as 'MINUTOS' | 'HORAS')}><option value="MINUTOS">Minutos</option><option value="HORAS">Horas</option></select></label></div>}
+            {scheduleType === 'PROXIMO_HORARIO' && <div className="grid gap-3 sm:grid-cols-2"><label className="space-y-1.5 text-sm font-medium">Horário<Input type="time" value={scheduleTime} onChange={(event) => setScheduleTime(event.target.value)} /></label><label className="space-y-1.5 text-sm font-medium">Fuso IANA<Input value={scheduleTimezone} onChange={(event) => setScheduleTimezone(event.target.value)} placeholder="America/Sao_Paulo" /></label></div>}
           </div>
           <label className="block space-y-1.5 text-sm font-medium">Conteúdo estruturado (JSON)<Textarea className="min-h-36 font-mono text-xs" value={body} onChange={(event) => setBody(event.target.value)} /></label>
           <div className="grid gap-4 lg:grid-cols-2">
