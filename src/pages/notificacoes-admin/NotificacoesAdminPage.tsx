@@ -119,6 +119,34 @@ function StatusBadge({ active, version }: { active: boolean; version?: { numero:
   )
 }
 
+function CorpoNotificacaoPreview({ corpo }: { corpo: unknown }) {
+  const documento = corpo && typeof corpo === 'object' && !Array.isArray(corpo)
+    ? corpo as { blocos?: Array<{ conteudo?: Array<{ tipo?: string; valor?: string; campo?: string; codigo?: string; negrito?: boolean; italico?: boolean }> }> }
+    : null
+  if (!documento?.blocos?.length) return <p className="text-sm text-muted-foreground">Sem conteúdo.</p>
+
+  return (
+    <div className="space-y-3 rounded-md border bg-background p-4 text-sm leading-6">
+      {documento.blocos.map((bloco, blocoIndex) => (
+        <p key={blocoIndex}>
+          {(bloco.conteudo ?? []).map((item, itemIndex) => {
+            const valor = item.tipo === 'variavel'
+              ? item.valor ?? item.campo ?? ''
+              : item.tipo === 'acao'
+                ? `[${item.codigo ?? 'ação'}]`
+                : item.valor ?? ''
+            const conteudo = <span className={item.tipo === 'acao' ? 'text-primary' : undefined}>{valor}</span>
+            if (item.negrito && item.italico) return <strong key={itemIndex}><em>{conteudo}</em></strong>
+            if (item.negrito) return <strong key={itemIndex}>{conteudo}</strong>
+            if (item.italico) return <em key={itemIndex}>{conteudo}</em>
+            return <span key={itemIndex}>{conteudo}</span>
+          })}
+        </p>
+      ))}
+    </div>
+  )
+}
+
 function parseJson(value: string, label: string) {
   try {
     return JSON.parse(value)
@@ -594,7 +622,7 @@ export function NotificacoesAdminPage() {
             <DialogTitle>Simulação sintética</DialogTitle>
             <DialogDescription>Nenhum dado real foi consultado, nenhum disparo foi criado e nenhum e-mail foi enviado.</DialogDescription>
           </DialogHeader>
-          {simulacao && <div className="space-y-4"><div className="grid gap-4 sm:grid-cols-2"><div><p className="text-xs uppercase text-muted-foreground">Título</p><p className="mt-1 text-sm font-medium">{simulacao.conteudo.titulo}</p></div><div><p className="text-xs uppercase text-muted-foreground">Destinatários estimados</p><p className="mt-1 text-sm">{simulacao.destinatarios.length}</p></div></div><pre className="max-h-80 overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(simulacao.conteudo.corpo, null, 2)}</pre><div className="space-y-1 text-xs text-muted-foreground">{simulacao.alertas.map((alerta) => <p key={alerta}>{alerta}</p>)}</div></div>}
+          {simulacao && <div className="space-y-4"><div className="grid gap-4 sm:grid-cols-2"><div><p className="text-xs uppercase text-muted-foreground">Título</p><p className="mt-1 text-sm font-medium">{simulacao.conteudo.titulo}</p></div><div><p className="text-xs uppercase text-muted-foreground">Destinatários estimados</p><p className="mt-1 text-sm">{simulacao.destinatarios.length}</p></div></div><CorpoNotificacaoPreview corpo={simulacao.conteudo.corpo} /><div className="space-y-1 text-xs text-muted-foreground">{simulacao.alertas.map((alerta) => <p key={alerta}>{alerta}</p>)}</div></div>}
         </DialogContent>
       </Dialog>
 
