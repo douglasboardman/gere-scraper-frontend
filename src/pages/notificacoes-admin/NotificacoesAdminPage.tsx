@@ -347,8 +347,8 @@ export function NotificacoesAdminPage() {
           </Card>
           <Card>
             <CardContent className="flex items-center justify-between gap-3 p-4">
-              <div><p className="text-xs uppercase text-muted-foreground">Fila de e-mail</p><p className="mt-1 text-sm font-semibold">{diagnosticoQuery.data.email.devidos} devido(s)</p><p className="mt-1 text-xs text-muted-foreground">{diagnosticoQuery.data.email.habilitado ? `${diagnosticoQuery.data.email.incertos} resultado(s) incerto(s)` : 'Desabilitada'}</p></div>
-              <Mail className={diagnosticoQuery.data.email.incertos > 0 ? 'h-5 w-5 text-amber-600' : 'h-5 w-5 text-muted-foreground'} />
+              <div><p className="text-xs uppercase text-muted-foreground">Fila de e-mail</p><p className="mt-1 text-sm font-semibold">{diagnosticoQuery.data.email?.devidos ?? 0} devido(s)</p><p className="mt-1 text-xs text-muted-foreground">{diagnosticoQuery.data.email?.habilitado ? `${diagnosticoQuery.data.email.incertos} resultado(s) incerto(s)` : 'Desabilitada'}</p></div>
+              <Mail className={(diagnosticoQuery.data.email?.incertos ?? 0) > 0 ? 'h-5 w-5 text-amber-600' : 'h-5 w-5 text-muted-foreground'} />
             </CardContent>
           </Card>
         </div>
