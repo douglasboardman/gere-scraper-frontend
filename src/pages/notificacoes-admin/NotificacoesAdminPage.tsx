@@ -49,6 +49,41 @@ type AgendamentoEditor =
   | { tipo: 'APOS_INTERVALO'; valor: number; unidade: 'MINUTOS' | 'HORAS' }
   | { tipo: 'PROXIMO_HORARIO'; hora: string; fuso: string }
 
+type GrupoDestinatarioEditor = {
+  seletor: 'PERFIS_DA_UNIDADE' | 'PERFIS_DA_UORG' | 'USUARIO_REFERENCIADO' | 'ADMINS_GLOBAIS'
+  referencia: string
+  perfis: string[]
+  excluirAutor: boolean
+}
+
+type AcaoEditor = {
+  codigo: string
+  rotulo: string
+  ordem: number
+  exigeConfirmacao: boolean
+}
+
+const ROLES_NOTIFICACAO = [
+  ['admin', 'Administrador'],
+  ['gestor_orgao', 'Gestor do órgão'],
+  ['gestor_unidade', 'Gestor de unidade'],
+  ['gestor_contratacoes', 'Gestor de contratações'],
+  ['gestor_contratos', 'Gestor de contratos'],
+  ['gestor_financeiro', 'Gestor financeiro'],
+  ['requisitante', 'Requisitante'],
+] as const
+
+const ACOES_POR_EVENTO: Record<string, Array<{ codigo: string; rotulo: string; exigeConfirmacao: boolean }>> = {
+  'usuario.acesso_solicitado': [{ codigo: 'ABRIR_USUARIO', rotulo: 'Abrir usuário', exigeConfirmacao: false }],
+  'requisicao.enviada': [
+    { codigo: 'ABRIR_REQUISICAO', rotulo: 'Abrir requisição', exigeConfirmacao: false },
+    { codigo: 'ANALISAR_REQUISICAO', rotulo: 'Analisar requisição', exigeConfirmacao: false },
+    { codigo: 'APROVAR_REQUISICAO', rotulo: 'Aprovar requisição', exigeConfirmacao: true },
+  ],
+  'requisicao.aprovada': [{ codigo: 'ABRIR_REQUISICAO', rotulo: 'Abrir requisição', exigeConfirmacao: false }],
+  'importacao.finalizada': [{ codigo: 'ABRIR_RESULTADO_IMPORTACAO', rotulo: 'Abrir resultado da importação', exigeConfirmacao: false }],
+}
+
 function normalizarAgendamento(raw: unknown): AgendamentoEditor {
   if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
     const valor = raw as Record<string, unknown>
@@ -89,6 +124,15 @@ function parseJson(value: string, label: string) {
     return JSON.parse(value)
   } catch {
     throw new Error(`${label} precisa conter um JSON válido.`)
+  }
+}
+
+function parseEditorArray<T>(value: string): T[] {
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed as T[] : []
+  } catch {
+    return []
   }
 }
 
@@ -769,6 +813,16 @@ function ModelDetail({
   const [scheduleTimezone, setScheduleTimezone] = useState(agendamentoInicial.tipo === 'PROXIMO_HORARIO' ? agendamentoInicial.fuso : 'America/Sao_Paulo')
   const [saving, setSaving] = useState(false)
   const [campoVariavel, setCampoVariavel] = useState('')
+  const [novoSeletor, setNovoSeletor] = useState<GrupoDestinatarioEditor['seletor']>('PERFIS_DA_UNIDADE')
+  const [novaReferencia, setNovaReferencia] = useState(catalogo?.referencias[0] ?? '')
+  const [novoPerfil, setNovoPerfil] = useState('gestor_unidade')
+  const [novaAcao, setNovaAcao] = useState('')
+
+  const referenciasCompativeis = (catalogo?.referencias ?? []).filter((referencia) => {
+    if (novoSeletor === 'USUARIO_REFERENCIADO') return referencia.startsWith('usuario')
+    if (novoSeletor === 'PERFIS_DA_UNIDADE' || novoSeletor === 'PERFIS_DA_UORG') return referencia.startsWith('unidade')
+    return true
+  })
 
   const inserirVariavelNoTitulo = () => {
     if (!campoVariavel) return
@@ -789,6 +843,43 @@ function ModelDetail({
     }
   }
 
+  const adicionarDestinatario = () => {
+    if (!novaReferencia) {
+      toast.error('Selecione uma referência do evento.')
+      return
+    }
+    const grupos = parseEditorArray<GrupoDestinatarioEditor>(recipients)
+    grupos.push({
+      seletor: novoSeletor,
+      referencia: novaReferencia,
+      perfis: novoSeletor === 'USUARIO_REFERENCIADO' || novoSeletor === 'ADMINS_GLOBAIS' ? [] : [novoPerfil],
+      excluirAutor: false,
+    })
+    setRecipients(JSON.stringify(grupos, null, 2))
+  }
+
+  const removerDestinatario = (indice: number) => {
+    const grupos = parseEditorArray<GrupoDestinatarioEditor>(recipients)
+    grupos.splice(indice, 1)
+    setRecipients(JSON.stringify(grupos, null, 2))
+  }
+
+  const adicionarAcao = () => {
+    const definicao = (ACOES_POR_EVENTO[modelo.evento.codigo] ?? []).find((acao) => acao.codigo === novaAcao)
+    if (!definicao) return
+    const acoes = parseEditorArray<AcaoEditor>(actions)
+    if (acoes.some((acao) => acao.codigo === definicao.codigo) || acoes.length >= 3) return
+    acoes.push({ ...definicao, ordem: acoes.length })
+    setActions(JSON.stringify(acoes, null, 2))
+    setNovaAcao('')
+  }
+
+  const removerAcao = (indice: number) => {
+    const acoes = parseEditorArray<AcaoEditor>(actions).filter((_acao, itemIndice) => itemIndice !== indice)
+      .map((acao, ordem) => ({ ...acao, ordem }))
+    setActions(JSON.stringify(acoes, null, 2))
+  }
+
   useEffect(() => {
     setTitle(draft?.tituloTemplate ?? '')
     setBody(JSON.stringify(draft?.corpoTemplate ?? DEFAULT_BODY, null, 2))
@@ -805,7 +896,13 @@ function ModelDetail({
     setScheduleUnit(agendamento.tipo === 'APOS_INTERVALO' ? agendamento.unidade : 'MINUTOS')
     setScheduleTime(agendamento.tipo === 'PROXIMO_HORARIO' ? agendamento.hora : '09:00')
     setScheduleTimezone(agendamento.tipo === 'PROXIMO_HORARIO' ? agendamento.fuso : 'America/Sao_Paulo')
-  }, [modelo.id, draft?.id, draft?.updatedAt])
+    setNovaReferencia(catalogo?.referencias[0] ?? '')
+    setNovaAcao('')
+  }, [modelo.id, draft?.id, draft?.updatedAt, catalogo?.codigo])
+
+  useEffect(() => {
+    if (!referenciasCompativeis.includes(novaReferencia)) setNovaReferencia(referenciasCompativeis[0] ?? '')
+  }, [novoSeletor, catalogo?.codigo])
 
   const save = async () => {
     if (!draft) return
@@ -872,8 +969,31 @@ function ModelDetail({
           </div>
           <label className="block space-y-1.5 text-sm font-medium">Conteúdo estruturado (JSON)<Textarea className="min-h-36 font-mono text-xs" value={body} onChange={(event) => setBody(event.target.value)} /></label>
           <div className="grid gap-4 lg:grid-cols-2">
-            <label className="space-y-1.5 text-sm font-medium">Destinatários (JSON)<Textarea className="min-h-32 font-mono text-xs" value={recipients} onChange={(event) => setRecipients(event.target.value)} /></label>
-            <label className="space-y-1.5 text-sm font-medium">Ações (JSON)<Textarea className="min-h-32 font-mono text-xs" value={actions} onChange={(event) => setActions(event.target.value)} /></label>
+            <div className="space-y-3 rounded-md border p-3">
+              <div><p className="text-sm font-medium">Destinatários guiados</p><p className="text-xs text-muted-foreground">Grupos são unidos e usuários repetidos recebem uma única entrega.</p></div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <select className="h-10 rounded-md border bg-background px-3 text-sm" value={novoSeletor} onChange={(event) => setNovoSeletor(event.target.value as GrupoDestinatarioEditor['seletor'])}>
+                  <option value="PERFIS_DA_UNIDADE">Perfis da unidade</option>
+                  <option value="PERFIS_DA_UORG">Perfis da UORG</option>
+                  <option value="USUARIO_REFERENCIADO">Usuário referenciado</option>
+                  <option value="ADMINS_GLOBAIS">Admins globais</option>
+                </select>
+                <select className="h-10 rounded-md border bg-background px-3 text-sm" value={novaReferencia} onChange={(event) => setNovaReferencia(event.target.value)}>
+                  <option value="">Referência...</option>
+                  {referenciasCompativeis.map((referencia) => <option key={referencia} value={referencia}>{referencia}</option>)}
+                </select>
+              </div>
+              {(novoSeletor === 'PERFIS_DA_UNIDADE' || novoSeletor === 'PERFIS_DA_UORG') && <select className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={novoPerfil} onChange={(event) => setNovoPerfil(event.target.value)}>{ROLES_NOTIFICACAO.map(([valor, rotulo]) => <option key={valor} value={valor}>{rotulo}</option>)}</select>}
+              <Button type="button" variant="outline" onClick={adicionarDestinatario} disabled={!novaReferencia}>Adicionar grupo</Button>
+              <div className="space-y-1.5">{parseEditorArray<GrupoDestinatarioEditor>(recipients).map((grupo, indice) => <div key={`${grupo.referencia}-${indice}`} className="flex items-center justify-between gap-2 rounded bg-muted/50 px-2 py-1.5 text-xs"><span>{grupo.seletor} · {grupo.referencia}{grupo.perfis?.length ? ` · ${grupo.perfis.join(', ')}` : ''}</span><Button type="button" size="sm" variant="ghost" onClick={() => removerDestinatario(indice)}>Remover</Button></div>)}</div>
+              <label className="block space-y-1.5 text-xs font-medium">Avançado (JSON)<Textarea className="min-h-24 font-mono text-xs" value={recipients} onChange={(event) => setRecipients(event.target.value)} /></label>
+            </div>
+            <div className="space-y-3 rounded-md border p-3">
+              <div><p className="text-sm font-medium">Ações do catálogo</p><p className="text-xs text-muted-foreground">Comandos mutáveis exigem confirmação na aplicação.</p></div>
+              <div className="flex gap-2"><select className="h-10 min-w-0 flex-1 rounded-md border bg-background px-3 text-sm" value={novaAcao} onChange={(event) => setNovaAcao(event.target.value)}><option value="">Selecione uma ação...</option>{(ACOES_POR_EVENTO[modelo.evento.codigo] ?? []).map((acao) => <option key={acao.codigo} value={acao.codigo}>{acao.rotulo}</option>)}</select><Button type="button" variant="outline" onClick={adicionarAcao} disabled={!novaAcao}>Adicionar</Button></div>
+              <div className="space-y-1.5">{parseEditorArray<AcaoEditor>(actions).map((acao, indice) => <div key={`${acao.codigo}-${indice}`} className="flex items-center justify-between gap-2 rounded bg-muted/50 px-2 py-1.5 text-xs"><span>{acao.rotulo}{acao.exigeConfirmacao ? ' · confirmação' : ''}</span><Button type="button" size="sm" variant="ghost" onClick={() => removerAcao(indice)}>Remover</Button></div>)}</div>
+              <label className="block space-y-1.5 text-xs font-medium">Avançado (JSON)<Textarea className="min-h-24 font-mono text-xs" value={actions} onChange={(event) => setActions(event.target.value)} /></label>
+            </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-1.5 text-sm font-medium">Condição<select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm font-normal" value={condition} onChange={(event) => setCondition(event.target.value)}><option value="SEMPRE">Sempre</option><option value="CADASTRO_AINDA_PENDENTE">Cadastro ainda pendente</option><option value="REQUISICAO_AINDA_ENVIADA_NO_MESMO_CICLO">Requisição ainda enviada</option><option value="FILTRO_RESULTADO_IMPORTACAO">Filtro de importação</option></select></label>
