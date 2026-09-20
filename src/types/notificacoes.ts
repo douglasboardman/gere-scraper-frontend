@@ -30,4 +30,8 @@ export interface NotificacaoDetalhe extends NotificacaoListaItem {
   referencias: unknown
   lidaEm: string | null
   arquivadaEm: string | null
+  acaoContexto: {
+    requisicaoId: string
+    revisaoEsperada: number | null
+  } | null
 }

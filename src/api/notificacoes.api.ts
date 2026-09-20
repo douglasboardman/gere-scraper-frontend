@@ -41,4 +41,19 @@ export const notificacoesApi = {
     const { data } = await apiClient.post('/notificacoes/ler-todas', { ate })
     return data as { alteradas: number; ate: string }
   },
+
+  async executarAcao(input: {
+    notificacaoId: string
+    acaoCodigo: 'APROVAR_REQUISICAO'
+    revisaoEsperada: number
+    idempotencyKey: string
+  }) {
+    const { data } = await apiClient.post(`/notificacoes/${encodeURIComponent(input.notificacaoId)}/acoes`, {
+      acaoCodigo: input.acaoCodigo,
+      revisaoEsperada: input.revisaoEsperada,
+      confirmacao: true,
+      idempotencyKey: input.idempotencyKey,
+    })
+    return data as { execucaoId: string; notificacaoId: string; acaoCodigo: string; requisicaoId: string; status: string; revisao: number }
+  },
 }

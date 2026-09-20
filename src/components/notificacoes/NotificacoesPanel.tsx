@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Archive, ArrowLeft, Bell, Check, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { Archive, ArrowLeft, Bell, Check, CheckCircle2, ExternalLink, Loader2 } from 'lucide-react'
 import { notificacoesApi } from '@/api/notificacoes.api'
 import { qk } from '@/lib/query-keys'
+import { getApiErrorMessage } from '@/lib/api-error'
 import type { EstadoCaixaNotificacoes, NotificacaoDetalhe } from '@/types/notificacoes'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value))
@@ -34,9 +37,11 @@ function CorpoEstruturado({ corpo }: { corpo: unknown }) {
 
 export function NotificacoesPanel() {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [estado, setEstado] = useState<EstadoCaixaNotificacoes>((searchParams.get('filtro') as EstadoCaixaNotificacoes) || 'todas')
   const [selecionada, setSelecionada] = useState<string | null>(searchParams.get('mensagem'))
+  const [acaoConfirmar, setAcaoConfirmar] = useState<{ chave: string; rotulo: string } | null>(null)
 
   const listaQuery = useQuery({
     queryKey: qk.notificacoes.lista(estado),
@@ -58,6 +63,23 @@ export function NotificacoesPanel() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['notificacoes'] })
     },
+  })
+  const acaoMutation = useMutation({
+    mutationFn: () => {
+      if (!selecionada || detalheQuery.data?.acaoContexto?.revisaoEsperada === null || detalheQuery.data?.acaoContexto?.revisaoEsperada === undefined) throw new Error('A revisão atual da requisição não está disponível.')
+      return notificacoesApi.executarAcao({
+        notificacaoId: selecionada,
+        acaoCodigo: 'APROVAR_REQUISICAO',
+        revisaoEsperada: detalheQuery.data.acaoContexto.revisaoEsperada,
+        idempotencyKey: acaoConfirmar?.chave ?? crypto.randomUUID(),
+      })
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['notificacoes'] })
+      setAcaoConfirmar(null)
+      toast.success('Requisição aprovada com sucesso.')
+    },
+    onError: (error: unknown) => toast.error(getApiErrorMessage(error, 'Não foi possível executar a ação.')),
   })
 
   useEffect(() => {
@@ -84,6 +106,8 @@ export function NotificacoesPanel() {
 
   if (selecionada && detalheQuery.data) {
     const detalhe: NotificacaoDetalhe = detalheQuery.data
+    const acoes = Array.isArray(detalhe.acoes) ? detalhe.acoes as Array<{ codigo?: string; rotulo?: string }> : []
+    const acaoAprovar = acoes.find((acao) => acao.codigo === 'APROVAR_REQUISICAO')
     return (
       <Card>
         <CardHeader>
@@ -95,6 +119,20 @@ export function NotificacoesPanel() {
         </CardHeader>
         <CardContent className="space-y-5">
           <CorpoEstruturado corpo={detalhe.corpo} />
+          {acaoAprovar && detalhe.acaoContexto?.requisicaoId && (
+            <div className="rounded-md border bg-muted/30 p-4">
+              <p className="text-sm font-medium">Ações disponíveis</p>
+              <p className="mt-1 text-xs text-muted-foreground">A aprovação confere novamente autorização, estado e saldo antes de confirmar.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button onClick={() => setAcaoConfirmar({ chave: crypto.randomUUID(), rotulo: acaoAprovar.rotulo ?? 'Aprovar requisição' })} disabled={acaoMutation.isPending || detalhe.acaoContexto.revisaoEsperada === null}>
+                  <CheckCircle2 className="mr-2 h-4 w-4" /> {acaoAprovar.rotulo ?? 'Aprovar requisição'}
+                </Button>
+                <Button variant="outline" onClick={() => navigate(`/requisicoes/detalhe?id=${encodeURIComponent(detalhe.acaoContexto!.requisicaoId)}`)}>
+                  <ExternalLink className="mr-2 h-4 w-4" /> Abrir requisição
+                </Button>
+              </div>
+            </div>
+          )}
           <div className="flex flex-wrap gap-2">
             {!detalhe.lida && (
               <Button size="sm" onClick={() => estadoMutation.mutate({ id: detalhe.id, lida: true })} disabled={estadoMutation.isPending}>
@@ -106,6 +144,16 @@ export function NotificacoesPanel() {
             </Button>
           </div>
         </CardContent>
+        <ConfirmDialog
+          open={!!acaoConfirmar}
+          onCancel={() => setAcaoConfirmar(null)}
+          onConfirm={() => acaoMutation.mutate()}
+          title={acaoConfirmar?.rotulo ?? 'Confirmar ação'}
+          description="A aprovação será executada com as permissões e o saldo atuais. Essa operação altera o status da requisição e consome os fornecimentos correspondentes."
+          confirmLabel="Confirmar aprovação"
+          variant="default"
+          isLoading={acaoMutation.isPending}
+        />
       </Card>
     )
   }
