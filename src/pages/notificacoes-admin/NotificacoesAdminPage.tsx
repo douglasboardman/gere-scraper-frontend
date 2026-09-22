@@ -44,6 +44,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { ConteudoNotificacao, DOCUMENTO_NOTIFICACAO_VAZIO } from '@/components/notificacoes/ConteudoNotificacao'
 import { ServicoNotificacaoEditor } from './ServicoNotificacaoEditor'
+import { EventoNotificacaoEditor } from './EventoNotificacaoEditor'
 
 type AdminTab = 'eventos' | 'modelos' | 'disparos'
 
@@ -206,6 +207,10 @@ export function NotificacoesAdminPage() {
       toast.success(variables.ativo ? 'Evento ativado.' : 'Evento desativado.')
     },
   })
+  const eventDraftMutation = useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Parameters<typeof notificacoesAdminApi.atualizarEventoRascunho>[1] }) => notificacoesAdminApi.atualizarEventoRascunho(id, input),
+    ...mutationOptions,
+  })
   const modelPublishMutation = useMutation({
     mutationFn: ({ id, revisao }: { id: string; revisao: number }) => notificacoesAdminApi.publicarModelo(id, revisao),
     ...mutationOptions,
@@ -237,6 +242,7 @@ export function NotificacoesAdminPage() {
     eventPublishMutation,
     eventPromoteMutation,
     eventActivateMutation,
+    eventDraftMutation,
     modelPublishMutation,
     modelPromoteMutation,
     modelActivateMutation,
@@ -574,7 +580,7 @@ export function NotificacoesAdminPage() {
       </Dialog>
 
       <Dialog open={!!selectedEventId} onOpenChange={(open) => !open && setSelectedEventId(null)}>
-        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+        <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Configuração do evento</DialogTitle>
             <DialogDescription>Publique e promova uma versão antes de ativar o evento.</DialogDescription>
@@ -588,6 +594,7 @@ export function NotificacoesAdminPage() {
               onPublish={() => eventPublishMutation.mutate({ id: eventoQuery.data!.id, revisao: eventoQuery.data!.revisao })}
               onPromote={(versaoId) => eventPromoteMutation.mutate({ id: eventoQuery.data!.id, versaoId, revisao: eventoQuery.data!.revisao })}
               onActivate={() => eventActivateMutation.mutate({ id: eventoQuery.data!.id, ativo: !eventoQuery.data!.ativo, revisao: eventoQuery.data!.revisao })}
+              onSave={(input) => eventDraftMutation.mutateAsync({ id: eventoQuery.data!.id, input })}
             />
           )}
         </DialogContent>
@@ -773,6 +780,7 @@ function EventDetail({
   onPublish,
   onPromote,
   onActivate,
+  onSave,
 }: {
   evento: NotificacaoEventoDetalhe
   catalogo?: NotificacaoCatalogoEvento
@@ -780,6 +788,7 @@ function EventDetail({
   onPublish: () => void
   onPromote: (versaoId: string) => void
   onActivate: () => void
+  onSave: (input: { revisaoEsperada: number; nome: string; campos: NotificacaoEventoDetalhe['versoes'][number]['campos']; acoes: NotificacaoEventoDetalhe['versoes'][number]['acoes'] }) => Promise<void>
 }) {
   const rascunho = evento.versoes.find((versao) => versao.status === 'RASCUNHO')
   return (
@@ -791,25 +800,7 @@ function EventDetail({
         <div><p className="text-xs uppercase text-muted-foreground">Revisão editorial</p><p className="text-sm">{evento.revisao}</p></div>
       </div>
       <Separator />
-      <div className="space-y-3">
-        <div>
-          <h3 className="text-sm font-semibold">Campos disponíveis para mensagens</h3>
-          <p className="text-xs text-muted-foreground">Use estes campos no título, no corpo ou nos parâmetros de uma ação.</p>
-        </div>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {(catalogo?.campos ?? []).map((campo) => (
-            <div key={campo.codigo} className="rounded-md border p-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-medium">{campo.rotulo}</p>
-                <div className="flex gap-1"><Badge variant="outline">{campo.tipo.replace('_', ' ')}</Badge><Badge variant="secondary">{campo.origem === 'EVENTO' ? 'Evento' : 'Contexto'}</Badge></div>
-              </div>
-              <p className="mt-1 font-mono text-xs text-primary">{`{{${campo.codigo}}}`}</p>
-              {campo.opcional && <p className="mt-1 text-xs text-muted-foreground">Pode não estar disponível em todas as ocorrências.</p>}
-            </div>
-          ))}
-        </div>
-        {!!catalogo?.acoes?.length && <div className="rounded-md border bg-muted/20 p-3"><p className="text-sm font-medium">Links e comandos disponíveis</p><div className="mt-2 space-y-2">{catalogo.acoes.map((acao) => <div key={acao.codigo} className="flex flex-wrap items-center justify-between gap-2 text-xs"><span>{acao.rotulo}</span><span className="font-mono text-muted-foreground">{acao.metodo} {acao.rota}</span></div>)}</div></div>}
-      </div>
+      <EventoNotificacaoEditor evento={evento} catalogo={catalogo} disabled={disabled} onSave={onSave} />
       <Separator />
       <div className="space-y-2">
         <h3 className="text-sm font-semibold">Versões</h3>

@@ -58,6 +58,17 @@ export interface NotificacaoEventoVersao {
   publicadoEm: string | null
   createdAt?: string
   updatedAt?: string
+  campos: Array<{
+    campo: string
+    nomeApresentado: string
+    alias: string
+    disponivel: boolean
+  }>
+  acoes: Array<{
+    codigo: string
+    rotulo: string
+    parametros: Record<string, string>
+  }>
 }
 
 export interface NotificacaoEventoDetalhe extends NotificacaoEventoResumo {
@@ -109,6 +120,7 @@ export interface NotificacaoModeloDetalhe extends NotificacaoModeloResumo {
 export interface AtualizarNotificacaoModeloRascunhoInput {
   revisaoEsperada: number
   nome?: string
+  eventoVersaoId?: string
   tituloTemplate?: string
   corpoTemplate?: unknown
   destinatarios?: unknown
@@ -263,6 +275,16 @@ export const notificacoesAdminApi = {
 
   async criarEvento(input: { codigo: string; nome: string }) {
     const { data } = await apiClient.post('/admin/notificacoes/eventos', input)
+    return data
+  },
+
+  async atualizarEventoRascunho(id: string, input: {
+    revisaoEsperada: number
+    nome?: string
+    campos?: NotificacaoEventoVersao['campos']
+    acoes?: NotificacaoEventoVersao['acoes']
+  }) {
+    const { data } = await apiClient.put(`/admin/notificacoes/eventos/${encodeURIComponent(id)}/rascunho`, input)
     return data
   },
 

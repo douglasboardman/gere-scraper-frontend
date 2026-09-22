@@ -160,19 +160,50 @@ export function ServicoNotificacaoEditor({
   creation?: boolean
 }) {
   const draft = modelo.versoes.find((versao) => versao.status === 'RASCUNHO') ?? modelo.versoes[0]
+  const [eventVersionId, setEventVersionId] = useState(draft?.eventoVersaoId ?? '')
+  const editorCatalogo = useMemo(() => {
+    if (!catalogo) return catalogo
+    const versaoEvento = evento?.versoes.find((versao) => versao.id === eventVersionId)
+      ?? evento?.versoes.find((versao) => versao.id === draft?.eventoVersaoId)
+      ?? evento?.versoes.find((versao) => versao.id === evento.versaoAtiva?.id)
+    if (!versaoEvento?.campos?.length) return catalogo
+    const camposConfigurados = new Map(versaoEvento.campos.filter((campo) => campo.disponivel).map((campo) => [campo.campo, campo]))
+    return {
+      ...catalogo,
+      campos: catalogo.campos.flatMap((campo) => {
+        const configurado = camposConfigurados.get(campo.codigo)
+        return configurado ? [{ ...campo, codigo: configurado.alias, rotulo: configurado.nomeApresentado }] : []
+      }),
+      acoes: catalogo.acoes.filter((acao) => versaoEvento.acoes.some((configurada) => configurada.codigo === acao.codigo)).map((acao) => ({
+        ...acao,
+        rotulo: versaoEvento.acoes.find((configurada) => configurada.codigo === acao.codigo)?.rotulo ?? acao.rotulo,
+        parametros: acao.parametros.map((parametro) => ({
+          ...parametro,
+          camposPermitidos: parametro.camposPermitidos.flatMap((campo) => {
+            const configurado = camposConfigurados.get(campo)
+            return configurado ? [configurado.alias] : []
+          }),
+          campoPadrao: (() => {
+            const configurada = versaoEvento.acoes.find((item) => item.codigo === acao.codigo)
+            return configurada?.parametros[parametro.nome] ?? camposConfigurados.get(parametro.campoPadrao)?.alias ?? ''
+          })(),
+        })),
+      })),
+    }
+  }, [catalogo, evento, draft?.eventoVersaoId, eventVersionId])
   const agendamentoInicial = normalizarAgendamento(draft?.agendamento)
-  const condicoesCatalogoKey = (catalogo?.condicoes ?? []).join('|')
+  const condicoesCatalogoKey = (editorCatalogo?.condicoes ?? []).join('|')
   const condicaoLegada = Boolean(
     draft?.condicaoEnvio
-    && catalogo?.condicoes?.length
-    && !catalogo.condicoes.includes(draft.condicaoEnvio),
+    && editorCatalogo?.condicoes?.length
+    && !editorCatalogo.condicoes.includes(draft.condicaoEnvio),
   )
   const [title, setTitle] = useState(draft?.tituloTemplate ?? '')
   const [serviceName, setServiceName] = useState(modelo.nome)
   const [body, setBody] = useState<DocumentoNotificacao>(normalizarDocumentoNotificacao(draft?.corpoTemplate ?? DOCUMENTO_NOTIFICACAO_VAZIO))
   const [recipients, setRecipients] = useState<GrupoDestinatarioEditor[]>(normalizarDestinatarios(draft?.destinatarios))
-  const [actions, setActions] = useState<AcaoEditor[]>(normalizarAcoes(draft?.acoes, catalogo))
-  const [condition, setCondition] = useState(normalizarCondicaoEnvio(draft?.condicaoEnvio, catalogo))
+  const [actions, setActions] = useState<AcaoEditor[]>(normalizarAcoes(draft?.acoes, editorCatalogo))
+  const [condition, setCondition] = useState(normalizarCondicaoEnvio(draft?.condicaoEnvio, editorCatalogo))
   const [filter, setFilter] = useState(draft?.filtroEvento ?? '')
   const [notifyOnLogin, setNotifyOnLogin] = useState(draft?.notificarNoLogin ?? false)
   const [replicateEmail, setReplicateEmail] = useState(draft?.replicarPorEmail ?? false)
@@ -185,26 +216,27 @@ export function ServicoNotificacaoEditor({
   const [saving, setSaving] = useState(false)
   const [campoTitulo, setCampoTitulo] = useState('')
   const [novoSeletor, setNovoSeletor] = useState<GrupoDestinatarioEditor['seletor']>('PERFIS_DA_UNIDADE')
-  const [novaReferencia, setNovaReferencia] = useState(catalogo?.referencias?.[0] ?? '')
+  const [novaReferencia, setNovaReferencia] = useState(editorCatalogo?.referencias?.[0] ?? '')
   const [novoPerfil, setNovoPerfil] = useState('gestor_unidade')
   const [novaAcao, setNovaAcao] = useState('')
   const versaoPublicadaEvento = evento?.versoes.find((versao) => versao.status === 'PUBLICADA' && evento.versaoAtiva?.id !== versao.id)
   const rascunhoEvento = evento?.versoes.find((versao) => versao.status === 'RASCUNHO')
   const eventoPronto = Boolean(evento?.ativo && evento.versaoAtiva)
 
-  const referenciasCompativeis = useMemo(() => (catalogo?.referencias ?? []).filter((referencia) => {
+  const referenciasCompativeis = useMemo(() => (editorCatalogo?.referencias ?? []).filter((referencia) => {
     if (novoSeletor === 'USUARIO_REFERENCIADO') return referencia.startsWith('usuario')
     if (novoSeletor === 'PERFIS_DA_UNIDADE' || novoSeletor === 'PERFIS_DA_UORG') return referencia.startsWith('unidade')
     return true
-  }), [catalogo, novoSeletor])
+  }), [editorCatalogo, novoSeletor])
 
   useEffect(() => {
     setTitle(draft?.tituloTemplate ?? '')
     setServiceName(modelo.nome)
+    setEventVersionId(draft?.eventoVersaoId ?? '')
     setBody(normalizarDocumentoNotificacao(draft?.corpoTemplate ?? DOCUMENTO_NOTIFICACAO_VAZIO))
     setRecipients(normalizarDestinatarios(draft?.destinatarios))
-    setActions(normalizarAcoes(draft?.acoes, catalogo))
-    setCondition(normalizarCondicaoEnvio(draft?.condicaoEnvio, catalogo))
+    setActions(normalizarAcoes(draft?.acoes, editorCatalogo))
+    setCondition(normalizarCondicaoEnvio(draft?.condicaoEnvio, editorCatalogo))
     setFilter(draft?.filtroEvento ?? '')
     setNotifyOnLogin(draft?.notificarNoLogin ?? false)
     setReplicateEmail(draft?.replicarPorEmail ?? false)
@@ -215,14 +247,14 @@ export function ServicoNotificacaoEditor({
     setScheduleUnit(agendamento.tipo === 'APOS_INTERVALO' ? agendamento.unidade : 'MINUTOS')
     setScheduleTime(agendamento.tipo === 'PROXIMO_HORARIO' ? agendamento.hora : '09:00')
     setScheduleTimezone(agendamento.tipo === 'PROXIMO_HORARIO' ? agendamento.fuso : 'America/Sao_Paulo')
-  }, [modelo.id, modelo.nome, draft?.id, draft?.updatedAt, catalogo?.codigo, condicoesCatalogoKey])
+  }, [modelo.id, modelo.nome, draft?.id, draft?.updatedAt, editorCatalogo?.codigo, condicoesCatalogoKey])
 
   useEffect(() => {
-    if (!referenciasCompativeis.includes(novaReferencia)) setNovaReferencia(referenciasCompativeis[0] ?? catalogo?.referencias?.[0] ?? '')
-  }, [referenciasCompativeis, novaReferencia, catalogo])
+    if (!referenciasCompativeis.includes(novaReferencia)) setNovaReferencia(referenciasCompativeis[0] ?? editorCatalogo?.referencias?.[0] ?? '')
+  }, [referenciasCompativeis, novaReferencia, editorCatalogo])
 
   const adicionarDestinatario = () => {
-    const referencia = novaReferencia || catalogo?.referencias?.[0]
+    const referencia = novaReferencia || editorCatalogo?.referencias?.[0]
     if (!referencia) return toast.error('Este evento não oferece uma referência compatível.')
     if (recipients.length >= 5) return toast.error('O limite é de cinco grupos de destinatários.')
     setRecipients((atuais) => [...atuais, {
@@ -234,7 +266,7 @@ export function ServicoNotificacaoEditor({
   }
 
   const adicionarAcao = () => {
-    const definicao = (catalogo?.acoes ?? []).find((acao) => acao.codigo === novaAcao)
+    const definicao = (editorCatalogo?.acoes ?? []).find((acao) => acao.codigo === novaAcao)
     if (!definicao || actions.some((acao) => acao.codigo === definicao.codigo) || actions.length >= 3) return
     setActions((atuais) => [...atuais, {
       codigo: definicao.codigo,
@@ -248,7 +280,7 @@ export function ServicoNotificacaoEditor({
 
   const save = async () => {
     if (!draft || !title.trim()) return toast.error('Informe o título da mensagem.')
-    if (!catalogo) return toast.error('Aguarde o catálogo do evento terminar de carregar.')
+    if (!editorCatalogo) return toast.error('Aguarde o catálogo do evento terminar de carregar.')
     if (!creation && serviceName.trim().length < 3) return toast.error('Informe o título do serviço.')
     const horas = Number(validity)
     const intervalo = Number(scheduleValue)
@@ -263,13 +295,14 @@ export function ServicoNotificacaoEditor({
       setSaving(true)
       await onSave({
         revisaoEsperada: modelo.revisao,
+        eventoVersaoId: eventVersionId,
         ...(!creation ? { nome: serviceName.trim() } : {}),
         tituloTemplate: title.trim(),
         corpoTemplate: body,
         destinatarios: recipients,
         acoes: actions,
         agendamento,
-        condicaoEnvio: normalizarCondicaoEnvio(condition, catalogo),
+        condicaoEnvio: normalizarCondicaoEnvio(condition, editorCatalogo),
         filtroEvento: filter || null,
         notificarNoLogin: notifyOnLogin,
         replicarPorEmail: replicateEmail,
@@ -292,13 +325,23 @@ export function ServicoNotificacaoEditor({
         </div>
       )}
 
+      {evento && (
+        <section className="rounded-lg border bg-muted/10 p-4">
+          <h3 className="font-semibold">Versão do evento gatilho</h3>
+          <p className="mt-1 text-sm text-muted-foreground">Para adaptar este serviço, selecione uma versão publicada do mesmo evento. O tipo de evento não pode ser trocado.</p>
+          <select className="mt-3 h-10 w-full rounded-md border bg-background px-3 text-sm" value={eventVersionId} onChange={(event) => setEventVersionId(event.target.value)}>
+            {evento.versoes.filter((versao) => versao.status === 'PUBLICADA' || versao.id === draft?.eventoVersaoId).map((versao) => <option key={versao.id} value={versao.id}>Versão {versao.numero}{versao.id === evento.versaoAtiva?.id ? ' · vigente' : ''}{versao.status === 'RASCUNHO' ? ' · rascunho atual' : ''}</option>)}
+          </select>
+        </section>
+      )}
+
       <section className="space-y-4">
         <div><h3 className="font-semibold">Mensagem</h3><p className="text-sm text-muted-foreground">Escreva como a mensagem será apresentada. Os campos dinâmicos serão substituídos quando o evento ocorrer.</p></div>
         <label className="block space-y-1.5 text-sm font-medium">
           Título da mensagem
-          <div className="flex gap-2"><Input value={title} maxLength={180} onChange={(event) => setTitle(event.target.value)} placeholder="Ex.: Nova requisição aguardando análise" /><select className="h-10 max-w-72 rounded-md border bg-background px-2 text-xs" value={campoTitulo} onChange={(event) => setCampoTitulo(event.target.value)}><option value="">Campo dinâmico...</option>{(catalogo?.campos ?? []).map((campo) => <option key={campo.codigo} value={campo.codigo}>{campo.rotulo}</option>)}</select><Button type="button" variant="outline" onClick={() => campoTitulo && setTitle((atual) => `${atual}${atual && !atual.endsWith(' ') ? ' ' : ''}{{${campoTitulo}}}`)} disabled={!campoTitulo}>Inserir</Button></div>
+          <div className="flex gap-2"><Input value={title} maxLength={180} onChange={(event) => setTitle(event.target.value)} placeholder="Ex.: Nova requisição aguardando análise" /><select className="h-10 max-w-72 rounded-md border bg-background px-2 text-xs" value={campoTitulo} onChange={(event) => setCampoTitulo(event.target.value)}><option value="">Campo dinâmico...</option>{(editorCatalogo?.campos ?? []).map((campo) => <option key={campo.codigo} value={campo.codigo}>{campo.rotulo}</option>)}</select><Button type="button" variant="outline" onClick={() => campoTitulo && setTitle((atual) => `${atual}${atual && !atual.endsWith(' ') ? ' ' : ''}{{${campoTitulo}}}`)} disabled={!campoTitulo}>Inserir</Button></div>
         </label>
-        <label className="block space-y-1.5 text-sm font-medium">Corpo da mensagem<EditorMensagem value={body} onChange={setBody} campos={(catalogo?.campos ?? []).map(({ codigo, rotulo }) => ({ codigo, rotulo }))} /></label>
+        <label className="block space-y-1.5 text-sm font-medium">Corpo da mensagem<EditorMensagem value={body} onChange={setBody} campos={(editorCatalogo?.campos ?? []).map(({ codigo, rotulo }) => ({ codigo, rotulo }))} /></label>
       </section>
 
       <Separator />
@@ -310,7 +353,7 @@ export function ServicoNotificacaoEditor({
           {scheduleType === 'PROXIMO_HORARIO' && <><label className="space-y-1.5 text-sm font-medium">Horário<Input type="time" value={scheduleTime} onChange={(event) => setScheduleTime(event.target.value)} /></label><label className="space-y-1.5 text-sm font-medium">Fuso horário<Input value={scheduleTimezone} onChange={(event) => setScheduleTimezone(event.target.value)} /></label></>}
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="space-y-1.5 text-sm font-medium">Condição<select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm font-normal" value={condition} onChange={(event) => setCondition(event.target.value)}>{(catalogo?.condicoes ?? ['SEMPRE']).map((item) => <option key={item} value={item}>{ROTULOS_CONDICAO[item] ?? item}</option>)}</select>{condicaoLegada && <span className="block text-xs font-normal text-amber-700">A condição da versão anterior será atualizada para a opção compatível com este evento ao salvar.</span>}</label>
+          <label className="space-y-1.5 text-sm font-medium">Condição<select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm font-normal" value={condition} onChange={(event) => setCondition(event.target.value)}>{(editorCatalogo?.condicoes ?? ['SEMPRE']).map((item) => <option key={item} value={item}>{ROTULOS_CONDICAO[item] ?? item}</option>)}</select>{condicaoLegada && <span className="block text-xs font-normal text-amber-700">A condição da versão anterior será atualizada para a opção compatível com este evento ao salvar.</span>}</label>
           {condition === 'FILTRO_RESULTADO_IMPORTACAO' && <label className="space-y-1.5 text-sm font-medium">Resultado da importação<select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm font-normal" value={filter} onChange={(event) => setFilter(event.target.value)}><option value="">Qualquer resultado</option><option value="SUCESSO">Sucesso</option><option value="SEM_PARTICIPACAO">Sem participação</option><option value="FALHA">Falha</option></select></label>}
           <label className="space-y-1.5 text-sm font-medium">Disponível por (horas)<Input type="number" min={1} max={8760} value={validity} onChange={(event) => setValidity(event.target.value)} /><span className="block text-xs font-normal text-muted-foreground">Controla a expiração da entrega e de ações.</span></label>
         </div>
@@ -334,10 +377,10 @@ export function ServicoNotificacaoEditor({
       <Separator />
       <section className="space-y-4">
         <div><h3 className="font-semibold">Links e botões da mensagem</h3><p className="text-sm text-muted-foreground">Escolha somente ações catalogadas pelo GERE. Rotas e comandos não podem ser digitados livremente.</p></div>
-        <div className="flex flex-wrap gap-2"><select className="h-10 min-w-64 flex-1 rounded-md border bg-background px-3 text-sm" value={novaAcao} onChange={(event) => setNovaAcao(event.target.value)}><option value="">Selecione uma ação...</option>{(catalogo?.acoes ?? []).filter((acao) => !actions.some((atual) => atual.codigo === acao.codigo)).map((acao) => <option key={acao.codigo} value={acao.codigo}>{acao.rotulo}</option>)}</select><Button type="button" variant="outline" onClick={adicionarAcao} disabled={!novaAcao}><Plus className="mr-2 h-4 w-4" /> Adicionar</Button></div>
+        <div className="flex flex-wrap gap-2"><select className="h-10 min-w-64 flex-1 rounded-md border bg-background px-3 text-sm" value={novaAcao} onChange={(event) => setNovaAcao(event.target.value)}><option value="">Selecione uma ação...</option>{(editorCatalogo?.acoes ?? []).filter((acao) => !actions.some((atual) => atual.codigo === acao.codigo)).map((acao) => <option key={acao.codigo} value={acao.codigo}>{acao.rotulo}</option>)}</select><Button type="button" variant="outline" onClick={adicionarAcao} disabled={!novaAcao}><Plus className="mr-2 h-4 w-4" /> Adicionar</Button></div>
         <div className="space-y-3">{actions.map((acao, indice) => {
-          const definicao = (catalogo?.acoes ?? []).find((item) => item.codigo === acao.codigo)
-          return <div key={acao.codigo} className="rounded-lg border p-4"><div className="flex items-start justify-between gap-3"><div><Input className="max-w-sm font-medium" value={acao.rotulo} maxLength={120} onChange={(event) => setActions((atuais) => atuais.map((item, itemIndice) => itemIndice === indice ? { ...item, rotulo: event.target.value } : item))} /><p className="mt-2 text-xs text-muted-foreground">{definicao?.descricao}</p><p className="mt-1 font-mono text-xs text-primary">{definicao?.metodo} {definicao?.rota}</p></div><Button type="button" size="sm" variant="ghost" onClick={() => setActions((atuais) => atuais.filter((_item, itemIndice) => itemIndice !== indice).map((item, ordem) => ({ ...item, ordem })))}><Trash2 className="h-4 w-4" /><span className="sr-only">Remover ação</span></Button></div>{(definicao?.parametros ?? []).map((parametro) => <label key={parametro.nome} className="mt-3 block space-y-1.5 text-sm font-medium">Campo usado em “{parametro.rotulo}”<select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm font-normal" value={acao.parametros[parametro.nome] ?? parametro.campoPadrao} onChange={(event) => setActions((atuais) => atuais.map((item, itemIndice) => itemIndice === indice ? { ...item, parametros: { ...item.parametros, [parametro.nome]: event.target.value } } : item))}>{(parametro.camposPermitidos ?? []).map((codigo) => <option key={codigo} value={codigo}>{(catalogo?.campos ?? []).find((campo) => campo.codigo === codigo)?.rotulo ?? codigo} · {`{{${codigo}}}`}</option>)}</select></label>)}{definicao?.exigeConfirmacao && <Badge variant="warning" className="mt-3">Exige confirmação do usuário</Badge>}</div>
+          const definicao = (editorCatalogo?.acoes ?? []).find((item) => item.codigo === acao.codigo)
+          return <div key={acao.codigo} className="rounded-lg border p-4"><div className="flex items-start justify-between gap-3"><div><Input className="max-w-sm font-medium" value={acao.rotulo} maxLength={120} onChange={(event) => setActions((atuais) => atuais.map((item, itemIndice) => itemIndice === indice ? { ...item, rotulo: event.target.value } : item))} /><p className="mt-2 text-xs text-muted-foreground">{definicao?.descricao}</p><p className="mt-1 font-mono text-xs text-primary">{definicao?.metodo} {definicao?.rota}</p></div><Button type="button" size="sm" variant="ghost" onClick={() => setActions((atuais) => atuais.filter((_item, itemIndice) => itemIndice !== indice).map((item, ordem) => ({ ...item, ordem })))}><Trash2 className="h-4 w-4" /><span className="sr-only">Remover ação</span></Button></div>{(definicao?.parametros ?? []).map((parametro) => <label key={parametro.nome} className="mt-3 block space-y-1.5 text-sm font-medium">Campo usado em “{parametro.rotulo}”<select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm font-normal" value={acao.parametros[parametro.nome] ?? parametro.campoPadrao} onChange={(event) => setActions((atuais) => atuais.map((item, itemIndice) => itemIndice === indice ? { ...item, parametros: { ...item.parametros, [parametro.nome]: event.target.value } } : item))}>{(parametro.camposPermitidos ?? []).map((codigo) => <option key={codigo} value={codigo}>{(editorCatalogo?.campos ?? []).find((campo) => campo.codigo === codigo)?.rotulo ?? codigo} · {`{{${codigo}}}`}</option>)}</select></label>)}{definicao?.exigeConfirmacao && <Badge variant="warning" className="mt-3">Exige confirmação do usuário</Badge>}</div>
         })}</div>
       </section>
 
