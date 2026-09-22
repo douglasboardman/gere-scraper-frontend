@@ -2,11 +2,36 @@ import apiClient from './client'
 
 export interface NotificacaoCatalogoEvento {
   codigo: string
+  nome: string
+  descricao: string
   schemaVersao: number
   viewCodigo: string
   referencias: string[]
   camposContexto: string[]
+  campos: Array<{
+    codigo: string
+    rotulo: string
+    tipo: 'TEXTO' | 'IDENTIFICADOR' | 'DATA_HORA' | 'DECIMAL' | 'INTEIRO' | 'EMAIL' | 'OPCAO'
+    origem: 'EVENTO' | 'CONTEXTO'
+    opcional?: boolean
+    descricao?: string
+  }>
   condicoes: string[]
+  acoes: Array<{
+    codigo: string
+    rotulo: string
+    descricao: string
+    tipo: 'NAVEGACAO' | 'COMANDO'
+    metodo: 'GET' | 'POST'
+    rota: string
+    exigeConfirmacao: boolean
+    parametros: Array<{
+      nome: string
+      rotulo: string
+      camposPermitidos: string[]
+      campoPadrao: string
+    }>
+  }>
 }
 
 export interface NotificacaoEventoResumo {
@@ -16,7 +41,7 @@ export interface NotificacaoEventoResumo {
   tipoEvento: string
   ativo: boolean
   revisao: number
-  versaoAtiva: { id: string; numero: number; status: string } | null
+  versaoAtiva: { id: string; numero: number; status: string; tituloTemplate?: string } | null
   totalVersoes: number
   totalModelos: number
   createdAt: string
@@ -46,8 +71,11 @@ export interface NotificacaoModeloResumo {
   evento: { id: string; codigo: string; nome: string }
   ativo: boolean
   revisao: number
-  versaoAtiva: { id: string; numero: number; status: string } | null
+  versaoAtiva: { id: string; numero: number; status: string; tituloTemplate?: string } | null
   totalVersoes: number
+  totalDisparos: number
+  totalEntregas: number
+  ultimoDisparoEm: string | null
   createdAt: string
   updatedAt: string
 }
@@ -80,6 +108,7 @@ export interface NotificacaoModeloDetalhe extends NotificacaoModeloResumo {
 
 export interface AtualizarNotificacaoModeloRascunhoInput {
   revisaoEsperada: number
+  nome?: string
   tituloTemplate?: string
   corpoTemplate?: unknown
   destinatarios?: unknown
@@ -90,6 +119,12 @@ export interface AtualizarNotificacaoModeloRascunhoInput {
   notificarNoLogin?: boolean
   replicarPorEmail?: boolean
   validadeHoras?: number
+}
+
+export interface CriarNotificacaoModeloInput extends Omit<AtualizarNotificacaoModeloRascunhoInput, 'revisaoEsperada'> {
+  codigo?: string
+  nome: string
+  eventoId: string
 }
 
 export interface NotificacoesDiagnostico {
@@ -256,7 +291,7 @@ export const notificacoesAdminApi = {
     return data
   },
 
-  async criarModelo(input: { codigo: string; nome: string; eventoId: string }) {
+  async criarModelo(input: CriarNotificacaoModeloInput) {
     const { data } = await apiClient.post('/admin/notificacoes/modelos', input)
     return data
   },

@@ -133,11 +133,11 @@ export function Header() {
               <DropdownMenuItem disabled>Nenhuma mensagem recente</DropdownMenuItem>
             )}
             {recentesQuery.data?.itens.filter((item) => !item.arquivada).slice(0, 10).map((item) => (
-              <DropdownMenuItem key={item.id} onClick={() => navigate(`/perfil?aba=notificacoes&mensagem=${encodeURIComponent(item.id)}`)} className="items-start gap-2 py-2">
-                <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${item.lida ? 'bg-muted-foreground/30' : 'bg-primary'}`} />
+              <DropdownMenuItem key={item.id} onClick={() => navigate(`/perfil?aba=notificacoes&mensagem=${encodeURIComponent(item.id)}`)} className="group items-start gap-2 py-2">
+                <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full transition-colors ${item.lida ? 'bg-muted-foreground/30 group-focus:bg-accent-foreground/60' : 'bg-primary group-focus:bg-accent-foreground'}`} />
                 <span className="min-w-0">
                   <span className={`block truncate text-sm ${item.lida ? 'font-normal' : 'font-semibold'}`}>{item.titulo ?? 'Notificação'}</span>
-                  <span className="block text-xs text-muted-foreground">{new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(item.disponibilizadaEm))}</span>
+                  <span className="block text-xs text-muted-foreground transition-colors group-focus:text-accent-foreground/80">{new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(item.disponibilizadaEm))}</span>
                 </span>
               </DropdownMenuItem>
             ))}

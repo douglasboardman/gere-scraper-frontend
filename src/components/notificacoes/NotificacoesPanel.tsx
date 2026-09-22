@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
+import { ConteudoNotificacao } from './ConteudoNotificacao'
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value))
@@ -22,39 +23,13 @@ function referenciaId(referencias: unknown, chave: string) {
   return typeof valor === 'string' && valor.length > 0 ? valor : null
 }
 
-function CorpoEstruturado({ corpo }: { corpo: unknown }) {
-  const documento = corpo as { blocos?: Array<{ conteudo?: Array<{ tipo?: string; valor?: string; campo?: string; codigo?: string; negrito?: boolean; italico?: boolean }> }> } | null
-  if (!documento?.blocos?.length) return <p className="text-sm text-muted-foreground">Sem conteúdo disponível.</p>
-
-  return (
-    <div className="space-y-3 text-sm leading-6">
-      {documento.blocos.map((bloco, blocoIndex) => (
-        <p key={blocoIndex}>
-          {(bloco.conteudo ?? []).map((item, itemIndex) => {
-            const conteudo = item.tipo === 'texto'
-              ? item.valor
-              : item.tipo === 'variavel'
-                ? item.valor ?? item.campo ?? ''
-                : `[${item.codigo ?? 'ação'}]`
-            const elemento = <span className={item.tipo === 'acao' || item.tipo === 'variavel' ? 'font-medium' : undefined}>{conteudo}</span>
-            if (item.negrito && item.italico) return <strong key={itemIndex}><em>{elemento}</em></strong>
-            if (item.negrito) return <strong key={itemIndex}>{elemento}</strong>
-            if (item.italico) return <em key={itemIndex}>{elemento}</em>
-            return <span key={itemIndex} className={item.tipo === 'acao' ? 'font-medium text-primary' : undefined}>{elemento}</span>
-          })}
-        </p>
-      ))}
-    </div>
-  )
-}
-
 export function NotificacoesPanel() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [estado, setEstado] = useState<EstadoCaixaNotificacoes>((searchParams.get('filtro') as EstadoCaixaNotificacoes) || 'todas')
   const [somenteImportantes, setSomenteImportantes] = useState(searchParams.get('importantes') === 'true')
-  const [selecionada, setSelecionada] = useState<string | null>(searchParams.get('mensagem'))
+  const selecionada = searchParams.get('mensagem')
   const [acaoConfirmar, setAcaoConfirmar] = useState<{ chave: string; rotulo: string } | null>(null)
   const leituraAutomaticaId = useRef<string | null>(null)
 
@@ -106,10 +81,8 @@ export function NotificacoesPanel() {
   })
 
   useEffect(() => {
-    const mensagem = searchParams.get('mensagem')
-    if (mensagem && mensagem !== selecionada) setSelecionada(mensagem)
     setSomenteImportantes(searchParams.get('importantes') === 'true')
-  }, [searchParams, selecionada])
+  }, [searchParams])
 
   useEffect(() => {
     if (!selecionada) {
@@ -146,26 +119,37 @@ export function NotificacoesPanel() {
   }
 
   const abrirMensagem = (id: string) => {
-    setSelecionada(id)
     const params = new URLSearchParams(searchParams)
     params.set('aba', 'notificacoes')
     params.set('mensagem', id)
     setSearchParams(params)
   }
 
+  const voltarParaMensagens = () => {
+    const params = new URLSearchParams(searchParams)
+    params.delete('mensagem')
+    setSearchParams(params)
+  }
+
   if (selecionada && detalheQuery.data) {
     const detalhe: NotificacaoDetalhe = detalheQuery.data
-    const acoes = Array.isArray(detalhe.acoes) ? detalhe.acoes as Array<{ codigo?: string; rotulo?: string }> : []
+    const acoes = Array.isArray(detalhe.acoes) ? detalhe.acoes as Array<{ codigo?: string; rotulo?: string; tipo?: string; url?: string | null }> : []
     const acaoAprovar = acoes.find((acao) => acao.codigo === 'APROVAR_REQUISICAO')
     const requisicaoId = detalhe.acaoContexto?.requisicaoId ?? referenciaId(detalhe.referencias, 'requisicaoId')
     const acoesNavegacao = acoes.filter((acao) => acao.codigo !== 'APROVAR_REQUISICAO').filter((acao) => {
+      if (acao.url && /^\/(?!\/)/.test(acao.url)) return true
       if (acao.codigo === 'ABRIR_USUARIO') return !!referenciaId(detalhe.referencias, 'usuarioSolicitante')
       if (acao.codigo === 'ABRIR_REQUISICAO' || acao.codigo === 'ANALISAR_REQUISICAO') return !!requisicaoId
       if (acao.codigo === 'ABRIR_RESULTADO_IMPORTACAO') return !!referenciaId(detalhe.referencias, 'contratacaoId')
       return false
     })
 
-    const abrirAcao = (codigo: string) => {
+    const abrirAcao = (acao: { codigo?: string; url?: string | null }) => {
+      if (acao.url && /^\/(?!\/)/.test(acao.url)) {
+        navigate(acao.url)
+        return
+      }
+      const codigo = acao.codigo
       if (codigo === 'ABRIR_USUARIO') {
         const usuarioId = referenciaId(detalhe.referencias, 'usuarioSolicitante')
         if (usuarioId) navigate(`/usuarios/${encodeURIComponent(usuarioId)}`)
@@ -184,19 +168,19 @@ export function NotificacoesPanel() {
     return (
       <Card>
         <CardHeader>
-          <Button variant="ghost" className="w-fit px-0" onClick={() => { setSelecionada(null); const params = new URLSearchParams(searchParams); params.delete('mensagem'); setSearchParams(params) }}>
+          <Button variant="ghost" className="w-fit" onClick={voltarParaMensagens}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para mensagens
           </Button>
           <CardTitle className="text-base">{detalhe.titulo ?? 'Notificação'}</CardTitle>
           <CardDescription>{formatDate(detalhe.disponibilizadaEm)}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
-          <CorpoEstruturado corpo={detalhe.corpo} />
+          <ConteudoNotificacao corpo={detalhe.corpo} />
           {acoesNavegacao.length > 0 && (
             <div className="rounded-md border bg-muted/30 p-4">
               <p className="text-sm font-medium">Ações disponíveis</p>
               <div className="mt-3 flex flex-wrap gap-2">
-                {acoesNavegacao.map((acao, indice) => <Button key={`${acao.codigo}-${indice}`} variant="outline" onClick={() => abrirAcao(acao.codigo ?? '')}>{acao.rotulo ?? 'Abrir recurso'}</Button>)}
+                {acoesNavegacao.map((acao, indice) => <Button key={`${acao.codigo}-${indice}`} variant="outline" onClick={() => abrirAcao(acao)}>{acao.rotulo ?? 'Abrir recurso'}</Button>)}
               </div>
             </div>
           )}

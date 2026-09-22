@@ -18,7 +18,7 @@ import {
 } from 'lucide-react'
 import { notificacoesAdminApi } from '@/api/notificacoes-admin.api'
 import type {
-  AtualizarNotificacaoModeloRascunhoInput,
+  CriarNotificacaoModeloInput,
   NotificacaoCatalogoEvento,
   NotificacaoEventoDetalhe,
   NotificacaoEventoResumo,
@@ -39,72 +39,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
+import { ConteudoNotificacao, DOCUMENTO_NOTIFICACAO_VAZIO } from '@/components/notificacoes/ConteudoNotificacao'
+import { ServicoNotificacaoEditor } from './ServicoNotificacaoEditor'
 
 type AdminTab = 'eventos' | 'modelos' | 'disparos'
-type AgendamentoEditor =
-  | { tipo: 'IMEDIATO' }
-  | { tipo: 'APOS_INTERVALO'; valor: number; unidade: 'MINUTOS' | 'HORAS' }
-  | { tipo: 'PROXIMO_HORARIO'; hora: string; fuso: string }
 
-type GrupoDestinatarioEditor = {
-  seletor: 'PERFIS_DA_UNIDADE' | 'PERFIS_DA_UORG' | 'USUARIO_REFERENCIADO' | 'ADMINS_GLOBAIS'
-  referencia: string
-  perfis: string[]
-  excluirAutor: boolean
-}
-
-type AcaoEditor = {
-  codigo: string
-  rotulo: string
-  ordem: number
-  exigeConfirmacao: boolean
-}
-
-const ROLES_NOTIFICACAO = [
-  ['admin', 'Administrador'],
-  ['gestor_orgao', 'Gestor do órgão'],
-  ['gestor_unidade', 'Gestor de unidade'],
-  ['gestor_contratacoes', 'Gestor de contratações'],
-  ['gestor_contratos', 'Gestor de contratos'],
-  ['gestor_financeiro', 'Gestor financeiro'],
-  ['requisitante', 'Requisitante'],
-] as const
-
-const ACOES_POR_EVENTO: Record<string, Array<{ codigo: string; rotulo: string; exigeConfirmacao: boolean }>> = {
-  'usuario.acesso_solicitado': [{ codigo: 'ABRIR_USUARIO', rotulo: 'Abrir usuário', exigeConfirmacao: false }],
-  'requisicao.enviada': [
-    { codigo: 'ABRIR_REQUISICAO', rotulo: 'Abrir requisição', exigeConfirmacao: false },
-    { codigo: 'ANALISAR_REQUISICAO', rotulo: 'Analisar requisição', exigeConfirmacao: false },
-    { codigo: 'APROVAR_REQUISICAO', rotulo: 'Aprovar requisição', exigeConfirmacao: true },
-  ],
-  'requisicao.aprovada': [{ codigo: 'ABRIR_REQUISICAO', rotulo: 'Abrir requisição', exigeConfirmacao: false }],
-  'importacao.finalizada': [{ codigo: 'ABRIR_RESULTADO_IMPORTACAO', rotulo: 'Abrir resultado da importação', exigeConfirmacao: false }],
-}
-
-function normalizarAgendamento(raw: unknown): AgendamentoEditor {
-  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
-    const valor = raw as Record<string, unknown>
-    if (valor.tipo === 'APOS_INTERVALO' && typeof valor.valor === 'number' && (valor.unidade === 'MINUTOS' || valor.unidade === 'HORAS')) {
-      return { tipo: 'APOS_INTERVALO', valor: valor.valor, unidade: valor.unidade }
-    }
-    if (valor.tipo === 'PROXIMO_HORARIO' && typeof valor.hora === 'string' && typeof valor.fuso === 'string') {
-      return { tipo: 'PROXIMO_HORARIO', hora: valor.hora, fuso: valor.fuso }
-    }
-  }
-  return { tipo: 'IMEDIATO' }
-}
-
-const DEFAULT_BODY = {
-  versao: 1,
-  blocos: [{ tipo: 'paragrafo', conteudo: [{ tipo: 'texto', valor: 'Configure o conteúdo desta notificação.' }] }],
-}
-
-const DEFAULT_RECIPIENTS: unknown[] = []
-const DEFAULT_ACTIONS: unknown[] = []
+const DEFAULT_BODY = DOCUMENTO_NOTIFICACAO_VAZIO
 
 function formatDate(value: string | null | undefined) {
   if (!value) return '—'
@@ -121,53 +64,14 @@ function StatusBadge({ active, version }: { active: boolean; version?: { numero:
 }
 
 function CorpoNotificacaoPreview({ corpo }: { corpo: unknown }) {
-  const documento = corpo && typeof corpo === 'object' && !Array.isArray(corpo)
-    ? corpo as { blocos?: Array<{ conteudo?: Array<{ tipo?: string; valor?: string; campo?: string; codigo?: string; negrito?: boolean; italico?: boolean }> }> }
-    : null
-  if (!documento?.blocos?.length) return <p className="text-sm text-muted-foreground">Sem conteúdo.</p>
-
   return (
-    <div className="space-y-3 rounded-md border bg-background p-4 text-sm leading-6">
-      {documento.blocos.map((bloco, blocoIndex) => (
-        <p key={blocoIndex}>
-          {(bloco.conteudo ?? []).map((item, itemIndex) => {
-            const valor = item.tipo === 'variavel'
-              ? item.valor ?? item.campo ?? ''
-              : item.tipo === 'acao'
-                ? `[${item.codigo ?? 'ação'}]`
-                : item.valor ?? ''
-            const conteudo = <span className={item.tipo === 'acao' ? 'text-primary' : undefined}>{valor}</span>
-            if (item.negrito && item.italico) return <strong key={itemIndex}><em>{conteudo}</em></strong>
-            if (item.negrito) return <strong key={itemIndex}>{conteudo}</strong>
-            if (item.italico) return <em key={itemIndex}>{conteudo}</em>
-            return <span key={itemIndex}>{conteudo}</span>
-          })}
-        </p>
-      ))}
-    </div>
+    <div className="rounded-md border bg-background p-4"><ConteudoNotificacao corpo={corpo} /></div>
   )
-}
-
-function parseJson(value: string, label: string) {
-  try {
-    return JSON.parse(value)
-  } catch {
-    throw new Error(`${label} precisa conter um JSON válido.`)
-  }
-}
-
-function parseEditorArray<T>(value: string): T[] {
-  try {
-    const parsed = JSON.parse(value)
-    return Array.isArray(parsed) ? parsed as T[] : []
-  } catch {
-    return []
-  }
 }
 
 export function NotificacoesAdminPage() {
   const queryClient = useQueryClient()
-  const [tab, setTab] = useState<AdminTab>('eventos')
+  const [tab, setTab] = useState<AdminTab>('modelos')
   const [createOpen, setCreateOpen] = useState(false)
   const [createType, setCreateType] = useState<AdminTab>('eventos')
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
@@ -176,7 +80,6 @@ export function NotificacoesAdminPage() {
   const [simulacao, setSimulacao] = useState<NotificacaoSimulacao | null>(null)
   const [eventCode, setEventCode] = useState('')
   const [eventName, setEventName] = useState('')
-  const [modelCode, setModelCode] = useState('')
   const [modelName, setModelName] = useState('')
   const [modelEventId, setModelEventId] = useState('')
 
@@ -217,6 +120,11 @@ export function NotificacoesAdminPage() {
     queryFn: () => notificacoesAdminApi.obterModelo(selectedModelId!),
     enabled: !!selectedModelId,
   })
+  const eventoModeloQuery = useQuery({
+    queryKey: qk.notificacoes.adminEvento(modeloQuery.data?.evento.id ?? ''),
+    queryFn: () => notificacoesAdminApi.obterEvento(modeloQuery.data!.evento.id),
+    enabled: !!selectedModelId && !!modeloQuery.data?.evento.id,
+  })
   const disparoQuery = useQuery({
     queryKey: qk.notificacoes.adminDisparo(selectedDisparoId ?? ''),
     queryFn: () => notificacoesAdminApi.obterDisparo(selectedDisparoId!),
@@ -235,6 +143,9 @@ export function NotificacoesAdminPage() {
         : Promise.resolve(),
       selectedModelId
         ? queryClient.invalidateQueries({ queryKey: qk.notificacoes.adminModelo(selectedModelId) })
+        : Promise.resolve(),
+      modeloQuery.data?.evento.id
+        ? queryClient.invalidateQueries({ queryKey: qk.notificacoes.adminEvento(modeloQuery.data.evento.id) })
         : Promise.resolve(),
     ])
   }
@@ -260,12 +171,10 @@ export function NotificacoesAdminPage() {
   })
 
   const createModelMutation = useMutation({
-    mutationFn: () => notificacoesAdminApi.criarModelo({ codigo: modelCode, nome: modelName, eventoId: modelEventId }),
-    ...mutationOptions,
+    mutationFn: (input: CriarNotificacaoModeloInput) => notificacoesAdminApi.criarModelo(input),
     onSuccess: async (data) => {
       await mutationOptions.onSuccess()
       setCreateOpen(false)
-      setModelCode('')
       setModelName('')
       setModelEventId('')
       if (data?.id) setSelectedModelId(data.id)
@@ -276,32 +185,50 @@ export function NotificacoesAdminPage() {
   const eventPublishMutation = useMutation({
     mutationFn: ({ id, revisao }: { id: string; revisao: number }) => notificacoesAdminApi.publicarEvento(id, revisao),
     ...mutationOptions,
-    onSuccess: () => toast.success('Versão do evento publicada.'),
+    onSuccess: async () => {
+      await mutationOptions.onSuccess()
+      toast.success('Versão do evento publicada. Agora torne-a vigente.')
+    },
   })
   const eventPromoteMutation = useMutation({
     mutationFn: ({ id, versaoId, revisao }: { id: string; versaoId: string; revisao: number }) => notificacoesAdminApi.promoverEvento(id, versaoId, revisao),
     ...mutationOptions,
-    onSuccess: () => toast.success('Versão do evento promovida.'),
+    onSuccess: async () => {
+      await mutationOptions.onSuccess()
+      toast.success('Versão do evento agora está vigente.')
+    },
   })
   const eventActivateMutation = useMutation({
     mutationFn: ({ id, ativo, revisao }: { id: string; ativo: boolean; revisao: number }) => notificacoesAdminApi.ativarEvento(id, ativo, revisao),
     ...mutationOptions,
-    onSuccess: (_data, variables) => toast.success(variables.ativo ? 'Evento ativado.' : 'Evento desativado.'),
+    onSuccess: async (_data, variables) => {
+      await mutationOptions.onSuccess()
+      toast.success(variables.ativo ? 'Evento ativado.' : 'Evento desativado.')
+    },
   })
   const modelPublishMutation = useMutation({
     mutationFn: ({ id, revisao }: { id: string; revisao: number }) => notificacoesAdminApi.publicarModelo(id, revisao),
     ...mutationOptions,
-    onSuccess: () => toast.success('Versão do modelo publicada.'),
+    onSuccess: async () => {
+      await mutationOptions.onSuccess()
+      toast.success('Versão publicada. Agora torne-a vigente para liberar a ativação.')
+    },
   })
   const modelPromoteMutation = useMutation({
     mutationFn: ({ id, versaoId, revisao }: { id: string; versaoId: string; revisao: number }) => notificacoesAdminApi.promoverModelo(id, versaoId, revisao),
     ...mutationOptions,
-    onSuccess: () => toast.success('Versão do modelo promovida.'),
+    onSuccess: async () => {
+      await mutationOptions.onSuccess()
+      toast.success('Versão vigente. O serviço já pode ser ativado.')
+    },
   })
   const modelActivateMutation = useMutation({
     mutationFn: ({ id, ativo, revisao }: { id: string; ativo: boolean; revisao: number }) => notificacoesAdminApi.ativarModelo(id, ativo, revisao),
     ...mutationOptions,
-    onSuccess: (_data, variables) => toast.success(variables.ativo ? 'Modelo ativado.' : 'Modelo desativado.'),
+    onSuccess: async (_data, variables) => {
+      await mutationOptions.onSuccess()
+      toast.success(variables.ativo ? 'Serviço ativado.' : 'Serviço desativado.')
+    },
   })
 
   const anyMutationPending = [
@@ -317,11 +244,10 @@ export function NotificacoesAdminPage() {
 
   const eventColumns = useMemo<ColumnDef<NotificacaoEventoResumo, unknown>[]>(() => [
     {
-      accessorKey: 'codigo',
-      header: 'Código',
-      cell: ({ row }) => <span className="font-mono text-xs">{row.original.codigo}</span>,
+      accessorKey: 'nome',
+      header: 'Evento gatilho',
+      cell: ({ row }) => <div><p className="font-medium">{row.original.nome}</p><p className="font-mono text-xs text-muted-foreground">{row.original.codigo}</p></div>,
     },
-    { accessorKey: 'nome', header: 'Nome' },
     {
       accessorKey: 'ativo',
       header: 'Estado',
@@ -329,8 +255,13 @@ export function NotificacoesAdminPage() {
     },
     {
       accessorKey: 'totalModelos',
-      header: 'Modelos',
+      header: 'Serviços',
       cell: ({ row }) => <span className="text-sm">{row.original.totalModelos}</span>,
+    },
+    {
+      id: 'campos',
+      header: 'Campos disponíveis',
+      cell: ({ row }) => <span className="text-sm">{catalogoQuery.data?.eventos.find((evento) => evento.codigo === row.original.codigo)?.campos?.length ?? 0}</span>,
     },
     {
       id: 'actions',
@@ -341,19 +272,28 @@ export function NotificacoesAdminPage() {
         </Button>
       ),
     },
-  ], [])
+  ], [catalogoQuery.data])
 
   const modelColumns = useMemo<ColumnDef<NotificacaoModeloResumo, unknown>[]>(() => [
     {
-      accessorKey: 'codigo',
-      header: 'Código',
-      cell: ({ row }) => <span className="font-mono text-xs">{row.original.codigo}</span>,
+      accessorKey: 'nome',
+      header: 'Serviço',
+      cell: ({ row }) => <div><p className="font-medium">{row.original.nome}</p><p className="max-w-80 truncate text-xs text-muted-foreground">{row.original.versaoAtiva?.tituloTemplate ?? 'Ainda sem mensagem publicada'}</p></div>,
     },
-    { accessorKey: 'nome', header: 'Nome' },
     {
       id: 'evento',
-      header: 'Evento',
-      cell: ({ row }) => <span className="font-mono text-xs">{row.original.evento.codigo}</span>,
+      header: 'Gatilho',
+      cell: ({ row }) => <div><p className="text-sm">{row.original.evento.nome}</p><p className="font-mono text-xs text-muted-foreground">{row.original.evento.codigo}</p></div>,
+    },
+    {
+      accessorKey: 'totalEntregas',
+      header: 'Entregas',
+      cell: ({ row }) => <div><p className="text-sm font-medium">{row.original.totalEntregas}</p><p className="text-xs text-muted-foreground">{row.original.totalDisparos} disparo(s)</p></div>,
+    },
+    {
+      accessorKey: 'ultimoDisparoEm',
+      header: 'Última atividade',
+      cell: ({ row }) => <span className="text-sm">{formatDate(row.original.ultimoDisparoEm)}</span>,
     },
     {
       accessorKey: 'ativo',
@@ -365,7 +305,7 @@ export function NotificacoesAdminPage() {
       header: 'Ações',
       cell: ({ row }) => (
         <Button size="sm" variant="outline" onClick={() => setSelectedModelId(row.original.id)}>
-          <Settings2 className="mr-2 h-4 w-4" /> Configurar
+          <Settings2 className="mr-2 h-4 w-4" /> Editar
         </Button>
       ),
     },
@@ -407,28 +347,73 @@ export function NotificacoesAdminPage() {
   const openCreate = (type: AdminTab) => {
     setCreateType(type)
     setCreateOpen(true)
-    if (type === 'modelos' && !modelEventId) setModelEventId(eventosQuery.data?.[0]?.id ?? '')
+    if (type === 'modelos' && !modelEventId) setModelEventId(eventosQuery.data?.find((evento) => evento.versaoAtiva)?.id ?? '')
   }
+
+  const eventoNovoServico = eventosQuery.data?.find((evento) => evento.id === modelEventId)
+  const catalogoNovoServico = catalogoQuery.data?.eventos.find((evento) => evento.codigo === eventoNovoServico?.codigo)
+  const modeloNovoServico = useMemo<NotificacaoModeloDetalhe | null>(() => {
+    if (!eventoNovoServico || !catalogoNovoServico) return null
+    const instante = new Date(0).toISOString()
+    return {
+      id: `novo:${eventoNovoServico.id}`,
+      codigo: 'gerado-automaticamente',
+      nome: 'Novo serviço',
+      evento: { id: eventoNovoServico.id, codigo: eventoNovoServico.codigo, nome: eventoNovoServico.nome, ativo: eventoNovoServico.ativo },
+      ativo: false,
+      revisao: 0,
+      versaoAtiva: null,
+      totalVersoes: 1,
+      totalDisparos: 0,
+      totalEntregas: 0,
+      ultimoDisparoEm: null,
+      createdAt: instante,
+      updatedAt: instante,
+      versoes: [{
+        id: `rascunho:${eventoNovoServico.id}`,
+        numero: 1,
+        status: 'RASCUNHO',
+        eventoVersaoId: eventoNovoServico.versaoAtiva?.id ?? '',
+        tituloTemplate: '',
+        corpoTemplate: DEFAULT_BODY,
+        destinatarios: [],
+        agendamento: { tipo: 'IMEDIATO' },
+        condicaoEnvio: catalogoNovoServico.condicoes?.[0] ?? 'SEMPRE',
+        filtroEvento: null,
+        acoes: [],
+        notificarNoLogin: false,
+        replicarPorEmail: false,
+        validadeHoras: 720,
+        hashDefinicao: '',
+        publicadoEm: null,
+        createdAt: instante,
+        updatedAt: instante,
+      }],
+    }
+  }, [eventoNovoServico, catalogoNovoServico])
 
   return (
     <div>
       <PageHeader
-        title="Notificações"
-        subtitle="Configure eventos, modelos e ativação do serviço de mensagens"
+        title="Serviços de notificação"
+        subtitle="Crie mensagens automáticas a partir dos eventos do GERE e acompanhe suas entregas"
         actions={
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => void invalidateAdmin()} disabled={anyMutationPending}>
               <RefreshCw className="mr-2 h-4 w-4" /> Atualizar
             </Button>
             <Button onClick={() => openCreate(tab)} disabled={tab === 'disparos'}>
-              <FilePlus2 className="mr-2 h-4 w-4" /> Novo {tab === 'eventos' ? 'evento' : 'modelo'}
+              <FilePlus2 className="mr-2 h-4 w-4" /> {tab === 'eventos' ? 'Mapear evento' : 'Novo serviço'}
             </Button>
           </div>
         }
       />
 
+      {(diagnosticoQuery.data || retencaoQuery.data) && <details className="mb-6 rounded-lg border bg-muted/10">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-medium">Saúde técnica e filas <span className="ml-2 text-xs font-normal text-muted-foreground">Informações para diagnóstico operacional</span></summary>
+        <div className="px-4 pb-4">
       {diagnosticoQuery.data && (
-        <div className="mb-6 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
           <Card>
             <CardContent className="flex items-center justify-between gap-3 p-4">
               <div><p className="text-xs uppercase text-muted-foreground">Captura</p><p className="mt-1 text-sm font-semibold">{capturaHabilitada === undefined ? 'Indisponível' : capturaHabilitada ? 'Habilitada' : 'Desabilitada'}</p><p className="mt-1 text-xs text-muted-foreground">Eventos novos</p></div>
@@ -474,25 +459,27 @@ export function NotificacoesAdminPage() {
         </div>
       )}
       {retencaoQuery.data && (
-        <Card className="mb-6">
+        <Card className="mt-3">
           <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div><p className="text-xs uppercase text-muted-foreground">Retenção</p><p className="mt-1 text-sm font-semibold">{retencaoQuery.data.purgaHabilitada ? 'Purga habilitada' : 'Purga desabilitada'}</p><p className="mt-1 text-xs text-muted-foreground">Diagnóstico sem escrita · {Object.values(retencaoQuery.data.candidatos).reduce((total, valor) => total + valor, 0)} candidato(s) estimado(s)</p></div>
             <div className="text-right text-xs text-muted-foreground">{retencaoQuery.data.bloqueios.disparosPendentes} disparo(s) pendente(s) · {retencaoQuery.data.bloqueios.emailsPendentes} e-mail(s) pendente(s)</div>
           </CardContent>
         </Card>
       )}
+        </div>
+      </details>}
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Megaphone className="h-5 w-5" /> Central administrativa</CardTitle>
-          <CardDescription>O ciclo é deliberadamente controlado: rascunho, publicação, promoção e ativação.</CardDescription>
+          <CardTitle className="flex items-center gap-2"><Megaphone className="h-5 w-5" /> Configuração e acompanhamento</CardTitle>
+          <CardDescription>Serviços são salvos como rascunho. Publicar e ativar são etapas separadas para evitar envios acidentais.</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs value={tab} onValueChange={(value) => setTab(value as AdminTab)}>
             <TabsList>
-              <TabsTrigger value="eventos">Eventos ({eventosQuery.data?.length ?? 0})</TabsTrigger>
-              <TabsTrigger value="modelos">Modelos ({modelosQuery.data?.length ?? 0})</TabsTrigger>
-              <TabsTrigger value="disparos">Histórico</TabsTrigger>
+              <TabsTrigger value="modelos">Serviços ({modelosQuery.data?.length ?? 0})</TabsTrigger>
+              <TabsTrigger value="eventos">Eventos gatilho ({eventosQuery.data?.length ?? 0})</TabsTrigger>
+              <TabsTrigger value="disparos">Entregas</TabsTrigger>
             </TabsList>
             <TabsContent value="eventos" className="mt-5">
               <DataTable
@@ -526,26 +513,26 @@ export function NotificacoesAdminPage() {
       </Card>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className={createType === 'modelos' ? 'max-h-[92vh] max-w-5xl overflow-y-auto' : 'max-w-lg'}>
           <DialogHeader>
-            <DialogTitle>{createType === 'eventos' ? 'Novo evento' : 'Novo modelo'}</DialogTitle>
+            <DialogTitle>{createType === 'eventos' ? 'Mapear evento gatilho' : 'Novo serviço de notificação'}</DialogTitle>
             <DialogDescription>
               {createType === 'eventos'
                 ? 'Selecione um evento do catálogo aprovado. A configuração nasce inativa e em rascunho.'
-                : 'O modelo será vinculado a um evento e receberá uma versão inicial em rascunho.'}
+                : 'Defina a mensagem, o momento de envio e os destinatários. O serviço será salvo inativo, como rascunho.'}
             </DialogDescription>
           </DialogHeader>
           {createType === 'eventos' ? (
             <div className="space-y-4">
               <label className="block space-y-1.5 text-sm font-medium">
                 Código do catálogo
-                <select className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={eventCode} onChange={(event) => setEventCode(event.target.value)}>
+                <select className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={eventCode} onChange={(event) => { const codigo = event.target.value; setEventCode(codigo); setEventName(catalogoQuery.data?.eventos.find((item) => item.codigo === codigo)?.nome ?? '') }}>
                   <option value="">Selecione...</option>
-                  {catalogoQuery.data?.eventos.map((evento) => <option key={evento.codigo} value={evento.codigo}>{evento.codigo}</option>)}
+                  {catalogoQuery.data?.eventos.filter((evento) => !eventosQuery.data?.some((mapeado) => mapeado.codigo === evento.codigo)).map((evento) => <option key={evento.codigo} value={evento.codigo}>{evento.nome}</option>)}
                 </select>
               </label>
               <label className="block space-y-1.5 text-sm font-medium">
-                Nome administrativo
+                Nome exibido
                 <Input value={eventName} onChange={(event) => setEventName(event.target.value)} placeholder="Ex.: Requisição enviada" />
               </label>
               <DialogFooter>
@@ -556,28 +543,31 @@ export function NotificacoesAdminPage() {
               </DialogFooter>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <label className="block space-y-1.5 text-sm font-medium">
-                Evento vinculado
+                Título do serviço
+                <Input value={modelName} maxLength={180} onChange={(event) => setModelName(event.target.value)} placeholder="Ex.: Avisar gestores sobre nova requisição" />
+                <span className="block text-xs font-normal text-muted-foreground">Este nome identifica o serviço apenas na área administrativa.</span>
+              </label>
+              <label className="block space-y-1.5 text-sm font-medium">
+                Evento gatilho
                 <select className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={modelEventId} onChange={(event) => setModelEventId(event.target.value)}>
                   <option value="">Selecione...</option>
-                  {eventosQuery.data?.map((evento) => <option key={evento.id} value={evento.id}>{evento.nome} ({evento.codigo})</option>)}
+                  {eventosQuery.data?.filter((evento) => evento.versaoAtiva).map((evento) => <option key={evento.id} value={evento.id}>{evento.nome}</option>)}
                 </select>
+                {!eventosQuery.data?.some((evento) => evento.versaoAtiva) && <span className="block text-xs font-normal text-amber-700">Publique e torne vigente ao menos um evento gatilho antes de criar o serviço.</span>}
               </label>
-              <label className="block space-y-1.5 text-sm font-medium">
-                Código técnico
-                <Input value={modelCode} onChange={(event) => setModelCode(event.target.value)} placeholder="Ex.: requisicao_enviada_gestores" />
-              </label>
-              <label className="block space-y-1.5 text-sm font-medium">
-                Nome administrativo
-                <Input value={modelName} onChange={(event) => setModelName(event.target.value)} placeholder="Ex.: Aviso aos gestores" />
-              </label>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button>
-                <Button onClick={() => createModelMutation.mutate()} disabled={!modelEventId || !/^[a-z0-9][a-z0-9_.-]{2,119}$/.test(modelCode) || modelName.trim().length < 3 || createModelMutation.isPending}>
-                  {createModelMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Criar rascunho
-                </Button>
-              </DialogFooter>
+              {modeloNovoServico && catalogoNovoServico && modelName.trim().length >= 3
+                ? <ServicoNotificacaoEditor
+                    creation
+                    modelo={modeloNovoServico}
+                    catalogo={catalogoNovoServico}
+                    disabled={createModelMutation.isPending}
+                    onSave={async ({ revisaoEsperada: _revisao, ...input }) => {
+                      await createModelMutation.mutateAsync({ ...input, nome: modelName.trim(), eventoId: modelEventId })
+                    }}
+                  />
+                : <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">Informe o título do serviço e escolha o evento gatilho para continuar.</div>}
             </div>
           )}
         </DialogContent>
@@ -593,6 +583,7 @@ export function NotificacoesAdminPage() {
           {eventoQuery.data && (
             <EventDetail
               evento={eventoQuery.data}
+              catalogo={catalogoQuery.data?.eventos.find((item) => item.codigo === eventoQuery.data?.codigo)}
               disabled={anyMutationPending}
               onPublish={() => eventPublishMutation.mutate({ id: eventoQuery.data!.id, revisao: eventoQuery.data!.revisao })}
               onPromote={(versaoId) => eventPromoteMutation.mutate({ id: eventoQuery.data!.id, versaoId, revisao: eventoQuery.data!.revisao })}
@@ -603,21 +594,25 @@ export function NotificacoesAdminPage() {
       </Dialog>
 
       <Dialog open={!!selectedModelId} onOpenChange={(open) => !open && setSelectedModelId(null)}>
-        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+        <DialogContent className="max-h-[92vh] max-w-5xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Configuração do modelo</DialogTitle>
-            <DialogDescription>Edite o rascunho, publique, promova e só então ative a distribuição.</DialogDescription>
+            <DialogTitle>Editar serviço de notificação</DialogTitle>
+            <DialogDescription>Altere a mensagem e os destinatários com controles guiados. Nenhuma mudança inicia envios automaticamente.</DialogDescription>
           </DialogHeader>
           {modeloQuery.isLoading && <Loader2 className="h-5 w-5 animate-spin" />}
           {modeloQuery.data && (
-            <ModelDetail
+            <ServicoNotificacaoEditor
               modelo={modeloQuery.data}
+              evento={eventoModeloQuery.data}
               catalogo={catalogoQuery.data?.eventos.find((evento) => evento.codigo === modeloQuery.data?.evento.codigo)}
-              disabled={anyMutationPending}
+              disabled={anyMutationPending || eventoModeloQuery.isLoading}
               onSave={(input) => notificacoesAdminApi.atualizarModeloRascunho(modeloQuery.data!.id, input).then(async () => { await invalidateAdmin(); toast.success('Rascunho salvo.') })}
               onPublish={() => modelPublishMutation.mutate({ id: modeloQuery.data!.id, revisao: modeloQuery.data!.revisao })}
               onPromote={(versaoId) => modelPromoteMutation.mutate({ id: modeloQuery.data!.id, versaoId, revisao: modeloQuery.data!.revisao })}
               onActivate={() => modelActivateMutation.mutate({ id: modeloQuery.data!.id, ativo: !modeloQuery.data!.ativo, revisao: modeloQuery.data!.revisao })}
+              onPublishEvent={() => eventPublishMutation.mutate({ id: eventoModeloQuery.data!.id, revisao: eventoModeloQuery.data!.revisao })}
+              onPromoteEvent={(versaoId) => eventPromoteMutation.mutate({ id: eventoModeloQuery.data!.id, versaoId, revisao: eventoModeloQuery.data!.revisao })}
+              onActivateEvent={() => eventActivateMutation.mutate({ id: eventoModeloQuery.data!.id, ativo: !eventoModeloQuery.data!.ativo, revisao: eventoModeloQuery.data!.revisao })}
               onSimulate={async () => {
                 try {
                   const versao = modeloQuery.data!.versoes.find((item) => item.status === 'RASCUNHO') ?? modeloQuery.data!.versoes.find((item) => item.id === modeloQuery.data!.versaoAtiva?.id)
@@ -729,8 +724,8 @@ function DisparoDetail({ disparo, onReprocessed, onDispatchReprocessed }: { disp
       {disparo.status === 'FALHA_FINAL' && disparo.destinatarios.length === 0 && <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-amber-200 bg-amber-50 p-3"><div><p className="text-sm font-medium">Nenhuma entrega interna foi criada</p><p className="text-xs text-muted-foreground">O disparo pode ser reprocessado após correção da configuração.</p></div><Button size="sm" variant="outline" onClick={() => setReprocessarDisparo(true)}><RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Reprocessar disparo</Button></div>}
       <div><p className="text-xs uppercase text-muted-foreground">Título resolvido</p><p className="mt-1 text-sm font-medium">{disparo.tituloResolvido ?? '—'}</p></div>
       <div>
-        <p className="text-xs uppercase text-muted-foreground">Corpo estruturado</p>
-        <pre className="mt-1 max-h-48 overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(disparo.corpoResolvido, null, 2)}</pre>
+        <p className="text-xs uppercase text-muted-foreground">Mensagem entregue</p>
+        <div className="mt-1"><CorpoNotificacaoPreview corpo={disparo.corpoResolvido} /></div>
       </div>
       <div className="space-y-2">
         <p className="text-xs uppercase text-muted-foreground">Entregas individuais</p>
@@ -773,12 +768,14 @@ function DisparoDetail({ disparo, onReprocessed, onDispatchReprocessed }: { disp
 
 function EventDetail({
   evento,
+  catalogo,
   disabled,
   onPublish,
   onPromote,
   onActivate,
 }: {
   evento: NotificacaoEventoDetalhe
+  catalogo?: NotificacaoCatalogoEvento
   disabled: boolean
   onPublish: () => void
   onPromote: (versaoId: string) => void
@@ -792,6 +789,26 @@ function EventDetail({
         <div><p className="text-xs uppercase text-muted-foreground">Estado</p><StatusBadge active={evento.ativo} version={evento.versaoAtiva} /></div>
         <div><p className="text-xs uppercase text-muted-foreground">View de contexto</p><p className="font-mono text-xs">{evento.versoes[0]?.viewCodigo ?? '—'}</p></div>
         <div><p className="text-xs uppercase text-muted-foreground">Revisão editorial</p><p className="text-sm">{evento.revisao}</p></div>
+      </div>
+      <Separator />
+      <div className="space-y-3">
+        <div>
+          <h3 className="text-sm font-semibold">Campos disponíveis para mensagens</h3>
+          <p className="text-xs text-muted-foreground">Use estes campos no título, no corpo ou nos parâmetros de uma ação.</p>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {(catalogo?.campos ?? []).map((campo) => (
+            <div key={campo.codigo} className="rounded-md border p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium">{campo.rotulo}</p>
+                <div className="flex gap-1"><Badge variant="outline">{campo.tipo.replace('_', ' ')}</Badge><Badge variant="secondary">{campo.origem === 'EVENTO' ? 'Evento' : 'Contexto'}</Badge></div>
+              </div>
+              <p className="mt-1 font-mono text-xs text-primary">{`{{${campo.codigo}}}`}</p>
+              {campo.opcional && <p className="mt-1 text-xs text-muted-foreground">Pode não estar disponível em todas as ocorrências.</p>}
+            </div>
+          ))}
+        </div>
+        {!!catalogo?.acoes?.length && <div className="rounded-md border bg-muted/20 p-3"><p className="text-sm font-medium">Links e comandos disponíveis</p><div className="mt-2 space-y-2">{catalogo.acoes.map((acao) => <div key={acao.codigo} className="flex flex-wrap items-center justify-between gap-2 text-xs"><span>{acao.rotulo}</span><span className="font-mono text-muted-foreground">{acao.metodo} {acao.rota}</span></div>)}</div></div>}
       </div>
       <Separator />
       <div className="space-y-2">
@@ -815,261 +832,6 @@ function EventDetail({
         <Button variant={evento.ativo ? 'outline' : 'default'} onClick={onActivate} disabled={disabled || (!evento.ativo && !evento.versaoAtiva) }><Power className="mr-2 h-4 w-4" /> {evento.ativo ? 'Desativar' : 'Ativar'}</Button>
       </div>
       {!rascunho && <p className="text-xs text-muted-foreground">Não há rascunho pendente para publicar.</p>}
-    </div>
-  )
-}
-
-function ModelDetail({
-  modelo,
-  catalogo,
-  disabled,
-  onSave,
-  onPublish,
-  onPromote,
-  onActivate,
-  onSimulate,
-}: {
-  modelo: NotificacaoModeloDetalhe
-  catalogo?: NotificacaoCatalogoEvento
-  disabled: boolean
-  onSave: (input: AtualizarNotificacaoModeloRascunhoInput) => Promise<void>
-  onPublish: () => void
-  onPromote: (versaoId: string) => void
-  onActivate: () => void
-  onSimulate: () => Promise<void>
-}) {
-  const draft = modelo.versoes.find((versao) => versao.status === 'RASCUNHO') ?? modelo.versoes[0]
-  const agendamentoInicial = normalizarAgendamento(draft?.agendamento)
-  const [title, setTitle] = useState(draft?.tituloTemplate ?? '')
-  const [body, setBody] = useState(JSON.stringify(draft?.corpoTemplate ?? DEFAULT_BODY, null, 2))
-  const [recipients, setRecipients] = useState(JSON.stringify(draft?.destinatarios ?? DEFAULT_RECIPIENTS, null, 2))
-  const [actions, setActions] = useState(JSON.stringify(draft?.acoes ?? DEFAULT_ACTIONS, null, 2))
-  const [condition, setCondition] = useState(draft?.condicaoEnvio ?? 'SEMPRE')
-  const [filter, setFilter] = useState(draft?.filtroEvento ?? '')
-  const [notifyOnLogin, setNotifyOnLogin] = useState(draft?.notificarNoLogin ?? false)
-  const [replicateEmail, setReplicateEmail] = useState(draft?.replicarPorEmail ?? false)
-  const [validity, setValidity] = useState(String(draft?.validadeHoras ?? 720))
-  const [scheduleType, setScheduleType] = useState<AgendamentoEditor['tipo']>(agendamentoInicial.tipo)
-  const [scheduleValue, setScheduleValue] = useState(String(agendamentoInicial.tipo === 'APOS_INTERVALO' ? agendamentoInicial.valor : 1))
-  const [scheduleUnit, setScheduleUnit] = useState<'MINUTOS' | 'HORAS'>(agendamentoInicial.tipo === 'APOS_INTERVALO' ? agendamentoInicial.unidade : 'MINUTOS')
-  const [scheduleTime, setScheduleTime] = useState(agendamentoInicial.tipo === 'PROXIMO_HORARIO' ? agendamentoInicial.hora : '09:00')
-  const [scheduleTimezone, setScheduleTimezone] = useState(agendamentoInicial.tipo === 'PROXIMO_HORARIO' ? agendamentoInicial.fuso : 'America/Sao_Paulo')
-  const [saving, setSaving] = useState(false)
-  const [campoVariavel, setCampoVariavel] = useState('')
-  const [estiloVariavel, setEstiloVariavel] = useState<'normal' | 'negrito' | 'italico' | 'negrito-italico'>('normal')
-  const [novoSeletor, setNovoSeletor] = useState<GrupoDestinatarioEditor['seletor']>('PERFIS_DA_UNIDADE')
-  const [novaReferencia, setNovaReferencia] = useState(catalogo?.referencias[0] ?? '')
-  const [novoPerfil, setNovoPerfil] = useState('gestor_unidade')
-  const [novaAcao, setNovaAcao] = useState('')
-
-  const referenciasCompativeis = (catalogo?.referencias ?? []).filter((referencia) => {
-    if (novoSeletor === 'USUARIO_REFERENCIADO') return referencia.startsWith('usuario')
-    if (novoSeletor === 'PERFIS_DA_UNIDADE' || novoSeletor === 'PERFIS_DA_UORG') return referencia.startsWith('unidade')
-    return true
-  })
-
-  const inserirVariavelNoTitulo = () => {
-    if (!campoVariavel) return
-    setTitle((valor) => `${valor}${valor && !valor.endsWith(' ') ? ' ' : ''}{{${campoVariavel}}}`)
-  }
-
-  const inserirVariavelNoCorpo = () => {
-    if (!campoVariavel) return
-    try {
-      const documento = parseJson(body, 'Conteúdo') as { versao?: number; blocos?: Array<{ tipo: 'paragrafo'; conteudo: unknown[] }> }
-      const blocos = Array.isArray(documento.blocos) && documento.blocos.length > 0
-        ? documento.blocos
-        : [{ tipo: 'paragrafo' as const, conteudo: [] }]
-      blocos[0].conteudo = [...(blocos[0].conteudo ?? []), {
-        tipo: 'variavel',
-        campo: campoVariavel,
-        ...(estiloVariavel === 'negrito' || estiloVariavel === 'negrito-italico' ? { negrito: true } : {}),
-        ...(estiloVariavel === 'italico' || estiloVariavel === 'negrito-italico' ? { italico: true } : {}),
-      }]
-      setBody(JSON.stringify({ ...documento, versao: 1, blocos }, null, 2))
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Não foi possível inserir a variável.')
-    }
-  }
-
-  const adicionarDestinatario = () => {
-    if (!novaReferencia) {
-      toast.error('Selecione uma referência do evento.')
-      return
-    }
-    const grupos = parseEditorArray<GrupoDestinatarioEditor>(recipients)
-    grupos.push({
-      seletor: novoSeletor,
-      referencia: novaReferencia,
-      perfis: novoSeletor === 'USUARIO_REFERENCIADO' || novoSeletor === 'ADMINS_GLOBAIS' ? [] : [novoPerfil],
-      excluirAutor: false,
-    })
-    setRecipients(JSON.stringify(grupos, null, 2))
-  }
-
-  const removerDestinatario = (indice: number) => {
-    const grupos = parseEditorArray<GrupoDestinatarioEditor>(recipients)
-    grupos.splice(indice, 1)
-    setRecipients(JSON.stringify(grupos, null, 2))
-  }
-
-  const adicionarAcao = () => {
-    const definicao = (ACOES_POR_EVENTO[modelo.evento.codigo] ?? []).find((acao) => acao.codigo === novaAcao)
-    if (!definicao) return
-    const acoes = parseEditorArray<AcaoEditor>(actions)
-    if (acoes.some((acao) => acao.codigo === definicao.codigo) || acoes.length >= 3) return
-    acoes.push({ ...definicao, ordem: acoes.length })
-    setActions(JSON.stringify(acoes, null, 2))
-    setNovaAcao('')
-  }
-
-  const removerAcao = (indice: number) => {
-    const acoes = parseEditorArray<AcaoEditor>(actions).filter((_acao, itemIndice) => itemIndice !== indice)
-      .map((acao, ordem) => ({ ...acao, ordem }))
-    setActions(JSON.stringify(acoes, null, 2))
-  }
-
-  useEffect(() => {
-    setTitle(draft?.tituloTemplate ?? '')
-    setBody(JSON.stringify(draft?.corpoTemplate ?? DEFAULT_BODY, null, 2))
-    setRecipients(JSON.stringify(draft?.destinatarios ?? DEFAULT_RECIPIENTS, null, 2))
-    setActions(JSON.stringify(draft?.acoes ?? DEFAULT_ACTIONS, null, 2))
-    setCondition(draft?.condicaoEnvio ?? 'SEMPRE')
-    setFilter(draft?.filtroEvento ?? '')
-    setNotifyOnLogin(draft?.notificarNoLogin ?? false)
-    setReplicateEmail(draft?.replicarPorEmail ?? false)
-    setValidity(String(draft?.validadeHoras ?? 720))
-    const agendamento = normalizarAgendamento(draft?.agendamento)
-    setScheduleType(agendamento.tipo)
-    setScheduleValue(agendamento.tipo === 'APOS_INTERVALO' ? String(agendamento.valor) : '1')
-    setScheduleUnit(agendamento.tipo === 'APOS_INTERVALO' ? agendamento.unidade : 'MINUTOS')
-    setScheduleTime(agendamento.tipo === 'PROXIMO_HORARIO' ? agendamento.hora : '09:00')
-    setScheduleTimezone(agendamento.tipo === 'PROXIMO_HORARIO' ? agendamento.fuso : 'America/Sao_Paulo')
-    setNovaReferencia(catalogo?.referencias[0] ?? '')
-    setNovaAcao('')
-  }, [modelo.id, draft?.id, draft?.updatedAt, catalogo?.codigo])
-
-  useEffect(() => {
-    if (!referenciasCompativeis.includes(novaReferencia)) setNovaReferencia(referenciasCompativeis[0] ?? '')
-  }, [novoSeletor, catalogo?.codigo])
-
-  const save = async () => {
-    if (!draft) return
-    try {
-      setSaving(true)
-      const agendamento: AgendamentoEditor = scheduleType === 'IMEDIATO'
-        ? { tipo: 'IMEDIATO' }
-        : scheduleType === 'APOS_INTERVALO'
-          ? { tipo: 'APOS_INTERVALO', valor: Number(scheduleValue), unidade: scheduleUnit }
-          : { tipo: 'PROXIMO_HORARIO', hora: scheduleTime, fuso: scheduleTimezone.trim() }
-      await onSave({
-        revisaoEsperada: modelo.revisao,
-        tituloTemplate: title.trim(),
-        corpoTemplate: parseJson(body, 'Conteúdo'),
-        destinatarios: parseJson(recipients, 'Destinatários'),
-        acoes: parseJson(actions, 'Ações'),
-        agendamento,
-        condicaoEnvio: condition,
-        filtroEvento: filter || null,
-        notificarNoLogin: notifyOnLogin,
-        replicarPorEmail: replicateEmail,
-        validadeHoras: Number(validity),
-      })
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Não foi possível salvar o rascunho.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div className="space-y-5">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div><p className="text-xs uppercase text-muted-foreground">Código</p><p className="font-mono text-sm">{modelo.codigo}</p></div>
-        <div><p className="text-xs uppercase text-muted-foreground">Evento</p><p className="text-sm">{modelo.evento.nome} <span className="font-mono text-xs text-muted-foreground">({modelo.evento.codigo})</span></p></div>
-        <div><p className="text-xs uppercase text-muted-foreground">Estado</p><StatusBadge active={modelo.ativo} version={modelo.versaoAtiva} /></div>
-        <div><p className="text-xs uppercase text-muted-foreground">Revisão editorial</p><p className="text-sm">{modelo.revisao}</p></div>
-      </div>
-      <Separator />
-      {draft ? (
-        <div className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="space-y-1.5 text-sm font-medium">Título<input className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm font-normal" value={title} onChange={(event) => setTitle(event.target.value)} /></label>
-            <label className="space-y-1.5 text-sm font-medium">Validade (horas)<Input type="number" min={1} max={8760} value={validity} onChange={(event) => setValidity(event.target.value)} /></label>
-          </div>
-          <div className="space-y-3 rounded-md border p-3">
-            <label className="block space-y-1.5 text-sm font-medium">Agendamento<select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm font-normal" value={scheduleType} onChange={(event) => setScheduleType(event.target.value as AgendamentoEditor['tipo'])}><option value="IMEDIATO">Imediato</option><option value="APOS_INTERVALO">Após intervalo</option><option value="PROXIMO_HORARIO">Próximo horário diário</option></select></label>
-            {scheduleType === 'APOS_INTERVALO' && <div className="grid gap-3 sm:grid-cols-2"><label className="space-y-1.5 text-sm font-medium">Intervalo<Input type="number" min={1} max={43200} value={scheduleValue} onChange={(event) => setScheduleValue(event.target.value)} /></label><label className="space-y-1.5 text-sm font-medium">Unidade<select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm font-normal" value={scheduleUnit} onChange={(event) => setScheduleUnit(event.target.value as 'MINUTOS' | 'HORAS')}><option value="MINUTOS">Minutos</option><option value="HORAS">Horas</option></select></label></div>}
-            {scheduleType === 'PROXIMO_HORARIO' && <div className="grid gap-3 sm:grid-cols-2"><label className="space-y-1.5 text-sm font-medium">Horário<Input type="time" value={scheduleTime} onChange={(event) => setScheduleTime(event.target.value)} /></label><label className="space-y-1.5 text-sm font-medium">Fuso IANA<Input value={scheduleTimezone} onChange={(event) => setScheduleTimezone(event.target.value)} placeholder="America/Sao_Paulo" /></label></div>}
-          </div>
-          <div className="space-y-3 rounded-md border p-3">
-            <div>
-              <p className="text-sm font-medium">Variáveis do evento</p>
-              <p className="text-xs text-muted-foreground">Insira campos aprovados no título ou no primeiro parágrafo do corpo.</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <select className="h-10 min-w-56 flex-1 rounded-md border bg-background px-3 text-sm" value={campoVariavel} onChange={(event) => setCampoVariavel(event.target.value)}>
-                <option value="">Selecione um campo...</option>
-                {(catalogo?.camposContexto ?? []).map((campo) => <option key={campo} value={campo}>{campo}</option>)}
-              </select>
-              <select className="h-10 rounded-md border bg-background px-3 text-sm" value={estiloVariavel} onChange={(event) => setEstiloVariavel(event.target.value as typeof estiloVariavel)} aria-label="Formatação da variável">
-                <option value="normal">Normal</option>
-                <option value="negrito">Negrito</option>
-                <option value="italico">Itálico</option>
-                <option value="negrito-italico">Negrito e itálico</option>
-              </select>
-              <Button type="button" variant="outline" onClick={inserirVariavelNoTitulo} disabled={!campoVariavel}>Inserir no título</Button>
-              <Button type="button" variant="outline" onClick={inserirVariavelNoCorpo} disabled={!campoVariavel}>Inserir no corpo</Button>
-            </div>
-          </div>
-          <label className="block space-y-1.5 text-sm font-medium">Conteúdo estruturado (JSON)<Textarea className="min-h-36 font-mono text-xs" value={body} onChange={(event) => setBody(event.target.value)} /></label>
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="space-y-3 rounded-md border p-3">
-              <div><p className="text-sm font-medium">Destinatários guiados</p><p className="text-xs text-muted-foreground">Grupos são unidos e usuários repetidos recebem uma única entrega.</p></div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <select className="h-10 rounded-md border bg-background px-3 text-sm" value={novoSeletor} onChange={(event) => setNovoSeletor(event.target.value as GrupoDestinatarioEditor['seletor'])}>
-                  <option value="PERFIS_DA_UNIDADE">Perfis da unidade</option>
-                  <option value="PERFIS_DA_UORG">Perfis da UORG</option>
-                  <option value="USUARIO_REFERENCIADO">Usuário referenciado</option>
-                  <option value="ADMINS_GLOBAIS">Admins globais</option>
-                </select>
-                <select className="h-10 rounded-md border bg-background px-3 text-sm" value={novaReferencia} onChange={(event) => setNovaReferencia(event.target.value)}>
-                  <option value="">Referência...</option>
-                  {referenciasCompativeis.map((referencia) => <option key={referencia} value={referencia}>{referencia}</option>)}
-                </select>
-              </div>
-              {(novoSeletor === 'PERFIS_DA_UNIDADE' || novoSeletor === 'PERFIS_DA_UORG') && <select className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={novoPerfil} onChange={(event) => setNovoPerfil(event.target.value)}>{ROLES_NOTIFICACAO.map(([valor, rotulo]) => <option key={valor} value={valor}>{rotulo}</option>)}</select>}
-              <Button type="button" variant="outline" onClick={adicionarDestinatario} disabled={!novaReferencia}>Adicionar grupo</Button>
-              <div className="space-y-1.5">{parseEditorArray<GrupoDestinatarioEditor>(recipients).map((grupo, indice) => <div key={`${grupo.referencia}-${indice}`} className="flex items-center justify-between gap-2 rounded bg-muted/50 px-2 py-1.5 text-xs"><span>{grupo.seletor} · {grupo.referencia}{grupo.perfis?.length ? ` · ${grupo.perfis.join(', ')}` : ''}</span><Button type="button" size="sm" variant="ghost" onClick={() => removerDestinatario(indice)}>Remover</Button></div>)}</div>
-              <label className="block space-y-1.5 text-xs font-medium">Avançado (JSON)<Textarea className="min-h-24 font-mono text-xs" value={recipients} onChange={(event) => setRecipients(event.target.value)} /></label>
-            </div>
-            <div className="space-y-3 rounded-md border p-3">
-              <div><p className="text-sm font-medium">Ações do catálogo</p><p className="text-xs text-muted-foreground">Comandos mutáveis exigem confirmação na aplicação.</p></div>
-              <div className="flex gap-2"><select className="h-10 min-w-0 flex-1 rounded-md border bg-background px-3 text-sm" value={novaAcao} onChange={(event) => setNovaAcao(event.target.value)}><option value="">Selecione uma ação...</option>{(ACOES_POR_EVENTO[modelo.evento.codigo] ?? []).map((acao) => <option key={acao.codigo} value={acao.codigo}>{acao.rotulo}</option>)}</select><Button type="button" variant="outline" onClick={adicionarAcao} disabled={!novaAcao}>Adicionar</Button></div>
-              <div className="space-y-1.5">{parseEditorArray<AcaoEditor>(actions).map((acao, indice) => <div key={`${acao.codigo}-${indice}`} className="flex items-center justify-between gap-2 rounded bg-muted/50 px-2 py-1.5 text-xs"><span>{acao.rotulo}{acao.exigeConfirmacao ? ' · confirmação' : ''}</span><Button type="button" size="sm" variant="ghost" onClick={() => removerAcao(indice)}>Remover</Button></div>)}</div>
-              <label className="block space-y-1.5 text-xs font-medium">Avançado (JSON)<Textarea className="min-h-24 font-mono text-xs" value={actions} onChange={(event) => setActions(event.target.value)} /></label>
-            </div>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="space-y-1.5 text-sm font-medium">Condição<select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm font-normal" value={condition} onChange={(event) => setCondition(event.target.value)}><option value="SEMPRE">Sempre</option><option value="CADASTRO_AINDA_PENDENTE">Cadastro ainda pendente</option><option value="REQUISICAO_AINDA_ENVIADA_NO_MESMO_CICLO">Requisição ainda enviada</option><option value="FILTRO_RESULTADO_IMPORTACAO">Filtro de importação</option></select></label>
-            <label className="space-y-1.5 text-sm font-medium">Filtro do evento<select className="mt-1 h-10 w-full rounded-md border bg-background px-3 text-sm font-normal" value={filter} onChange={(event) => setFilter(event.target.value)}><option value="">Nenhum</option><option value="SUCESSO">Sucesso</option><option value="SEM_PARTICIPACAO">Sem participação</option><option value="FALHA">Falha</option></select></label>
-          </div>
-          <div className="grid gap-3 rounded-md border p-3 sm:grid-cols-2">
-            <label className="flex items-center justify-between gap-3 text-sm"><span><span className="block font-medium">Avisar no login</span><span className="text-xs text-muted-foreground">Exibe o modal na próxima autenticação.</span></span><Switch checked={notifyOnLogin} onCheckedChange={setNotifyOnLogin} /></label>
-            <label className="flex items-center justify-between gap-3 text-sm"><span><span className="block font-medium">Replicar por e-mail</span><span className="text-xs text-muted-foreground">Fila opcional, independente do login.</span></span><Switch checked={replicateEmail} onCheckedChange={setReplicateEmail} /></label>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={() => void save()} disabled={disabled || saving}>{saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Salvar rascunho</Button>
-            <Button variant="outline" onClick={() => void onSimulate()} disabled={disabled}><Eye className="mr-2 h-4 w-4" /> Simular</Button>
-            {draft.status === 'RASCUNHO' && <Button variant="outline" onClick={onPublish} disabled={disabled}><CheckCircle2 className="mr-2 h-4 w-4" /> Publicar versão</Button>}
-            {modelo.versoes.filter((versao) => versao.status === 'PUBLICADA' && modelo.versaoAtiva?.id !== versao.id).map((versao) => <Button key={versao.id} variant="outline" onClick={() => onPromote(versao.id)} disabled={disabled}><Rocket className="mr-2 h-4 w-4" /> Promover v{versao.numero}</Button>)}
-          </div>
-        </div>
-      ) : <p className="text-sm text-muted-foreground">Nenhuma versão disponível para edição.</p>}
-      <div className="flex items-center justify-between rounded-md bg-muted/50 p-3">
-        <div><p className="text-sm font-medium">Distribuição do modelo</p><p className="text-xs text-muted-foreground">Somente um modelo promovido com evento ativo pode ser ativado.</p></div>
-        <Button variant={modelo.ativo ? 'outline' : 'default'} onClick={onActivate} disabled={disabled || (!modelo.ativo && !modelo.versaoAtiva)}><Power className="mr-2 h-4 w-4" /> {modelo.ativo ? 'Desativar' : 'Ativar'}</Button>
-      </div>
     </div>
   )
 }
