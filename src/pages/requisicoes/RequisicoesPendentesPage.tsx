@@ -14,6 +14,7 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useAuthStore } from '@/store/auth.store'
 import type { IRequisicao, IUsuario } from '@/types'
 
 function getRequisitanteName(req: IRequisicao): string {
@@ -25,6 +26,7 @@ function getRequisitanteName(req: IRequisicao): string {
 export function RequisicoesPendentesPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const user = useAuthStore((state) => state.user)
   const [search, setSearch] = useState('')
   const [confirmDevolver, setConfirmDevolver] = useState<string | null>(null)
 
@@ -98,6 +100,7 @@ export function RequisicoesPendentesPage() {
             <RequisicaoPendenteCard
               key={req.identificador}
               req={req}
+              isAutor={req.identRequisitante === user?.id}
               onAnalisar={() => navigate(`/requisicoes/analise?id=${encodeURIComponent(req.identificador)}`)}
               onDevolver={() => setConfirmDevolver(req.identificador)}
               isDevolverPending={devolverMutation.isPending && confirmDevolver === req.identificador}
@@ -124,12 +127,13 @@ export function RequisicoesPendentesPage() {
 
 interface CardProps {
   req: IRequisicao
+  isAutor: boolean
   onAnalisar: () => void
   onDevolver: () => void
   isDevolverPending: boolean
 }
 
-function RequisicaoPendenteCard({ req, onAnalisar, onDevolver, isDevolverPending }: CardProps) {
+function RequisicaoPendenteCard({ req, isAutor, onAnalisar, onDevolver, isDevolverPending }: CardProps) {
   return (
     <div className="border rounded-lg p-5 bg-card hover:shadow-sm transition-shadow">
       <div className="flex items-start justify-between gap-4">
@@ -175,23 +179,31 @@ function RequisicaoPendenteCard({ req, onAnalisar, onDevolver, isDevolverPending
 
         {/* Botões de ação */}
         <div className="shrink-0 flex flex-col gap-2">
-          <Button
-            onClick={onAnalisar}
-            className="gap-2 bg-[#2a593a] hover:bg-[#1e4229] text-white"
-          >
-            <ClipboardCheck className="h-4 w-4" />
-            Analisar
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2 text-amber-700 border-amber-400 hover:bg-amber-50 hover:text-amber-800"
-            disabled={isDevolverPending}
-            onClick={onDevolver}
-          >
-            <Undo2 className="h-4 w-4" />
-            Devolver para Edição
-          </Button>
+          {isAutor ? (
+            <p className="max-w-44 text-right text-xs text-muted-foreground">
+              Criada por você; aguarda análise de outro gestor.
+            </p>
+          ) : (
+            <>
+              <Button
+                onClick={onAnalisar}
+                className="gap-2 bg-[#2a593a] hover:bg-[#1e4229] text-white"
+              >
+                <ClipboardCheck className="h-4 w-4" />
+                Analisar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 text-amber-700 border-amber-400 hover:bg-amber-50 hover:text-amber-800"
+                disabled={isDevolverPending}
+                onClick={onDevolver}
+              >
+                <Undo2 className="h-4 w-4" />
+                Devolver para Edição
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -28,6 +28,7 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { cn, formatCurrency, formatQtd, destDespesaLabel } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
+import { useAuthStore } from '@/store/auth.store'
 import type { IItemRequisicao, IFornecimento, IItem, IUsuario, IUnidade, IUorg } from '@/types'
 
 // ---------------------------------------------------------------------------
@@ -383,6 +384,7 @@ export function RequisicaoAnalisePage() {
   const id = useIdParam()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const user = useAuthStore((state) => state.user)
 
   const [observacoes, setObservacoes] = useState<string | null>(null)
   const [itemsMutated, setItemsMutated] = useState(false)
@@ -483,6 +485,11 @@ export function RequisicaoAnalisePage() {
   const unidade = typeof requisicao.identUnidade === 'string' ? null : (requisicao.identUnidade as IUnidade)
   const uorg = requisicao.uorg as IUorg | undefined
   const userUasg = unidade?.uasg ?? ''
+  const isAutor = requisicao.identRequisitante === user?.id
+  const podeEditarItens =
+    requisicao.status === 'Enviada' &&
+    !isAutor &&
+    (user?.role === 'gestor_unidade' || user?.role === 'gestor_orgao')
   const requisitante = typeof requisicao.requisitante === 'string'
     ? null
     : (requisicao.requisitante as IUsuario)
@@ -548,28 +555,32 @@ export function RequisicaoAnalisePage() {
             Voltar
           </Button>
           <div className="flex-1" />
-          <Button
-            variant="outline"
-            className="gap-1 border-destructive text-destructive hover:bg-destructive/10"
-            disabled={!canRejeitar || isMutating}
-            title={!canRejeitar ? 'Preencha o campo Observações para habilitar a rejeição' : undefined}
-            onClick={() => setConfirmAction('rejeitar')}
-          >
-            {rejeitarMutation.isPending
-              ? <Loader2 className="h-4 w-4 animate-spin" />
-              : <XCircle className="h-4 w-4" />}
-            Rejeitar
-          </Button>
-          <Button
-            className="gap-1 bg-green-700 hover:bg-green-800 text-white"
-            disabled={isMutating}
-            onClick={() => setConfirmAction('aprovar')}
-          >
-            {aprovarMutation.isPending
-              ? <Loader2 className="h-4 w-4 animate-spin" />
-              : <CheckCircle className="h-4 w-4" />}
-            Aprovar
-          </Button>
+          {!isAutor && (
+            <>
+              <Button
+                variant="outline"
+                className="gap-1 border-destructive text-destructive hover:bg-destructive/10"
+                disabled={!canRejeitar || isMutating}
+                title={!canRejeitar ? 'Preencha o campo Observações para habilitar a rejeição' : undefined}
+                onClick={() => setConfirmAction('rejeitar')}
+              >
+                {rejeitarMutation.isPending
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <XCircle className="h-4 w-4" />}
+                Rejeitar
+              </Button>
+              <Button
+                className="gap-1 bg-green-700 hover:bg-green-800 text-white"
+                disabled={isMutating}
+                onClick={() => setConfirmAction('aprovar')}
+              >
+                {aprovarMutation.isPending
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <CheckCircle className="h-4 w-4" />}
+                Aprovar
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -624,6 +635,7 @@ export function RequisicaoAnalisePage() {
               rows={3}
               placeholder="Registre observações, ajustes solicitados ou motivo de rejeição..."
               value={currentObservacoes}
+              disabled={isAutor}
               onChange={(e) => setObservacoes(e.target.value)}
             />
             {canRejeitar && (
@@ -639,11 +651,20 @@ export function RequisicaoAnalisePage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold">Itens da Requisição</h2>
-          <Button size="sm" onClick={() => setAddItemsOpen(true)}>
-            <Plus className="h-4 w-4 mr-1" />
-            Adicionar Itens
-          </Button>
+          {podeEditarItens && (
+            <Button size="sm" onClick={() => setAddItemsOpen(true)}>
+              <Plus className="h-4 w-4 mr-1" />
+              Adicionar Itens
+            </Button>
+          )}
         </div>
+        {!podeEditarItens && (
+          <p className="text-sm text-muted-foreground">
+            {isAutor
+              ? 'Esta requisição foi criada por você e deve ser analisada por outro gestor da unidade.'
+              : 'Apenas gestor de unidade ou gestor de órgão pode alterar itens durante a análise.'}
+          </p>
+        )}
 
         {loadingItens ? (
           <Skeleton className="h-48 w-full" />
@@ -672,7 +693,7 @@ export function RequisicaoAnalisePage() {
                         <th className="text-right px-4 py-2 font-medium text-muted-foreground">Qtd</th>
                         <th className="text-right px-4 py-2 font-medium text-muted-foreground">Valor Unit.</th>
                         <th className="text-right px-4 py-2 font-medium text-muted-foreground">Valor Total</th>
-                        <th className="w-16 px-4 py-2" />
+                        {podeEditarItens && <th className="w-16 px-4 py-2" />}
                       </tr>
                     </thead>
                     <tbody className="divide-y">
@@ -686,27 +707,29 @@ export function RequisicaoAnalisePage() {
                           <td className="px-4 py-2.5 text-right font-medium">
                             {item.valTotal != null ? formatCurrency(item.valTotal) : '—'}
                           </td>
-                          <td className="px-4 py-2.5">
-                            <div className="flex items-center gap-1 justify-end">
-                              <Button
-                                variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                                title="Editar quantidade"
-                                aria-label="Editar quantidade"
-                                onClick={() => setEditItemTarget(item)}
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10"
-                                title="Remover item"
-                                aria-label="Remover item"
-                                disabled={removeItemMutation.isPending}
-                                onClick={() => removeItemMutation.mutate(item.id)}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          </td>
+                          {podeEditarItens && (
+                            <td className="px-4 py-2.5">
+                              <div className="flex items-center gap-1 justify-end">
+                                <Button
+                                  variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                  title="Editar quantidade"
+                                  aria-label="Editar quantidade"
+                                  onClick={() => setEditItemTarget(item)}
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                                  title={itensRequisicao.length <= 1 ? 'A requisição deve manter ao menos um item' : 'Remover item'}
+                                  aria-label="Remover item"
+                                  disabled={removeItemMutation.isPending || itensRequisicao.length <= 1}
+                                  onClick={() => removeItemMutation.mutate(item.id)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -718,7 +741,7 @@ export function RequisicaoAnalisePage() {
                         <td className="px-4 py-2.5 text-right font-bold text-green-700">
                           {formatCurrency(totalFornecedor)}
                         </td>
-                        <td />
+                        {podeEditarItens && <td />}
                       </tr>
                     </tfoot>
                   </table>
@@ -770,8 +793,7 @@ export function RequisicaoAnalisePage() {
         onCancel={() => setShowLeaveAlert(false)}
       />
 
-      {/* Editar quantidade */}
-      {editItemTarget && (
+      {podeEditarItens && editItemTarget && (
         <EditItemDialog
           item={editItemTarget}
           open={!!editItemTarget}
@@ -780,8 +802,7 @@ export function RequisicaoAnalisePage() {
         />
       )}
 
-      {/* Adicionar itens */}
-      {addItemsOpen && (
+      {podeEditarItens && addItemsOpen && (
         <AddItemsDialog
           open={addItemsOpen}
           onOpenChange={setAddItemsOpen}
@@ -792,6 +813,7 @@ export function RequisicaoAnalisePage() {
           onSaved={invalidateItems}
         />
       )}
+
     </div>
   )
 }
