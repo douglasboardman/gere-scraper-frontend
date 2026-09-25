@@ -68,6 +68,9 @@ export function Header() {
     enabled: !!user,
     staleTime: 30_000,
   })
+  // `importantesNaoLidas` é subconjunto de `naoLidas`; o máximo também
+  // preserva o aviso visual durante uma atualização concorrente do resumo.
+  const naoLidas = Math.max(resumo?.naoLidas ?? 0, resumo?.importantesNaoLidas ?? 0)
 
   const crumbs = getBreadcrumb(location.pathname)
 
@@ -106,14 +109,12 @@ export function Header() {
             <Button
               variant="ghost"
               size="icon"
-              aria-label={resumo?.naoLidas ? `${resumo.naoLidas} notificações não lidas` : 'Notificações'}
+              aria-label={naoLidas ? `${naoLidas} notificações não lidas` : 'Notificações'}
               className="relative h-9 w-9 hover:bg-muted/60 hover:text-foreground transition-colors duration-150"
             >
               <Bell className="h-4 w-4" />
-              {!!resumo?.naoLidas && (
-                <span className="absolute -right-0.5 -top-0.5 min-w-4 h-4 rounded-full bg-primary px-1 text-[10px] leading-4 text-primary-foreground">
-                  {resumo.naoLidas > 99 ? '99+' : resumo.naoLidas}
-                </span>
+              {!!naoLidas && (
+                <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary" aria-hidden="true" />
               )}
             </Button>
           </DropdownMenuTrigger>
@@ -121,7 +122,7 @@ export function Header() {
             <DropdownMenuLabel className="font-normal">
               <p className="text-sm font-semibold">Notificações</p>
               <p className="text-xs text-muted-foreground">
-                {resumo?.naoLidas ? `${resumo.naoLidas} não lida(s)` : 'Nenhuma não lida'}
+                {naoLidas ? `${naoLidas} não lida(s)` : 'Nenhuma não lida'}
                 {resumo?.importantesNaoLidas ? ` · ${resumo.importantesNaoLidas} importante(s)` : ''}
               </p>
             </DropdownMenuLabel>

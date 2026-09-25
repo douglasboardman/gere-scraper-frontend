@@ -569,7 +569,7 @@ export function NotificacoesAdminPage() {
                     modelo={modeloNovoServico}
                     catalogo={catalogoNovoServico}
                     disabled={createModelMutation.isPending}
-                    onSave={async ({ revisaoEsperada: _revisao, ...input }) => {
+                    onSave={async ({ revisaoEsperada: _revisao, eventoVersaoId: _eventoVersaoId, ...input }) => {
                       await createModelMutation.mutateAsync({ ...input, nome: modelName.trim(), eventoId: modelEventId })
                     }}
                   />

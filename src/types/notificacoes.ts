@@ -24,14 +24,20 @@ export interface NotificacoesListaResponse {
   instanteCorte: string
 }
 
+export interface AcaoNotificacaoResolvida {
+  codigo: string
+  rotulo: string
+  tipo: 'NAVEGACAO' | 'COMANDO'
+  exigeConfirmacao: boolean
+  url: string | null
+  parametrosComando?: Record<string, unknown>
+}
+
 export interface NotificacaoDetalhe extends NotificacaoListaItem {
   corpo: unknown
-  acoes: unknown
+  acoes: AcaoNotificacaoResolvida[]
   referencias: unknown
   lidaEm: string | null
   arquivadaEm: string | null
-  acaoContexto: {
-    requisicaoId: string
-    revisaoEsperada: number | null
-  } | null
+  acaoContexto: unknown | null
 }

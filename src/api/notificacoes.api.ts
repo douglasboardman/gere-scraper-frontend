@@ -44,13 +44,13 @@ export const notificacoesApi = {
 
   async executarAcao(input: {
     notificacaoId: string
-    acaoCodigo: 'APROVAR_REQUISICAO'
-    revisaoEsperada: number
+    acaoCodigo: string
+    parametros: Record<string, unknown>
     idempotencyKey: string
   }) {
     const { data } = await apiClient.post(`/notificacoes/${encodeURIComponent(input.notificacaoId)}/acoes`, {
       acaoCodigo: input.acaoCodigo,
-      revisaoEsperada: input.revisaoEsperada,
+      parametros: input.parametros,
       confirmacao: true,
       idempotencyKey: input.idempotencyKey,
     })

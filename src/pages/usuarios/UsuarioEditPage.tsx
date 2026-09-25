@@ -83,21 +83,33 @@ export function UsuarioEditPage() {
 
   const form = useForm<EditUsuarioFormData>({
     resolver: zodResolver(editUsuarioSchema),
-    values: usuario
-      ? {
-          nome: usuario.nome,
-          email: usuario.email,
-          role: usuario.role,
-          unidade: usuario.identUnidade ?? usuario.unidade?.identificador ?? '',
-          identUorg: usuario.identUorg ?? '',
-        }
-      : undefined,
+    defaultValues: {
+      nome: '',
+      email: '',
+      role: 'requisitante',
+      unidade: '',
+      identUorg: '',
+    },
   })
+
+  // A tela pode ser aberta por uma ação de notificação antes de as listas de
+  // unidade/UORG chegarem. `reset` fixa ambos os identificadores no form assim
+  // que o recurso é carregado, sem depender da sincronização implícita de
+  // `values` do React Hook Form.
+  useEffect(() => {
+    if (!usuario) return
+    form.reset({
+      nome: usuario.nome,
+      email: usuario.email,
+      role: usuario.role,
+      unidade: usuario.identUnidade ?? usuario.unidade?.identificador ?? '',
+      identUorg: usuario.identUorg ?? '',
+    })
+  }, [usuario, form])
 
   const selectedRole = form.watch('role')
   const selectedUnidade = form.watch('unidade')
-  // Fallback para identUnidade direto enquanto o form ainda não sincronizou via values/useEffect
-  const queryUnidade = selectedUnidade ?? usuario?.identUnidade ?? ''
+  const queryUnidade = selectedUnidade || usuario?.identUnidade || ''
 
   const { data: uorgs = [], isLoading: uorgsLoading } = useQuery({
     queryKey: qk.uorgs.byUnidade(queryUnidade),
@@ -105,8 +117,8 @@ export function UsuarioEditPage() {
     enabled: !!queryUnidade,
   })
 
-  // Garante que identUorg seja aplicado após UORGs carregarem, caso o form.values
-  // tenha sincronizado antes das opções estarem disponíveis no Select (race condition).
+  // Garante que a opção da UORG seja reaplicada quando sua lista chegar depois
+  // da carga inicial do formulário.
   useEffect(() => {
     if (!usuario?.identUorg || uorgsLoading || !uorgs.length) return
     if (!form.getValues('identUorg')) {

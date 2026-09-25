@@ -133,7 +133,7 @@ export interface AtualizarNotificacaoModeloRascunhoInput {
   validadeHoras?: number
 }
 
-export interface CriarNotificacaoModeloInput extends Omit<AtualizarNotificacaoModeloRascunhoInput, 'revisaoEsperada'> {
+export interface CriarNotificacaoModeloInput extends Omit<AtualizarNotificacaoModeloRascunhoInput, 'revisaoEsperada' | 'eventoVersaoId'> {
   codigo?: string
   nome: string
   eventoId: string
