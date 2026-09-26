@@ -40,6 +40,7 @@ export function ScrapingProgressBar() {
   const [minimized, setMinimized] = useState(false)
   const [notFoundDialogOpen, setNotFoundDialogOpen] = useState(false)
   const [naoParticipanteDialogOpen, setNaoParticipanteDialogOpen] = useState(false)
+  const [fonteIndisponivelDialogOpen, setFonteIndisponivelDialogOpen] = useState(false)
   const queryClient = useQueryClient()
   const { progresso, itensProcessados, totalItens, atasProcessadas, atasTotal, mensagem, status, errorCode, isActive } =
     useJobStream(activeJobId)
@@ -57,6 +58,9 @@ export function ScrapingProgressBar() {
     if (status === 'failed' && errorCode === 'UASG_NAO_PARTICIPANTE') {
       setNaoParticipanteDialogOpen(true)
     }
+    if (status === 'failed' && errorCode === 'FONTE_EXTERNA_INDISPONIVEL') {
+      setFonteIndisponivelDialogOpen(true)
+    }
   }, [status, errorCode])
 
   const handleNotFoundDialogClose = () => {
@@ -72,6 +76,11 @@ export function ScrapingProgressBar() {
 
   const handleNaoParticipanteDialogClose = () => {
     setNaoParticipanteDialogOpen(false)
+    setActiveJobId(null)
+  }
+
+  const handleFonteIndisponivelDialogClose = () => {
+    setFonteIndisponivelDialogOpen(false)
     setActiveJobId(null)
   }
 
@@ -106,6 +115,30 @@ export function ScrapingProgressBar() {
             <Button onClick={handleNaoParticipanteDialogClose}>
               Fechar
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
+  if (fonteIndisponivelDialogOpen) {
+    return (
+      <Dialog open onOpenChange={(open) => { if (!open) handleFonteIndisponivelDialogClose() }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertTriangle className="h-5 w-5" />
+              Fonte oficial indisponível
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              {mensagem || 'Não foi possível consultar as fontes oficiais necessárias para confirmar a participação da unidade.'}
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            A importação não foi concluída e a unidade não foi marcada como não participante. Tente novamente mais tarde.
+          </p>
+          <DialogFooter>
+            <Button onClick={handleFonteIndisponivelDialogClose}>Fechar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
