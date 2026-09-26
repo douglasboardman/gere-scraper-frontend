@@ -1,2 +1,7 @@
 node_modules
 dist/
+
+# Configuração local do Vite; o modelo seguro continua versionado.
+.env
+.env.*
+!.env.example
