@@ -20,6 +20,7 @@ type Action =
   | 'manage:requisicoes_unidade'
   | 'list:all_requisicoes'
   | 'delete:any_requisicao'
+  | 'manage:cedencias_itens'
   // Usuários
   | 'manage:usuarios'
   | 'view:usuarios_unidade'
@@ -62,6 +63,7 @@ const permissions: Record<UserRole, Action[]> = {
     'manage:requisicoes_unidade',
     'view:usuarios_unidade',
     'edit:usuarios_unidade',
+    'manage:cedencias_itens',
   ],
   gestor_unidade: [
     'create:contratacoes',
@@ -78,6 +80,7 @@ const permissions: Record<UserRole, Action[]> = {
     'manage:requisicoes_unidade',
     'view:usuarios_unidade',
     'edit:usuarios_unidade',
+    'manage:cedencias_itens',
   ],
   gestor_contratacoes: [
     'create:contratacoes',

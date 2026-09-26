@@ -45,6 +45,7 @@ import { PerfilPage } from '@/pages/PerfilPage'
 import { SobrePage } from '@/pages/SobrePage'
 import { OutrasObrigacoesPage } from '@/pages/outras-obrigacoes/OutrasObrigacoesPage'
 import { NotificacoesAdminPage } from '@/pages/notificacoes-admin/NotificacoesAdminPage'
+import { CedenciasItensPage } from '@/pages/cedencias-itens/CedenciasItensPage'
 
 // Protected route component
 function PrivateRoute({
@@ -53,12 +54,14 @@ function PrivateRoute({
   requireGestorOrAdmin = false,
   requireNonAdmin = false,
   requireGestorOnly = false,
+  requireGestorUnidade = false,
 }: {
   requireAdmin?: boolean
   requireAdminOrGestorUnidade?: boolean
   requireGestorOrAdmin?: boolean
   requireNonAdmin?: boolean
   requireGestorOnly?: boolean
+  requireGestorUnidade?: boolean
 }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const { isAdmin, isGestor, isGestorUnidade } = usePermission()
@@ -84,6 +87,10 @@ function PrivateRoute({
   }
 
   if (requireGestorOnly && !isGestor) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  if (requireGestorUnidade && !isGestorUnidade) {
     return <Navigate to="/dashboard" replace />
   }
 
@@ -304,6 +311,11 @@ export const router = createBrowserRouter([
                 element: <OutrasObrigacoesPage />,
               },
             ],
+          },
+          {
+            path: 'cedencias-itens',
+            element: <PrivateRoute requireGestorUnidade />,
+            children: [{ index: true, element: <CedenciasItensPage /> }],
           },
           {
             path: 'perfil',

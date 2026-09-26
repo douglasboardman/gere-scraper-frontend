@@ -48,6 +48,13 @@ export const qk = {
       ["analise-fornecimentos", contratacaoId, uasg] as const,
   },
 
+  cedenciasItens: {
+    all: ['cedencias-itens'] as const,
+    caixa: (caixa: 'solicitadas' | 'recebidas') => ['cedencias-itens', caixa] as const,
+    detail: (id: string) => ['cedencias-itens', 'detail', id] as const,
+    ofertas: (contratacaoId: string, itemId: string) => ['cedencias-itens', 'ofertas', contratacaoId, itemId] as const,
+  },
+
   fornecedores: {
     all: ["fornecedores"] as const,
     detail: (id: string) => ["fornecedor", id] as const,

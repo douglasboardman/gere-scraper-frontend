@@ -5,6 +5,7 @@
 export type StatusElemContratacaoAlt = 'Em_Processamento' | 'Processada' | 'Inconsistente' | 'Disponivel' | 'Encerrada'
 export type StatusElemContratacao = 'Em_Processamento' | 'Processado' | 'Inconsistente' | 'Disponivel' | 'Encerrado'
 export type StatusRequisicao = 'Rascunho' | 'Enviada' | 'Aprovada' | 'Rejeitada' | 'Empenhada'
+export type StatusCedenciaItem = 'Rascunho' | 'Enviada' | 'Aprovada' | 'Aprovada_Parcialmente' | 'Rejeitada' | 'Cancelada'
 export type StatusJob = 'running' | 'completed' | 'failed'
 
 export type UserRole =
@@ -188,6 +189,51 @@ export interface IFornecimento {
   status: StatusElemContratacao
   createdAt: string
   updatedAt: string
+}
+
+export interface ICedenciaItemLog {
+  id: string
+  acao: string
+  statusAnterior?: StatusCedenciaItem | null
+  statusNovo: StatusCedenciaItem
+  saldoSolicitado: number
+  saldoDoado: number
+  createdAt: string
+  ator: Pick<IUsuario, 'id' | 'nome' | 'email'>
+}
+
+export interface ICedenciaItem {
+  id: string
+  identFornecimentoDoador: string
+  identFornecimentoSolicitante?: string | null
+  identUnidadeDoadora: string
+  identUnidadeSolicitante: string
+  idUsuarioSolicitante: string
+  idUsuarioDoador?: string | null
+  saldoSolicitado: number
+  saldoDoado: number
+  justificativa: string
+  devolutiva?: string | null
+  status: StatusCedenciaItem
+  dataEnvio?: string | null
+  dataDecisao?: string | null
+  revisao: number
+  createdAt: string
+  updatedAt: string
+  unidadeDoadora: IUnidade
+  unidadeSolicitante: IUnidade
+  usuarioSolicitante: Pick<IUsuario, 'id' | 'nome' | 'email'>
+  usuarioDoador?: Pick<IUsuario, 'id' | 'nome' | 'email'> | null
+  fornecimentoDoador: IFornecimento & { item: IItem; fornecedor: IFornecedor }
+  fornecimentoSolicitante?: (IFornecimento & { item: IItem; fornecedor: IFornecedor }) | null
+  log: ICedenciaItemLog[]
+}
+
+export type OfertaCedenciaItem = IFornecimento & {
+  item: IItem
+  fornecedor: IFornecedor
+  unidadeDoadora: IUnidade | null
+  fornecimentoSolicitante: IFornecimento | null
 }
 
 export interface IContrato {

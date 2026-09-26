@@ -105,6 +105,7 @@ export function Sidebar() {
       items: [
         ...(can('create:contratacoes') ? [{ label: 'Importar Contratação', to: '/contratacoes/nova', icon: Upload }] : []),
         ...(isGestorUnidade ? [{ label: 'Outras Obrigações', to: '/outras-obrigacoes', icon: Layers }] : []),
+        ...(can('manage:cedencias_itens') ? [{ label: 'Cedências de Itens', to: '/cedencias-itens', icon: ArrowLeftRight }] : []),
         ...((isAdmin || isGestaoContratos) ? [{ label: 'Gestão de Contratos', to: '/contratos/dashboard', icon: LayoutDashboard }] : []),
         ...(isAdmin ? [{ label: 'Notificações', to: '/notificacoes/admin', icon: BellRing }] : []),
         ...(canApprove && !isAdmin ? [{ label: 'Analisar Requisições', to: '/requisicoes/pendentes', icon: ClipboardCheck }] : []),
