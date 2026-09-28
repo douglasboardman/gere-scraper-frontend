@@ -70,6 +70,25 @@ function CorpoNotificacaoPreview({ corpo }: { corpo: unknown }) {
   )
 }
 
+function diagnosticoDestinatarios(raw: unknown) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return []
+  const grupos = (raw as { diagnosticoDestinatarios?: unknown }).diagnosticoDestinatarios
+  if (!Array.isArray(grupos)) return []
+  return grupos.flatMap((grupo) => {
+    if (!grupo || typeof grupo !== 'object' || Array.isArray(grupo)) return []
+    const valor = grupo as Record<string, unknown>
+    if (typeof valor.seletor !== 'string' || typeof valor.referencia !== 'string') return []
+    return [{
+      seletor: valor.seletor,
+      referencia: valor.referencia,
+      valorReferencia: typeof valor.valorReferencia === 'string' ? valor.valorReferencia : 'não resolvida',
+      candidatos: typeof valor.candidatos === 'number' ? valor.candidatos : 0,
+      excluidosPorSerAutor: typeof valor.excluidosPorSerAutor === 'number' ? valor.excluidosPorSerAutor : 0,
+      elegiveis: typeof valor.elegiveis === 'number' ? valor.elegiveis : 0,
+    }]
+  })
+}
+
 export function NotificacoesAdminPage() {
   const queryClient = useQueryClient()
   const [tab, setTab] = useState<AdminTab>('modelos')
@@ -677,6 +696,7 @@ function DisparoDetail({ disparo, onReprocessed, onDispatchReprocessed }: { disp
   const [reprocessarDisparo, setReprocessarDisparo] = useState(false)
   const [motivoDisparo, setMotivoDisparo] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const diagnostico = diagnosticoDestinatarios(disparo.contextoResolvido)
 
   const confirmarReprocessamento = async () => {
     if (!emailSelecionado || motivo.trim().length < 10) {
@@ -729,6 +749,7 @@ function DisparoDetail({ disparo, onReprocessed, onDispatchReprocessed }: { disp
       </div>
       <Separator />
       {['FALHA_FINAL', 'SEM_DESTINATARIOS'].includes(disparo.status) && disparo.destinatarios.length === 0 && <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-amber-200 bg-amber-50 p-3"><div><p className="text-sm font-medium">Nenhuma entrega interna foi criada</p><p className="text-xs text-muted-foreground">O disparo pode ser reprocessado após a correção da configuração ou de vínculos de destinatários.</p></div><Button size="sm" variant="outline" onClick={() => setReprocessarDisparo(true)}><RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Reprocessar disparo</Button></div>}
+      {diagnostico.length > 0 && <div className="rounded-md border bg-muted/30 p-3"><p className="text-sm font-medium">Diagnóstico dos destinatários</p><div className="mt-2 space-y-1 text-xs text-muted-foreground">{diagnostico.map((grupo, indice) => <p key={`${grupo.seletor}-${grupo.referencia}-${indice}`}><span className="font-mono text-foreground">{grupo.seletor}</span> por <span className="font-mono text-foreground">{grupo.referencia}</span> ({grupo.valorReferencia}): {grupo.candidatos} candidato(s), {grupo.elegiveis} elegível(is){grupo.excluidosPorSerAutor ? `, ${grupo.excluidosPorSerAutor} excluído(s) por ser autor` : ''}.</p>)}</div></div>}
       <div><p className="text-xs uppercase text-muted-foreground">Título resolvido</p><p className="mt-1 text-sm font-medium">{disparo.tituloResolvido ?? '—'}</p></div>
       <div>
         <p className="text-xs uppercase text-muted-foreground">Mensagem entregue</p>

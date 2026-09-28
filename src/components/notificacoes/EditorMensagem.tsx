@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react'
 import { Bold, Braces, CornerDownLeft, Italic, Link2, Underline } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,13 @@ import {
 } from './ConteudoNotificacao'
 
 type Marcas = Pick<ItemConteudoNotificacao, 'negrito' | 'italico' | 'sublinhado' | 'link'>
+type MarcasAtivas = Required<Pick<ItemConteudoNotificacao, 'negrito' | 'italico' | 'sublinhado'>>
+
+const MARCAS_INATIVAS: MarcasAtivas = { negrito: false, italico: false, sublinhado: false }
+
+function classeBotaoFormatacao(ativo: boolean) {
+  return `h-8 w-8 p-0 ${ativo ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground' : 'bg-transparent hover:!bg-transparent hover:text-foreground'}`
+}
 
 function escaparHtml(valor: string) {
   return valor.replace(/[&<>"']/g, (caractere) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[caractere] ?? caractere)
@@ -131,6 +138,36 @@ export function EditorMensagem({
   const [campo, setCampo] = useState('')
   const [editandoLink, setEditandoLink] = useState(false)
   const [link, setLink] = useState('')
+  const [marcasAtivas, setMarcasAtivas] = useState<MarcasAtivas>(MARCAS_INATIVAS)
+
+  const atualizarMarcasAtivas = useCallback(() => {
+    const selecao = window.getSelection()
+    const editor = editorRef.current
+    if (!editor || !selecao?.rangeCount || !editor.contains(selecao.getRangeAt(0).commonAncestorContainer)) {
+      setMarcasAtivas((atual) => atual.negrito || atual.italico || atual.sublinhado ? MARCAS_INATIVAS : atual)
+      return
+    }
+    const inicio = selecao.getRangeAt(0).startContainer
+    const elementoInicial: HTMLElement | null = inicio instanceof HTMLElement ? inicio : inicio.parentElement
+    const consultar = (marca: keyof MarcasAtivas) => {
+      let elemento = elementoInicial
+      while (elemento && elemento !== editor) {
+        const estilo = elemento.style
+        if (marca === 'negrito' && (elemento.tagName === 'B' || elemento.tagName === 'STRONG' || estilo.fontWeight === 'bold' || Number(estilo.fontWeight) >= 600)) return true
+        if (marca === 'italico' && (elemento.tagName === 'I' || elemento.tagName === 'EM' || estilo.fontStyle === 'italic')) return true
+        if (marca === 'sublinhado' && (elemento.tagName === 'U' || estilo.textDecoration.includes('underline'))) return true
+        elemento = elemento.parentElement
+      }
+      return false
+    }
+    const proximas = { negrito: consultar('negrito'), italico: consultar('italico'), sublinhado: consultar('sublinhado') }
+    setMarcasAtivas((atual) => atual.negrito === proximas.negrito && atual.italico === proximas.italico && atual.sublinhado === proximas.sublinhado ? atual : proximas)
+  }, [])
+
+  useEffect(() => {
+    document.addEventListener('selectionchange', atualizarMarcasAtivas)
+    return () => document.removeEventListener('selectionchange', atualizarMarcasAtivas)
+  }, [atualizarMarcasAtivas])
 
   useEffect(() => {
     const normalizado = normalizarDocumentoNotificacao(value)
@@ -138,13 +175,22 @@ export function EditorMensagem({
     if (!editorRef.current || assinatura === valorEmitidoRef.current) return
     editorRef.current.innerHTML = documentoParaHtml(normalizado)
     valorEmitidoRef.current = assinatura
-  }, [value])
+    atualizarMarcasAtivas()
+  }, [value, atualizarMarcasAtivas])
 
   const memorizarSelecao = () => {
     const selecao = window.getSelection()
     if (!editorRef.current || !selecao?.rangeCount) return
     const faixa = selecao.getRangeAt(0)
     if (editorRef.current.contains(faixa.commonAncestorContainer)) selecaoRef.current = faixa.cloneRange()
+  }
+
+  // O mousedown de um botão desloca o foco antes do click. Impedi-lo mantém a
+  // seleção no contentEditable, para que o comando seja aplicado uma vez à faixa
+  // que o usuário acabou de selecionar.
+  const preservarSelecaoNoMouseDown = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault()
+    memorizarSelecao()
   }
 
   const restaurarSelecao = () => {
@@ -171,6 +217,7 @@ export function EditorMensagem({
     document.execCommand(nome, false, valor)
     editorRef.current?.focus()
     emitir()
+    requestAnimationFrame(atualizarMarcasAtivas)
   }
 
   const inserirCampo = () => {
@@ -190,13 +237,13 @@ export function EditorMensagem({
   }
 
   return (
-    <div className="overflow-hidden rounded-md border bg-background">
+    <div className="overflow-hidden rounded-md border bg-background font-normal">
       <div className="flex flex-wrap items-center gap-1 border-b bg-muted/30 p-2" onMouseDown={memorizarSelecao}>
-        <Button type="button" size="sm" variant="ghost" className="h-8 w-8 p-0" title="Negrito" aria-label="Negrito" onClick={() => comando('bold')}><Bold className="h-4 w-4" /></Button>
-        <Button type="button" size="sm" variant="ghost" className="h-8 w-8 p-0" title="Itálico" aria-label="Itálico" onClick={() => comando('italic')}><Italic className="h-4 w-4" /></Button>
-        <Button type="button" size="sm" variant="ghost" className="h-8 w-8 p-0" title="Sublinhado" aria-label="Sublinhado" onClick={() => comando('underline')}><Underline className="h-4 w-4" /></Button>
-        <Button type="button" size="sm" variant="ghost" className="h-8 w-8 p-0" title="Adicionar link interno" aria-label="Adicionar link interno" onClick={() => { memorizarSelecao(); setEditandoLink((atual) => !atual) }}><Link2 className="h-4 w-4" /></Button>
-        <Button type="button" size="sm" variant="ghost" className="h-8 w-8 p-0" title="Nova linha" aria-label="Nova linha" onClick={() => comando('insertParagraph')}><CornerDownLeft className="h-4 w-4" /></Button>
+        <Button type="button" size="sm" variant="ghost" className={classeBotaoFormatacao(marcasAtivas.negrito)} title="Negrito" aria-label="Negrito" aria-pressed={marcasAtivas.negrito} onMouseDown={preservarSelecaoNoMouseDown} onClick={() => comando('bold')}><Bold className="h-4 w-4" /></Button>
+        <Button type="button" size="sm" variant="ghost" className={classeBotaoFormatacao(marcasAtivas.italico)} title="Itálico" aria-label="Itálico" aria-pressed={marcasAtivas.italico} onMouseDown={preservarSelecaoNoMouseDown} onClick={() => comando('italic')}><Italic className="h-4 w-4" /></Button>
+        <Button type="button" size="sm" variant="ghost" className={classeBotaoFormatacao(marcasAtivas.sublinhado)} title="Sublinhado" aria-label="Sublinhado" aria-pressed={marcasAtivas.sublinhado} onMouseDown={preservarSelecaoNoMouseDown} onClick={() => comando('underline')}><Underline className="h-4 w-4" /></Button>
+        <Button type="button" size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-muted hover:text-foreground" title="Adicionar link interno" aria-label="Adicionar link interno" onClick={() => { memorizarSelecao(); setEditandoLink((atual) => !atual) }}><Link2 className="h-4 w-4" /></Button>
+        <Button type="button" size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-muted hover:text-foreground" title="Nova linha" aria-label="Nova linha" onClick={() => comando('insertParagraph')}><CornerDownLeft className="h-4 w-4" /></Button>
         <span className="mx-1 h-5 w-px bg-border" />
         <select className="h-8 min-w-48 flex-1 rounded-md border bg-background px-2 text-xs sm:max-w-72" value={campo} onChange={(event) => setCampo(event.target.value)} aria-label="Campo dinâmico">
           <option value="">Inserir campo dinâmico...</option>
@@ -219,9 +266,10 @@ export function EditorMensagem({
         aria-multiline="true"
         aria-label="Corpo da mensagem"
         className="min-h-44 px-4 py-3 text-sm leading-6 outline-none [&_a]:text-primary [&_a]:underline [&_p]:min-h-6"
-        onInput={emitir}
-        onMouseUp={memorizarSelecao}
-        onKeyUp={memorizarSelecao}
+        onFocus={atualizarMarcasAtivas}
+        onInput={() => { emitir(); atualizarMarcasAtivas() }}
+        onMouseUp={() => { memorizarSelecao(); atualizarMarcasAtivas() }}
+        onKeyUp={() => { memorizarSelecao(); atualizarMarcasAtivas() }}
         onBlur={memorizarSelecao}
         onPaste={(event) => {
           event.preventDefault()

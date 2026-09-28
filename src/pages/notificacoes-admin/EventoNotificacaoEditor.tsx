@@ -40,7 +40,16 @@ export function EventoNotificacaoEditor({
     rotulo: acao.rotulo,
     parametros: Object.fromEntries(acao.parametros.map((parametro) => [parametro.nome, parametro.campoPadrao])),
   })), [catalogo])
-  const camposConfigurados = versao?.campos.length ? versao.campos : camposPadrao
+  const camposConfigurados = useMemo<Campo[]>(() => {
+    if (!catalogo) return versao?.campos ?? camposPadrao
+    const configurados = new Map((versao?.campos ?? []).map((campo) => [campo.campo, campo]))
+    return catalogo.campos.map((campo) => configurados.get(campo.codigo) ?? {
+      campo: campo.codigo,
+      nomeApresentado: campo.rotulo,
+      alias: campo.codigo,
+      disponivel: true,
+    })
+  }, [catalogo, camposPadrao, versao?.campos])
   const acoesConfiguradas = versao?.acoes.length ? versao.acoes : acoesPadrao
   const criandoNovaVersao = !evento.versoes.some((item) => item.status === 'RASCUNHO')
   const [nome, setNome] = useState(evento.nome)

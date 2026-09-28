@@ -82,6 +82,18 @@ export function NotificacoesPanel() {
     setSomenteImportantes(searchParams.get('importantes') === 'true')
   }, [searchParams])
 
+  useEffect(() => {
+    const detalhe = detalheQuery.data
+    if (!selecionada || !detalhe || detalhe.lida || estadoMutation.isPending) return
+
+    // Só registra a leitura se a pessoa continuar no detalhe durante três segundos.
+    // A limpeza cancela a marcação ao voltar para a lista ou abrir outra mensagem.
+    const temporizador = window.setTimeout(() => {
+      estadoMutation.mutate({ id: detalhe.id, lida: true })
+    }, 3_000)
+    return () => window.clearTimeout(temporizador)
+  }, [selecionada, detalheQuery.data?.id, detalheQuery.data?.lida, estadoMutation])
+
   const escolherEstado = (novoEstado: EstadoCaixaNotificacoes) => {
     setEstado(novoEstado)
     const params = new URLSearchParams(searchParams)

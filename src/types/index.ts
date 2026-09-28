@@ -197,21 +197,21 @@ export interface ICedenciaItemLog {
   statusAnterior?: StatusCedenciaItem | null
   statusNovo: StatusCedenciaItem
   saldoSolicitado: number
-  saldoDoado: number
+  saldoCedido: number
   createdAt: string
   ator: Pick<IUsuario, 'id' | 'nome' | 'email'>
 }
 
 export interface ICedenciaItem {
   id: string
-  identFornecimentoDoador: string
+  identFornecimentoCedente: string
   identFornecimentoSolicitante?: string | null
-  identUnidadeDoadora: string
+  identUnidadeCedente: string
   identUnidadeSolicitante: string
   idUsuarioSolicitante: string
-  idUsuarioDoador?: string | null
+  idUsuarioAvaliador?: string | null
   saldoSolicitado: number
-  saldoDoado: number
+  saldoCedido: number
   justificativa: string
   devolutiva?: string | null
   status: StatusCedenciaItem
@@ -220,11 +220,11 @@ export interface ICedenciaItem {
   revisao: number
   createdAt: string
   updatedAt: string
-  unidadeDoadora: IUnidade
+  unidadeCedente: IUnidade
   unidadeSolicitante: IUnidade
   usuarioSolicitante: Pick<IUsuario, 'id' | 'nome' | 'email'>
-  usuarioDoador?: Pick<IUsuario, 'id' | 'nome' | 'email'> | null
-  fornecimentoDoador: IFornecimento & { item: IItem; fornecedor: IFornecedor }
+  usuarioAvaliador?: Pick<IUsuario, 'id' | 'nome' | 'email'> | null
+  fornecimentoCedente: IFornecimento & { item: IItem; fornecedor: IFornecedor }
   fornecimentoSolicitante?: (IFornecimento & { item: IItem; fornecedor: IFornecedor }) | null
   log: ICedenciaItemLog[]
 }
@@ -232,7 +232,7 @@ export interface ICedenciaItem {
 export type OfertaCedenciaItem = IFornecimento & {
   item: IItem
   fornecedor: IFornecedor
-  unidadeDoadora: IUnidade | null
+  unidadeCedente: IUnidade | null
   fornecimentoSolicitante: IFornecimento | null
 }
 

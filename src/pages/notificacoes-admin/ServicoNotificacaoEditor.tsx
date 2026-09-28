@@ -341,7 +341,10 @@ export function ServicoNotificacaoEditor({
           Título da mensagem
           <div className="flex gap-2"><Input value={title} maxLength={180} onChange={(event) => setTitle(event.target.value)} placeholder="Ex.: Nova requisição aguardando análise" /><select className="h-10 max-w-72 rounded-md border bg-background px-2 text-xs" value={campoTitulo} onChange={(event) => setCampoTitulo(event.target.value)}><option value="">Campo dinâmico...</option>{(editorCatalogo?.campos ?? []).map((campo) => <option key={campo.codigo} value={campo.codigo}>{campo.rotulo}</option>)}</select><Button type="button" variant="outline" onClick={() => campoTitulo && setTitle((atual) => `${atual}${atual && !atual.endsWith(' ') ? ' ' : ''}{{${campoTitulo}}}`)} disabled={!campoTitulo}>Inserir</Button></div>
         </label>
-        <label className="block space-y-1.5 text-sm font-medium">Corpo da mensagem<EditorMensagem value={body} onChange={setBody} campos={(editorCatalogo?.campos ?? []).map(({ codigo, rotulo }) => ({ codigo, rotulo }))} /></label>
+        <div className="space-y-1.5">
+          <p className="text-sm font-medium">Corpo da mensagem</p>
+          <EditorMensagem value={body} onChange={setBody} campos={(editorCatalogo?.campos ?? []).map(({ codigo, rotulo }) => ({ codigo, rotulo }))} />
+        </div>
       </section>
 
       <Separator />
