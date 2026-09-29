@@ -32,6 +32,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export function normalizarTextoBusca(value: unknown): string {
+  return String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('pt-BR')
+}
+
 export function formatCNPJ(cnpj: string): string {
   const digits = cnpj.replace(/\D/g, '')
   if (digits.length !== 14) return cnpj

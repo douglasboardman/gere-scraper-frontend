@@ -11,7 +11,7 @@ import { DataTable } from "@/components/shared/DataTable";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { formatCurrency, formatCNPJ, formatQtd, ENTITY } from "@/lib/utils";
+import { formatCurrency, formatCNPJ, formatQtd, ENTITY, normalizarTextoBusca } from "@/lib/utils";
 import { usePermission } from "@/hooks/usePermission";
 import type { IFornecimento, IItem, IAtaRegPrecos, IContratacao, IContrato } from "@/types";
 
@@ -120,15 +120,15 @@ export function FornecimentosPage() {
         if (!numContrato.toLowerCase().includes(contratoFilter.toLowerCase())) return false;
       }
       if (fornecedorNameFilter.trim()) {
-        if (!(f.nomeFornecedor ?? "").toLowerCase().includes(fornecedorNameFilter.toLowerCase())) return false;
+        if (!normalizarTextoBusca(f.nomeFornecedor).includes(normalizarTextoBusca(fornecedorNameFilter))) return false;
       }
       if (itemDescFilter.trim()) {
-        const term = itemDescFilter.toLowerCase();
+        const term = normalizarTextoBusca(itemDescFilter);
         const item = f.identItem;
         const detalhada = typeof item !== "string"
           ? (item.descDetalhada ?? item.descricaoDetalhada ?? "")
           : "";
-        if (!detalhada.toLowerCase().includes(term)) return false;
+        if (!normalizarTextoBusca(detalhada).includes(term)) return false;
       }
       return true;
     })

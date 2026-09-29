@@ -5,7 +5,7 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { Plus, Eye, Trash2, TriangleAlert, FileText, Handshake, Package } from 'lucide-react'
-import type { ColumnDef } from '@tanstack/react-table'
+import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 import { contratacoesApi } from '@/api/contratacoes.api'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { unidadesApi } from '@/api/unidades.api'
@@ -16,7 +16,7 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { usePermission } from '@/hooks/usePermission'
 import { useAuthStore } from '@/store/auth.store'
-import { ENTITY } from '@/lib/utils'
+import { ENTITY, normalizarTextoBusca } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import { displayNumEdital } from '@/lib/identifier-utils'
 import type { IContratacao } from '@/types'
@@ -27,6 +27,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+
+const filtroGlobalSemAcentos: FilterFn<IContratacao> = (row, columnId, valorBusca) =>
+  normalizarTextoBusca(row.getValue(columnId)).includes(normalizarTextoBusca(valorBusca))
 
 export function ContratacoesPage() {
   const navigate = useNavigate()
@@ -231,6 +234,7 @@ export function ContratacoesPage() {
         data={filtered}
         isLoading={isLoading}
         emptyMessage="Nenhuma contratacao encontrada."
+        globalFilterFn={filtroGlobalSemAcentos}
         pageResetKey={statusFilter}
       />
 

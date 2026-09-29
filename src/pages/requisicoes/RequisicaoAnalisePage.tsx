@@ -64,6 +64,13 @@ function getItemName(item: IItemRequisicao): string {
   if (typeof i === 'string') return i
   return i?.descricaoBreve ?? i?.descBreve ?? f?.identificador ?? '—'
 }
+function getNumeroItemPregao(item: IItemRequisicao): string | null {
+  const f = item.identFornecimento as IFornecimento
+  if (typeof f === 'string') return null
+  const i = f?.identItem as IItem
+  if (typeof i === 'string') return null
+  return i?.sequencialItemPregao ?? i?.numItem ?? null
+}
 function getFornecedorName(item: IItemRequisicao): string {
   const f = item.identFornecimento as IFornecimento
   if (typeof f === 'string') return '—'
@@ -699,7 +706,14 @@ export function RequisicaoAnalisePage() {
                     <tbody className="divide-y">
                       {itensForn.map((item) => (
                         <tr key={item.id} className="hover:bg-muted/10">
-                          <td className="px-5 py-2.5 font-medium">{getItemName(item)}</td>
+                          <td className="px-5 py-2.5">
+                            {getNumeroItemPregao(item) && (
+                              <p className="font-mono text-xs text-muted-foreground">
+                                Item {getNumeroItemPregao(item)}
+                              </p>
+                            )}
+                            <p className="font-medium">{getItemName(item)}</p>
+                          </td>
                           <td className="px-4 py-2.5 text-right">{formatQtd(item.qtdSolicitada)}</td>
                           <td className="px-4 py-2.5 text-right">
                             {item.valUnitario != null ? formatCurrency(item.valUnitario) : '—'}

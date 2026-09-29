@@ -6,6 +6,7 @@ import {
   getPaginationRowModel,
   flexRender,
   type ColumnDef,
+  type FilterFn,
   type Row,
 } from '@tanstack/react-table'
 import {
@@ -29,6 +30,7 @@ interface DataTableProps<TData> {
   searchable?: boolean
   searchPlaceholder?: string
   emptyMessage?: string
+  globalFilterFn?: FilterFn<TData>
   renderExpandedRow?: (row: Row<TData>, colSpan: number) => React.ReactNode
   pageResetKey?: unknown
 }
@@ -40,6 +42,7 @@ export function DataTable<TData>({
   searchable = true,
   searchPlaceholder = 'Buscar...',
   emptyMessage = 'Nenhum registro encontrado.',
+  globalFilterFn,
   renderExpandedRow,
   pageResetKey,
 }: DataTableProps<TData>) {
@@ -54,6 +57,7 @@ export function DataTable<TData>({
       globalFilter,
     },
     onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn,
     autoResetPageIndex: false,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),

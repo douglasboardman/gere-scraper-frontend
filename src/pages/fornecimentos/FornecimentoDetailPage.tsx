@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { ArrowLeft, Pencil, X, Check } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Pencil, X, Check } from 'lucide-react'
 import { useIdParam } from '@/hooks/useIdParam'
 import { displayNumEdital } from '@/lib/identifier-utils'
 import { fornecimentosApi } from '@/api/fornecimentos.api'
@@ -150,6 +150,12 @@ export function FornecimentoDetailPage() {
     const numEdital = displayNumEdital(ic)
     return numEdital ? ` | C ${numEdital}` : ''
   })()
+  const identContratacao = isItemObj
+    ? (fornecimento.identItem as IItem).identContratacao
+    : null
+  const idContratacao = typeof identContratacao === 'string'
+    ? identContratacao
+    : identContratacao?.identificador
 
   return (
     <div>
@@ -332,6 +338,16 @@ export function FornecimentoDetailPage() {
               <Button variant="outline" size="sm" onClick={handleEdit}>
                 <Pencil className="h-4 w-4" />
                 Editar
+              </Button>
+            </div>
+          )}
+          {idContratacao && (
+            <div className="flex gap-3 flex-wrap mt-6 pt-5 border-t">
+              <Button asChild variant="outline" size="sm">
+                <Link to={`/contratacoes/detalhe?id=${encodeURIComponent(idContratacao)}`}>
+                  <ExternalLink className="h-4 w-4" />
+                  Documentos da contratação
+                </Link>
               </Button>
             </div>
           )}
