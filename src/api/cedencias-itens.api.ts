@@ -14,7 +14,7 @@ export const cedenciasItensApi = {
     const { data } = await apiClient.get<OfertaCedenciaItem[]>('/cedencias-itens/ofertas', { params: { contratacaoId, itemId } })
     return data
   },
-  async criar(body: { identFornecimentoCedente: string; saldoSolicitado: number; justificativa: string }): Promise<ICedenciaItem> {
+  async criar(body: { identFornecimentoCedente: string; saldoSolicitado: number; justificativa: string; fornecedorContatado: true }): Promise<ICedenciaItem> {
     const { data } = await apiClient.post<ICedenciaItem>('/cedencias-itens', body)
     return data
   },

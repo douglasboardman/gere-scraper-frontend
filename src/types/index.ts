@@ -213,6 +213,7 @@ export interface ICedenciaItem {
   saldoSolicitado: number
   saldoCedido: number
   justificativa: string
+  fornecedorContatado: boolean
   devolutiva?: string | null
   status: StatusCedenciaItem
   dataEnvio?: string | null

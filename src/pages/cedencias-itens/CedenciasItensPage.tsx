@@ -110,6 +110,7 @@ export function CedenciasItensPage() {
   const [devolutiva, setDevolutiva] = useState('')
   const [saldoCedido, setSaldoCedido] = useState('')
   const [fornecimentoOpen, setFornecimentoOpen] = useState(false)
+  const [fornecedorContatado, setFornecedorContatado] = useState(false)
 
   const minhas = useQuery({ queryKey: qk.cedenciasItens.caixa('solicitadas'), queryFn: () => cedenciasItensApi.listar({ caixa: 'solicitadas' }) })
   const recebidas = useQuery({ queryKey: qk.cedenciasItens.caixa('recebidas'), queryFn: () => cedenciasItensApi.listar({ caixa: 'recebidas' }) })
@@ -171,14 +172,14 @@ export function CedenciasItensPage() {
   })
 
   const abrirNovo = () => {
-    setContratacaoId(''); setItemId(''); setOfertaId(''); setQuantidade(''); setJustificativa(''); setCreateOpen(true)
+    setContratacaoId(''); setItemId(''); setOfertaId(''); setQuantidade(''); setJustificativa(''); setCreateOpen(true); setFornecedorContatado(false)
   }
   const salvarRascunho = () => {
-    if (!ofertaSelecionada || !Number(quantidade) || justificativa.trim().length < 10) {
-      toast.error('Selecione um fornecimento, informe quantidade positiva e uma justificativa com ao menos 10 caracteres.')
+    if (!ofertaSelecionada || !Number(quantidade) || justificativa.trim().length < 10 || !fornecedorContatado) {
+      toast.error('Selecione um fornecimento, informe quantidade positiva, uma justificativa válida e confirme a anuência do fornecedor.')
       return
     }
-    criar.mutate({ identFornecimentoCedente: ofertaSelecionada.identificador, saldoSolicitado: Number(quantidade), justificativa })
+    criar.mutate({ identFornecimentoCedente: ofertaSelecionada.identificador, saldoSolicitado: Number(quantidade), justificativa, fornecedorContatado: true })
   }
   const itensContratacao = (contratacoes.data ?? []).filter((contratacao) => !contratacao.isOutrasObrigacoes && contratacao.amparoLegal === 'LEI_14133_2021')
 
@@ -205,7 +206,17 @@ export function CedenciasItensPage() {
         <div className="grid gap-2"><Label>Fornecimento cedente</Label><Select value={ofertaId} onValueChange={setOfertaId} disabled={!itemId || ofertas.isLoading || ofertas.isError}><SelectTrigger><SelectValue placeholder={!itemId ? 'Selecione primeiro o item...' : ofertas.isLoading ? 'Buscando ofertas...' : ofertas.isError ? 'Não foi possível carregar as ofertas' : 'Selecione o fornecimento...'} /></SelectTrigger><SelectContent>{ofertas.data?.map((item) => <SelectItem key={item.identificador} value={item.identificador}>{descricaoOferta(item)}</SelectItem>)}</SelectContent></Select>{ofertas.isError && <p className="text-sm text-destructive">{getApiErrorMessage(ofertas.error, 'Não foi possível carregar os fornecimentos disponíveis de outras unidades.')}</p>}{!ofertas.isLoading && !ofertas.isError && itemId && ofertas.data?.length === 0 && <p className="text-sm text-muted-foreground">Não há fornecimentos elegíveis de outras unidades para este item.</p>}{ofertaSelecionada && <div className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1"><p>Fornecedor: {ofertaSelecionada.fornecedor.nome} · Ata: {numeroAta(ofertaSelecionada.item)} · Saldo disponível do cedente: {formatQtd(ofertaSelecionada.saldoDisponivel)}</p>{ofertaSelecionada.fornecimentoSolicitante ? <p>Fornecimento da sua unidade — autorizado: {formatQtd(ofertaSelecionada.fornecimentoSolicitante.qtdAutorizada)} · utilizado: {formatQtd(ofertaSelecionada.fornecimentoSolicitante.qtdUtilizada)} · saldo atual: {formatQtd(ofertaSelecionada.fornecimentoSolicitante.saldoDisponivel)}</p> : <p>Sua unidade ainda não possui fornecimento deste item e fornecedor.</p>}</div>}</div>
         <div className="grid gap-2"><Label htmlFor="quantidade">Quantidade solicitada</Label><Input id="quantidade" type="number" min={0} step={1} value={quantidade} onChange={(event) => { if (event.target.value === '' || Number(event.target.value) >= 0) setQuantidade(event.target.value) }} /></div>
         <div className="grid gap-2"><Label htmlFor="justificativa">Justificativa</Label><Textarea id="justificativa" value={justificativa} onChange={(event) => setJustificativa(event.target.value)} placeholder="Explique a necessidade da unidade solicitante." /></div>
-      </div><DialogFooter><Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button><Button onClick={salvarRascunho} disabled={criar.isPending}>Salvar rascunho</Button></DialogFooter>
+        <div className="flex items-start gap-3 rounded-md border p-3">
+          <input
+            id="fornecedorContatado"
+            type="checkbox"
+            checked={fornecedorContatado}
+            onChange={(event) => setFornecedorContatado(event.target.checked)}
+            className="mt-1 h-4 w-4 shrink-0"
+          />
+          <Label htmlFor="fornecedorContatado" className="cursor-pointer leading-relaxed">Declaro que entrei em contato com o fornecedor e obtive anuência para entrega do item em minha unidade.</Label>
+        </div>
+      </div><DialogFooter><Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button><Button onClick={salvarRascunho} disabled={criar.isPending || !fornecedorContatado}>Salvar rascunho</Button></DialogFooter>
     </DialogContent></Dialog>
 
     <Dialog open={!!selected} onOpenChange={(open) => { if (!open) { setFornecimentoOpen(false); setSelected(null) } }}>{selected && <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Pedido de cedência</DialogTitle><DialogDescription>{selected.id}</DialogDescription></DialogHeader>
