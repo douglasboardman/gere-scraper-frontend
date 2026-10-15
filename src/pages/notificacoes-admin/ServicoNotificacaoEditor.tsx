@@ -396,7 +396,7 @@ export function ServicoNotificacaoEditor({
         </div>
       </section>
 
-      <div className="sticky bottom-0 -mx-1 flex flex-wrap gap-2 border-t bg-background/95 px-1 py-4 backdrop-blur">
+      <div className="sticky bottom-0 -mx-1 flex flex-wrap gap-2 border-t bg-background/95 px-1 py-4 backdrop-blur-sm">
         <Button onClick={() => void save()} disabled={disabled || saving}>{saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} {creation ? 'Salvar serviço como rascunho' : 'Salvar rascunho'}</Button>
         {!creation && onSimulate && <Button variant="outline" onClick={() => void onSimulate()} disabled={disabled}><Eye className="mr-2 h-4 w-4" /> Visualizar exemplo</Button>}
       </div>

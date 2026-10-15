@@ -552,7 +552,7 @@ export function ImportarContratoPage() {
         )}
 
         {importarMutation.isPending && (
-          <div className="fixed inset-0 bg-background/60 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-background/60 backdrop-blur-xs flex items-center justify-center z-50">
             <div className="flex items-center gap-3 bg-card border rounded-xl px-8 py-6 shadow-lg">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
               <span className="text-sm font-medium">Importando contrato…</span>

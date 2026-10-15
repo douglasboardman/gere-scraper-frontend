@@ -219,7 +219,7 @@ function DespesasPanel({ contrato, ano }: { contrato: IContratoOob; ano: string 
         const descBreve = item?.descBreve ?? f.identItem
         const unMedida = item?.unMedida ?? ''
         return (
-          <div key={f.identificador} className="flex items-center justify-between border rounded px-3 py-2 text-sm">
+          <div key={f.identificador} className="flex items-center justify-between border rounded-sm px-3 py-2 text-sm">
             <div>
               <p className="font-medium">{descBreve}</p>
               <p className="text-xs text-muted-foreground">
@@ -334,7 +334,7 @@ export function OutrasObrigacoesPage() {
         actions={
           <div className="flex items-center gap-2">
             <select
-              className="text-sm border rounded px-2 py-1"
+              className="text-sm border rounded-sm px-2 py-1"
               value={ano}
               onChange={(e) => { setAno(e.target.value); setSelectedContratoId(null) }}
             >

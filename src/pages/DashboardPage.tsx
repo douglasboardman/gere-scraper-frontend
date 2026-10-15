@@ -166,7 +166,7 @@ export function DashboardPage() {
                 {recentRequisicoes.map((req: IRequisicao) => (
                   <div
                     key={req.identificador}
-                    className="flex items-center justify-between py-2.5 px-2 border-b last:border-0 rounded-sm hover:bg-muted/30 transition-colors duration-100 cursor-default"
+                    className="flex items-center justify-between py-2.5 px-2 border-b last:border-0 rounded-xs hover:bg-muted/30 transition-colors duration-100 cursor-default"
                   >
                     <div>
                       <p className="text-sm font-medium">{req.identificador}</p>
@@ -203,7 +203,7 @@ export function DashboardPage() {
                 {contratacoesEmAnalise.map((contratacao) => (
                   <div
                     key={contratacao.identificador}
-                    className="flex items-center justify-between py-2.5 px-2 border-b last:border-0 rounded-sm hover:bg-muted/30 transition-colors duration-100 cursor-default"
+                    className="flex items-center justify-between py-2.5 px-2 border-b last:border-0 rounded-xs hover:bg-muted/30 transition-colors duration-100 cursor-default"
                   >
                     <div>
                       <p className="text-sm font-medium">{contratacao.identificador}</p>

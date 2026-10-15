@@ -10,7 +10,7 @@ export function RouteErrorBoundary() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background p-6">
-      <section className="w-full max-w-lg rounded-lg border bg-card p-8 text-center shadow-sm">
+      <section className="w-full max-w-lg rounded-lg border bg-card p-8 text-center shadow-xs">
         <p className="text-sm font-medium text-muted-foreground">GERE</p>
         <h1 className="mt-2 text-2xl font-semibold">Não foi possível carregar esta tela</h1>
         <p className="mt-3 text-sm text-muted-foreground">O problema pode ser temporário. Tente recarregar ou volte ao painel.</p>

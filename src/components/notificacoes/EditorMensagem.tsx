@@ -16,7 +16,7 @@ type MarcasAtivas = Required<Pick<ItemConteudoNotificacao, 'negrito' | 'italico'
 const MARCAS_INATIVAS: MarcasAtivas = { negrito: false, italico: false, sublinhado: false }
 
 function classeBotaoFormatacao(ativo: boolean) {
-  return `h-8 w-8 p-0 ${ativo ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground' : 'bg-transparent hover:!bg-transparent hover:text-foreground'}`
+  return `h-8 w-8 p-0 ${ativo ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground' : 'bg-transparent hover:bg-transparent! hover:text-foreground'}`
 }
 
 function escaparHtml(valor: string) {
@@ -265,7 +265,7 @@ export function EditorMensagem({
         role="textbox"
         aria-multiline="true"
         aria-label="Corpo da mensagem"
-        className="min-h-44 px-4 py-3 text-sm leading-6 outline-none [&_a]:text-primary [&_a]:underline [&_p]:min-h-6"
+        className="min-h-44 px-4 py-3 text-sm leading-6 outline-hidden [&_a]:text-primary [&_a]:underline [&_p]:min-h-6"
         onFocus={atualizarMarcasAtivas}
         onInput={() => { emitir(); atualizarMarcasAtivas() }}
         onMouseUp={() => { memorizarSelecao(); atualizarMarcasAtivas() }}

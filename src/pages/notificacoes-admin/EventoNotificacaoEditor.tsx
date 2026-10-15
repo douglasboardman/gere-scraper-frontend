@@ -123,7 +123,7 @@ export function EventoNotificacaoEditor({
         {!acoes.length && <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">Nenhuma ação ficará disponível para os serviços deste evento.</p>}
       </section>
 
-      <div className="sticky bottom-0 flex items-center justify-between gap-4 border-t bg-background/95 py-4 backdrop-blur">
+      <div className="sticky bottom-0 flex items-center justify-between gap-4 border-t bg-background/95 py-4 backdrop-blur-sm">
         {criandoNovaVersao && <p className="text-sm text-muted-foreground">Ao salvar, será criada uma nova versão em rascunho. A versão publicada não será alterada.</p>}
         <Button className="ml-auto" onClick={() => void salvar()} disabled={disabled || salvando}>{salvando ? 'Salvando...' : 'Salvar rascunho'}</Button>
       </div>

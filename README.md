@@ -30,7 +30,7 @@ A interface é multiunidade e adapta navegação e ações ao perfil. A autoriza
 | Estado global local | Zustand 5 |
 | HTTP | Axios |
 | Formulários | React Hook Form + Zod |
-| Estilos | Tailwind CSS 3 |
+| Estilos | Tailwind CSS 4 + integração Vite |
 | Componentes | shadcn/ui + Radix UI |
 | Tabelas | TanStack Table 8 |
 | Feedback e ícones | Sonner + Lucide React |
@@ -229,3 +229,9 @@ npm run build
 Também valide manualmente o fluxo afetado, perfis, estados vazios, erros e responsividade. Mudanças de integração devem executar os testes e build de `../gere-api`.
 
 Consulte `../gere-api/README.md` para banco, variáveis, importações e autorização.
+
+### Atualização de segurança e Tailwind 4
+
+Instale as versões corrigidas com `npm ci` e compile com `npm run build` antes de publicar o diretório `dist` no Apache2. O Tailwind 4 é processado pelo plugin `@tailwindcss/vite`; o tema continua em `tailwind.config.js`, carregado explicitamente por `src/index.css`. As classes de sombra, raio e foco foram adaptadas, e `tailwind-merge` usa a versão 3 compatível.
+
+A interface requer navegadores compatíveis com Tailwind 4: Safari 16.4+, Chrome 111+ ou Firefox 128+. Consulte o [guia oficial de migração](https://tailwindcss.com/docs/upgrade-guide). Execute `npm audit` para verificar todas as dependências, incluindo as de desenvolvimento.

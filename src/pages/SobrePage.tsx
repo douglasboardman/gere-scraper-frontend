@@ -30,7 +30,7 @@ export function SobrePage() {
         <div className="w-full max-w-4xl flex flex-col lg:flex-row items-start gap-16">
 
           {/* Logo side */}
-          <div className="flex-shrink-0 flex items-center justify-center">
+          <div className="shrink-0 flex items-center justify-center">
             <img
               src="/logo.svg"
               alt="Logo GERE"
@@ -51,7 +51,7 @@ export function SobrePage() {
             </div>
 
             <div
-              className="w-12 h-0.5 rounded"
+              className="w-12 h-0.5 rounded-sm"
               style={{ backgroundColor: '#82ab90' }}
             />
 
@@ -81,7 +81,7 @@ export function SobrePage() {
             )}
 
             <div
-              className="w-12 h-0.5 rounded"
+              className="w-12 h-0.5 rounded-sm"
               style={{ backgroundColor: '#82ab90' }}
             />
 
@@ -97,7 +97,7 @@ export function SobrePage() {
                   href="mailto:douglas.boardman@gmail.com"
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                  <Mail className="h-3.5 w-3.5 shrink-0" />
                   douglas.boardman@gmail.com
                 </a>
                 <a
@@ -106,7 +106,7 @@ export function SobrePage() {
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
+                  <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                   github.com/douglasboardman
                 </a>
               </div>

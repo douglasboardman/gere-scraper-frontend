@@ -165,7 +165,7 @@ export function ScrapingProgressBar() {
         )}
       >
         {minimized ? (
-          <div className="flex items-center justify-between max-w-screen-xl mx-auto">
+          <div className="flex items-center justify-between max-w-[theme(screens.xl)] mx-auto">
             <div className="flex items-center gap-2 text-white text-sm">
               <Loader2 className="h-4 w-4 animate-spin text-green-400" />
               <span>Processamento em andamento...</span>
@@ -180,7 +180,7 @@ export function ScrapingProgressBar() {
             </Button>
           </div>
         ) : (
-          <div className="max-w-screen-xl mx-auto">
+          <div className="max-w-[theme(screens.xl)] mx-auto">
             <div className="flex items-center gap-3">
               {/* Icon */}
               <div className="shrink-0">

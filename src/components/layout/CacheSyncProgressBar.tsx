@@ -42,7 +42,7 @@ export function CacheSyncProgressBar() {
         isFailed ? 'bg-red-900' : 'bg-[#272626]',
       )}
     >
-      <div className="max-w-screen-xl mx-auto">
+      <div className="max-w-[theme(screens.xl)] mx-auto">
         <div className="flex items-center gap-3">
           <div className="shrink-0">
             {isCompleted ? (

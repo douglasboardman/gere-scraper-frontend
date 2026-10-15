@@ -210,7 +210,7 @@ export function ContratosPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs"
           >
             <option value="">Todos os status</option>
             {STATUS_OPTIONS.map((s) => (

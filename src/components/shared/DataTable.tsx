@@ -102,7 +102,7 @@ export function DataTable<TData>({
               placeholder={searchPlaceholder}
               value={globalFilter ?? ''}
               onChange={(e) => setGlobalFilter(e.target.value)}
-              className="pl-8 transition-shadow duration-150 focus:shadow-sm"
+              className="pl-8 transition-shadow duration-150 focus:shadow-xs"
             />
           </div>
         </div>

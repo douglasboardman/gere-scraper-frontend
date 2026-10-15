@@ -135,7 +135,7 @@ interface CardProps {
 
 function RequisicaoPendenteCard({ req, isAutor, onAnalisar, onDevolver, isDevolverPending }: CardProps) {
   return (
-    <div className="border rounded-lg p-5 bg-card hover:shadow-sm transition-shadow">
+    <div className="border rounded-lg p-5 bg-card hover:shadow-xs transition-shadow">
       <div className="flex items-start justify-between gap-4">
         {/* Dados principais */}
         <div className="flex-1 min-w-0 space-y-3">

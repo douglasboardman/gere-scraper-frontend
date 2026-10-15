@@ -169,7 +169,7 @@ function CardRequerente({
             </span>
             {edit ? (
               <select
-                className="block w-full border border-input rounded-md bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                className="block w-full border border-input rounded-md bg-background px-3 py-1.5 text-sm focus:outline-hidden focus:ring-1 focus:ring-ring"
                 value={draft ?? ''}
                 onChange={(e) => setDraft(e.target.value || null)}
               >

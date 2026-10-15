@@ -80,7 +80,7 @@ export function Header() {
   }
 
   return (
-    <header className="h-16 border-b bg-white/95 backdrop-blur-sm flex items-center justify-between px-6 shrink-0 shadow-sm">
+    <header className="h-16 border-b bg-white/95 backdrop-blur-xs flex items-center justify-between px-6 shrink-0 shadow-xs">
       {/* Left: breadcrumb */}
       <div className="flex items-center gap-1 text-sm">
         {crumbs.map((crumb, idx) => (
