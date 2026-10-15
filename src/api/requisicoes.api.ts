@@ -38,6 +38,11 @@ export const requisicoesApi = {
     return data
   },
 
+  async estornar(identificador: string): Promise<IRequisicao> {
+    const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${encodeURIComponent(identificador)}/estornar`)
+    return data
+  },
+
   async rejeitar(identificador: string, motivo?: string): Promise<IRequisicao> {
     const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${encodeURIComponent(identificador)}/rejeitar`, { motivo })
     return data

@@ -82,7 +82,7 @@ Rascunho -> Enviada -> Aprovada -> Empenhada
     +-- devolução para edição
 ```
 
-Há páginas para requisições próprias, da unidade, análise, detalhe, visualização e impressão sem layout.
+Há páginas para requisições próprias, da unidade, análise, detalhe, visualização e impressão sem layout. Na visualização, administradores podem usar “Estornar Requisição” ao lado de “Excluir Requisição” quando o estado é Aprovada. Após confirmação, os saldos são devolvidos e a requisição retorna para Rascunho com seus itens preservados. A ação não está disponível para requisições empenhadas.
 
 ### Outras obrigações
 

@@ -4,7 +4,7 @@ import { useIdParam } from '@/hooks/useIdParam'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { ArrowLeft, Printer, Trash2 } from 'lucide-react'
+import { ArrowLeft, Printer, Trash2, Undo2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { requisicoesApi } from '@/api/requisicoes.api'
 import { getApiErrorMessage } from '@/lib/api-error'
@@ -24,6 +24,19 @@ export function RequisicaoViewPage() {
   const queryClient = useQueryClient()
   const { isAdmin } = usePermission()
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+  const [confirmEstornoOpen, setConfirmEstornoOpen] = useState(false)
+
+  const estornarMutation = useMutation({
+    mutationFn: () => requisicoesApi.estornar(id!),
+    onSuccess: async () => {
+      setConfirmEstornoOpen(false)
+      toast.success('Requisição estornada. Saldos devolvidos e requisição retornada para rascunho.')
+      await queryClient.invalidateQueries()
+    },
+    onError: (error: unknown) => {
+      toast.error(getApiErrorMessage(error, 'Erro ao estornar a requisição.'))
+    },
+  })
 
   const deletarMutation = useMutation({
     mutationFn: () => requisicoesApi.deletar(id!),
@@ -95,6 +108,7 @@ export function RequisicaoViewPage() {
 
   const canPrint = requisicao.status === 'Aprovada' || requisicao.status === 'Empenhada'
   const canDelete = isAdmin && (requisicao.status === 'Aprovada' || requisicao.status === 'Empenhada')
+  const canEstornar = isAdmin && requisicao.status === 'Aprovada'
 
   return (
     <div className="space-y-6">
@@ -122,10 +136,17 @@ export function RequisicaoViewPage() {
               Imprimir
             </Button>
           )}
+          {canEstornar && (
+            <Button variant="outline" size="sm" disabled={estornarMutation.isPending || deletarMutation.isPending} onClick={() => setConfirmEstornoOpen(true)}>
+              <Undo2 className="h-4 w-4 mr-1" />
+              Estornar Requisição
+            </Button>
+          )}
           {canDelete && (
             <Button
               variant="destructive"
               size="sm"
+              disabled={estornarMutation.isPending || deletarMutation.isPending}
               onClick={() => setConfirmDeleteOpen(true)}
             >
               <Trash2 className="h-4 w-4 mr-1" />
@@ -283,13 +304,14 @@ export function RequisicaoViewPage() {
                     itemData?.descDetalhada ??
                     (typeof item.identFornecimento === 'string' ? item.identFornecimento : '—')
                   const nomeForn = forn?.nomeFornecedor ?? '—'
+                  const numItem = (itemData?.sequencialItemPregao ?? itemData?.numItem)?.toString().trim()
                   const valUnit = item.valUnitario ?? forn?.valorUnitario ?? forn?.valUnitHomologado ?? 0
                   const valTotal = item.valTotal ?? valUnit * item.qtdSolicitada
 
                   return (
                     <tr key={item.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
                       <td className="py-3 pr-4">
-                        <p className="font-medium">{desc}</p>
+                        <p className="font-medium">{numItem ? `${numItem.padStart(5, '0')} - ${desc}` : desc}</p>
                         <p className="text-xs text-muted-foreground">{nomeForn}</p>
                         {item.observacao && (
                           <p className="text-xs text-muted-foreground mt-0.5 italic">
@@ -334,6 +356,18 @@ export function RequisicaoViewPage() {
         )}
       </div>
 
+      {canEstornar && (
+        <ConfirmDialog
+          open={confirmEstornoOpen}
+          title="Estornar Requisição"
+          description="O saldo de todos os fornecimentos será devolvido e a requisição retornará para Rascunho, preservando seus itens para edição e novo envio. Deseja continuar?"
+          confirmLabel="Estornar Requisição"
+          variant="default"
+          isLoading={estornarMutation.isPending}
+          onConfirm={() => estornarMutation.mutate()}
+          onCancel={() => setConfirmEstornoOpen(false)}
+        />
+      )}
       {canDelete && (
         <ConfirmDialog
           open={confirmDeleteOpen}
