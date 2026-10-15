@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useListState } from '@/hooks/useListState'
+import { useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Eye, PlusCircle, Search } from "lucide-react";
@@ -25,13 +26,13 @@ export function FornecimentosPage() {
   const idItemParam = searchParams.get("identItem") ?? undefined;
   const idFornecedorParam = searchParams.get("identFornecedor") ?? undefined;
   const statusParam = searchParams.get("status") ?? undefined;
-  const [uasgFilter, setUasgFilter] = useState("");
-  const [contratacaoFilter, setContratacaoFilter] = useState("");
-  const [contratoFilter, setContratoFilter] = useState("");
-  const [deContratoOnly, setDeContratoOnly] = useState(false);
-  const [apenasMinhaUnidade, setApenasMinhaUnidade] = useState(true);
-  const [fornecedorNameFilter, setFornecedorNameFilter] = useState("");
-  const [itemDescFilter, setItemDescFilter] = useState("");
+  const [uasgFilter, setUasgFilter] = useListState('uasgFilter', "");
+  const [contratacaoFilter, setContratacaoFilter] = useListState('contratacaoFilter', "");
+  const [contratoFilter, setContratoFilter] = useListState('contratoFilter', "");
+  const [deContratoOnly, setDeContratoOnly] = useListState('deContratoOnly', false);
+  const [apenasMinhaUnidade, setApenasMinhaUnidade] = useListState('apenasMinhaUnidade', true);
+  const [fornecedorNameFilter, setFornecedorNameFilter] = useListState('fornecedorNameFilter', "");
+  const [itemDescFilter, setItemDescFilter] = useListState('itemDescFilter', "");
 
   const { data: fornecimentos = [], isLoading } = useQuery({
     queryKey: qk.fornecimentos.byParams(idItemParam!, idFornecedorParam!, statusParam!),

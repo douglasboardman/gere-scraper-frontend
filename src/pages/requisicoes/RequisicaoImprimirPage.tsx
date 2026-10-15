@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useBackNavigation } from '@/hooks/useBackNavigation'
 import { useIdParam } from '@/hooks/useIdParam'
 import { useQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
@@ -91,7 +91,7 @@ function InfoCard({ requisitante, unidade, uorg, tipo, justificativa, status, id
 
 export function RequisicaoImprimirPage() {
   const id = useIdParam()
-  const navigate = useNavigate()
+  const goBack = useBackNavigation('/requisicoes')
 
   const { data: requisicao, isLoading } = useQuery({
     queryKey: qk.requisicoes.imprimir(id!),
@@ -162,7 +162,7 @@ export function RequisicaoImprimirPage() {
     <div>
       {/* Barra de ações — não imprime */}
       <div className="flex items-center gap-2 p-4 border-b print:hidden">
-        <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+        <Button variant="outline" size="sm" onClick={goBack}>
           <ArrowLeft className="h-4 w-4 mr-1" />
           Voltar
         </Button>

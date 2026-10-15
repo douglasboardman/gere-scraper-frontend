@@ -1,3 +1,4 @@
+import { useBackNavigation } from '@/hooks/useBackNavigation'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -66,6 +67,7 @@ export function UsuarioEditPage() {
   const { id } = useParams<{ id: string }>()
   const { isAdmin } = usePermission()
   const navigate = useNavigate()
+  const goBack = useBackNavigation('/usuarios')
   const queryClient = useQueryClient()
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -211,7 +213,7 @@ export function UsuarioEditPage() {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground">Usuário não encontrado.</p>
-        <Button variant="outline" className="mt-4" onClick={() => navigate('/usuarios')}>
+        <Button variant="outline" className="mt-4" onClick={goBack}>
           Voltar
         </Button>
       </div>
@@ -235,7 +237,7 @@ export function UsuarioEditPage() {
                 Excluir
               </Button>
             )}
-            <Button variant="outline" onClick={() => navigate('/usuarios')}>
+            <Button variant="outline" onClick={goBack}>
               <ArrowLeft className="h-4 w-4" />
               Voltar
             </Button>
@@ -408,7 +410,7 @@ export function UsuarioEditPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => navigate('/usuarios')}
+                    onClick={goBack}
                   >
                     Cancelar
                   </Button>

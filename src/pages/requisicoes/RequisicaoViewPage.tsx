@@ -1,3 +1,4 @@
+import { useBackNavigation } from '@/hooks/useBackNavigation'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useIdParam } from '@/hooks/useIdParam'
@@ -21,6 +22,7 @@ import type { IUsuario, IUnidade, IFornecimento, IItem } from '@/types'
 export function RequisicaoViewPage() {
   const id = useIdParam()
   const navigate = useNavigate()
+  const goBack = useBackNavigation('/requisicoes')
   const queryClient = useQueryClient()
   const { isAdmin } = usePermission()
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
@@ -115,7 +117,7 @@ export function RequisicaoViewPage() {
       {/* Cabeçalho */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="sm" onClick={goBack}>
             <ArrowLeft className="h-4 w-4 mr-1" />
             Voltar
           </Button>

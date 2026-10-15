@@ -1,3 +1,4 @@
+import { useBackNavigation } from '@/hooks/useBackNavigation'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useIdParam } from '@/hooks/useIdParam'
@@ -46,6 +47,7 @@ import { EditRequisicaoDialog } from './components/EditRequisicaoDialog'
 export function RequisicaoDetailPage() {
   const id = useIdParam()
   const navigate = useNavigate()
+  const goBack = useBackNavigation('/requisicoes/minhas_requisicoes')
   const queryClient = useQueryClient()
   const user = useAuthStore((s) => s.user)
 
@@ -180,7 +182,7 @@ export function RequisicaoDetailPage() {
         subtitle={`Criada em ${format(new Date(requisicao.createdAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`}
         actions={
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/requisicoes/minhas_requisicoes')}>
+            <Button variant="outline" size="sm" onClick={goBack}>
               <ArrowLeft className="h-4 w-4" />
               Voltar
             </Button>

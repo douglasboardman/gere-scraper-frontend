@@ -1,3 +1,5 @@
+import { useListState } from '@/hooks/useListState'
+import { useBackNavigation } from '@/hooks/useBackNavigation'
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -50,6 +52,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 export function ContratoDetailPage() {
   const id = useIdParam()
   const navigate = useNavigate()
+  const goBack = useBackNavigation('/contratos')
   const queryClient = useQueryClient()
   const { can } = usePermission()
   const [editMode, setEditMode] = useState(false)
@@ -60,7 +63,7 @@ export function ContratoDetailPage() {
   const [editNumParcelas, setEditNumParcelas] = useState('')
   const [editValParcelas, setEditValParcelas] = useState('')
   const [editStatus, setEditStatus] = useState('')
-  const [activeTab, setActiveTab] = useState('informacoes')
+  const [activeTab, setActiveTab] = useListState('activeTab', 'informacoes')
 
   const { data: contrato, isLoading } = useQuery({
     queryKey: qk.contratos.detail(id!),
@@ -177,7 +180,7 @@ export function ContratoDetailPage() {
               </>
             ) : (
               <>
-                <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+                <Button variant="outline" size="sm" onClick={goBack}>
                   <ArrowLeft className="h-4 w-4" />
                   Voltar
                 </Button>

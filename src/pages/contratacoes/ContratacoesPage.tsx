@@ -1,3 +1,4 @@
+import { useListState } from '@/hooks/useListState'
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -38,7 +39,7 @@ export function ContratacoesPage() {
   const queryClient = useQueryClient()
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [selectedUasg, setSelectedUasg] = useState<string>('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useListState<string>('statusFilter', 'all')
 
   const { data: compras = [], isLoading } = useQuery({
     queryKey: qk.contratacoes.all,

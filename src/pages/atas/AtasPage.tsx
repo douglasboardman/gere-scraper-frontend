@@ -1,6 +1,6 @@
+import { useListState } from '@/hooks/useListState'
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import { format } from "date-fns";
 import { formatCNPJ, ENTITY } from "@/lib/utils";
 import { displayNumEdital } from "@/lib/identifier-utils";
@@ -21,7 +21,7 @@ export function AtasPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const identContratacao = searchParams.get("identContratacao") ?? undefined;
-  const [fornecedorFilter, setFornecedorFilter] = useState("");
+  const [fornecedorFilter, setFornecedorFilter] = useListState('fornecedorFilter', "");
 
   const { data: atas = [], isLoading } = useQuery({
     queryKey: qk.atas.byContratacao(identContratacao!),

@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect, Fragment } from 'react'
+import { useMemo, useEffect, Fragment } from 'react'
+import { useListState } from '@/hooks/useListState'
 import {
   useReactTable,
   getCoreRowModel,
@@ -8,6 +9,8 @@ import {
   type ColumnDef,
   type FilterFn,
   type Row,
+  type PaginationState,
+  type Updater,
 } from '@tanstack/react-table'
 import {
   Table,
@@ -33,6 +36,7 @@ interface DataTableProps<TData> {
   globalFilterFn?: FilterFn<TData>
   renderExpandedRow?: (row: Row<TData>, colSpan: number) => React.ReactNode
   pageResetKey?: unknown
+  persistenceKey?: string
 }
 
 export function DataTable<TData>({
@@ -45,8 +49,24 @@ export function DataTable<TData>({
   globalFilterFn,
   renderExpandedRow,
   pageResetKey,
+  persistenceKey = 'main',
 }: DataTableProps<TData>) {
-  const [globalFilter, setGlobalFilter] = useState<string>('')
+  const resetKey = JSON.stringify(pageResetKey ?? null)
+  const [view, setView] = useListState(`table:${persistenceKey}`, {
+    globalFilter: '',
+    pagination: { pageIndex: 0, pageSize: 10 },
+    resetKey,
+  })
+  const { globalFilter, pagination } = view
+  const setGlobalFilter = (update: Updater<string>) => setView((previous) => ({
+    ...previous,
+    globalFilter: typeof update === 'function' ? update(previous.globalFilter) : update,
+    pagination: { ...previous.pagination, pageIndex: 0 },
+  }))
+  const setPagination = (update: Updater<PaginationState>) => setView((previous) => ({
+    ...previous,
+    pagination: typeof update === 'function' ? update(previous.pagination) : update,
+  }))
 
   const tableData = useMemo(() => data, [data])
 
@@ -55,27 +75,30 @@ export function DataTable<TData>({
     columns,
     state: {
       globalFilter,
+      pagination,
     },
     onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn,
+    onPaginationChange: setPagination,
+    globalFilterFn: globalFilterFn ?? 'auto',
     autoResetPageIndex: false,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      pagination: { pageSize: 10 },
-    },
   })
 
   useEffect(() => {
-    table.setPageIndex(0)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageResetKey])
+    if (view.resetKey !== resetKey) {
+      setView((previous) => ({ ...previous, resetKey, pagination: { ...previous.pagination, pageIndex: 0 } }))
+    }
+  }, [resetKey, view.resetKey, setView])
 
+  const pageCount = table.getPageCount()
   useEffect(() => {
-    table.setPageIndex(0)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [globalFilter])
+    // Uma exclusão ou atualização pode reduzir o número de páginas da pesquisa.
+    if (!isLoading && view.resetKey === resetKey && pagination.pageIndex >= Math.max(1, pageCount)) {
+      setView((previous) => ({ ...previous, pagination: { ...previous.pagination, pageIndex: Math.max(0, pageCount - 1) } }))
+    }
+  }, [isLoading, pageCount, pagination.pageIndex, setView, view.resetKey, resetKey])
 
   if (isLoading) {
     return (

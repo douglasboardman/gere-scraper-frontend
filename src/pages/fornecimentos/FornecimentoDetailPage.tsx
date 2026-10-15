@@ -1,5 +1,6 @@
+import { useBackNavigation } from '@/hooks/useBackNavigation'
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -39,7 +40,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 export function FornecimentoDetailPage() {
   const id = useIdParam()
-  const navigate = useNavigate()
+  const goBack = useBackNavigation('/fornecimentos')
   const queryClient = useQueryClient()
   const { can } = usePermission()
   const [editMode, setEditMode] = useState(false)
@@ -176,7 +177,7 @@ export function FornecimentoDetailPage() {
                 </Button>
               </>
             ) : (
-              <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+              <Button variant="outline" size="sm" onClick={goBack}>
                 <ArrowLeft className="h-4 w-4" />
                 Voltar
               </Button>

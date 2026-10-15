@@ -1,3 +1,4 @@
+import { useBackNavigation } from '@/hooks/useBackNavigation'
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useIdParam } from '@/hooks/useIdParam'
@@ -390,6 +391,7 @@ function AddItemsDialog({
 export function RequisicaoAnalisePage() {
   const id = useIdParam()
   const navigate = useNavigate()
+  const goBack = useBackNavigation('/requisicoes/pendentes')
   const queryClient = useQueryClient()
   const user = useAuthStore((state) => state.user)
 
@@ -472,7 +474,7 @@ export function RequisicaoAnalisePage() {
     if (isDirty) {
       setShowLeaveAlert(true)
     } else {
-      navigate('/requisicoes/pendentes')
+      goBack()
     }
   }
 
@@ -803,7 +805,7 @@ export function RequisicaoAnalisePage() {
         description="Você realizou alterações que ainda não foram aplicadas (aprovar/rejeitar). Se sair agora, as alterações serão perdidas."
         confirmLabel="Sair mesmo assim"
         variant="destructive"
-        onConfirm={() => navigate('/requisicoes/pendentes')}
+        onConfirm={goBack}
         onCancel={() => setShowLeaveAlert(false)}
       />
 

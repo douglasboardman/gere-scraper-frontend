@@ -1,3 +1,4 @@
+import { useBackNavigation } from '@/hooks/useBackNavigation'
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -43,6 +44,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 export function FornecedorDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const goBack = useBackNavigation('/fornecedores')
   const queryClient = useQueryClient()
   const { can } = usePermission()
   const [editMode, setEditMode] = useState(false)
@@ -162,7 +164,7 @@ export function FornecedorDetailPage() {
                   )}
                   Consultar Sanções
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+                <Button variant="outline" size="sm" onClick={goBack}>
                   <ArrowLeft className="h-4 w-4" />
                   Voltar
                 </Button>

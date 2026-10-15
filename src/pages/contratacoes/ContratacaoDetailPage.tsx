@@ -1,3 +1,5 @@
+import { useListState } from '@/hooks/useListState'
+import { useBackNavigation } from '@/hooks/useBackNavigation'
 import { useState, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIdParam } from "@/hooks/useIdParam";
@@ -83,6 +85,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 export function ContratacaoDetailPage() {
   const identificador = useIdParam();
   const navigate = useNavigate();
+  const goBack = useBackNavigation('/contratacoes')
   const queryClient = useQueryClient();
   const { can, isAdmin } = usePermission();
   const usuario = useAuthStore((s) => s.user);
@@ -90,7 +93,7 @@ export function ContratacaoDetailPage() {
   const [editObjeto, setEditObjeto] = useState("");
   const [editStatus, setEditStatus] = useState("");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [activeTab, setActiveTab] = useState('informacoes');
+  const [activeTab, setActiveTab] = useListState('activeTab', 'informacoes');
 
   const resetEditState = () => {
     setEditMode(false);
@@ -218,7 +221,7 @@ export function ContratacaoDetailPage() {
               </>
             ) : (
               <>
-                <Button variant="outline" size="sm" onClick={() => navigate("/contratacoes")}>
+                <Button variant="outline" size="sm" onClick={goBack}>
                   <ArrowLeft className="h-4 w-4" />
                   Voltar
                 </Button>

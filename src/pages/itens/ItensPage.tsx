@@ -1,3 +1,4 @@
+import { useListState } from '@/hooks/useListState'
 import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -28,9 +29,9 @@ export function ItensPage() {
   const identAta = searchParams.get("identAta") ?? undefined;
   const identContratacao = searchParams.get("identContratacao") ?? undefined;
 
-  const [descFilter, setDescFilter] = useState("");
-  const [contratacaoFilter, setContratacaoFilter] = useState("");
-  const [tipoFilter, setTipoFilter] = useState("all");
+  const [descFilter, setDescFilter] = useListState('descFilter', "");
+  const [contratacaoFilter, setContratacaoFilter] = useListState('contratacaoFilter', "");
+  const [tipoFilter, setTipoFilter] = useListState('tipoFilter', "all");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   const toggleExpand = (id: string) =>

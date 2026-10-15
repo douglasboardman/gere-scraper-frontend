@@ -1,3 +1,5 @@
+import { useListState } from '@/hooks/useListState'
+import { useBackNavigation } from '@/hooks/useBackNavigation'
 import { useState, Fragment } from 'react'
 import { useNavigate, Link } from "react-router-dom";
 import { useIdParam } from "@/hooks/useIdParam";
@@ -49,12 +51,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 export function AtaDetailPage() {
   const id = useIdParam();
   const navigate = useNavigate();
+  const goBack = useBackNavigation('/atas')
   const queryClient = useQueryClient();
   const { can } = usePermission();
   const [editMode, setEditMode] = useState(false);
   const [editStatus, setEditStatus] = useState('');
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [activeTab, setActiveTab] = useState('informacoes');
+  const [activeTab, setActiveTab] = useListState('activeTab', 'informacoes');
 
   const toggleExpand = (id: string) =>
     setExpandedIds((prev) => {
@@ -158,7 +161,7 @@ export function AtaDetailPage() {
                 </Button>
               </>
             ) : (
-              <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+              <Button variant="outline" size="sm" onClick={goBack}>
                 <ArrowLeft className="h-4 w-4" />
                 Voltar
               </Button>

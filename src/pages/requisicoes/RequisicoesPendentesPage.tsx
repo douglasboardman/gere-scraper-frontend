@@ -1,3 +1,4 @@
+import { useListState } from '@/hooks/useListState'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
@@ -27,7 +28,7 @@ export function RequisicoesPendentesPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const user = useAuthStore((state) => state.user)
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useListState('search', '')
   const [confirmDevolver, setConfirmDevolver] = useState<string | null>(null)
 
   const { data: todasRequisicoes = [], isLoading } = useQuery({

@@ -1,3 +1,4 @@
+import { useListState } from '@/hooks/useListState'
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -91,7 +92,7 @@ function diagnosticoDestinatarios(raw: unknown) {
 
 export function NotificacoesAdminPage() {
   const queryClient = useQueryClient()
-  const [tab, setTab] = useState<AdminTab>('modelos')
+  const [tab, setTab] = useListState<AdminTab>('tab', 'modelos')
   const [createOpen, setCreateOpen] = useState(false)
   const [createType, setCreateType] = useState<AdminTab>('eventos')
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
@@ -508,6 +509,7 @@ export function NotificacoesAdminPage() {
             </TabsList>
             <TabsContent value="eventos" className="mt-5">
               <DataTable
+                persistenceKey="eventos"
                 columns={eventColumns}
                 data={eventosQuery.data ?? []}
                 isLoading={eventosQuery.isLoading}
@@ -517,6 +519,7 @@ export function NotificacoesAdminPage() {
             </TabsContent>
             <TabsContent value="modelos" className="mt-5">
               <DataTable
+                persistenceKey="modelos"
                 columns={modelColumns}
                 data={modelosQuery.data ?? []}
                 isLoading={modelosQuery.isLoading}
@@ -526,6 +529,7 @@ export function NotificacoesAdminPage() {
             </TabsContent>
             <TabsContent value="disparos" className="mt-5">
               <DataTable
+                persistenceKey="disparos"
                 columns={disparoColumns}
                 data={disparosQuery.data?.itens ?? []}
                 isLoading={disparosQuery.isLoading}

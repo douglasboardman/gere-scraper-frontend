@@ -235,3 +235,9 @@ Consulte `../gere-api/README.md` para banco, variáveis, importações e autoriz
 Instale as versões corrigidas com `npm ci` e compile com `npm run build` antes de publicar o diretório `dist` no Apache2. O Tailwind 4 é processado pelo plugin `@tailwindcss/vite`; o tema continua em `tailwind.config.js`, carregado explicitamente por `src/index.css`. As classes de sombra, raio e foco foram adaptadas, e `tailwind-merge` usa a versão 3 compatível.
 
 A interface requer navegadores compatíveis com Tailwind 4: Safari 16.4+, Chrome 111+ ou Firefox 128+. Consulte o [guia oficial de migração](https://tailwindcss.com/docs/upgrade-guide). Execute `npm audit` para verificar todas as dependências, incluindo as de desenvolvimento.
+
+### Retorno às listagens
+
+Busca, filtros aplicados, página e quantidade de linhas são guardados no `sessionStorage`, por usuário, endereço e parâmetros da listagem. Ao abrir um detalhe e voltar, a pesquisa é restaurada, inclusive após recarregar a aba. As tabelas da administração de notificações têm configurações separadas; abas dos detalhes também são preservadas ao navegar entre entidades relacionadas.
+
+Alterar uma busca ou filtro inicia uma nova pesquisa na primeira página. Se uma atualização reduzir a quantidade de registros, a paginação é ajustada para uma página existente. O botão Voltar retorna à origem pelo histórico e, em um detalhe aberto diretamente, usa a listagem correspondente. Nenhum dado das entidades ou token é salvo por essa persistência; se o armazenamento do navegador estiver indisponível, a tela continua funcionando sem restauração.

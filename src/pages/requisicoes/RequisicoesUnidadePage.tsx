@@ -1,3 +1,4 @@
+import { useListState } from '@/hooks/useListState'
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -62,7 +63,7 @@ export function RequisicoesUnidadePage() {
   const { isAdmin, isGestor } = usePermission()
   const [filterModalOpen, setFilterModalOpen] = useState(false)
   const [pendingFilters, setPendingFilters] = useState<Filtros>(FILTROS_INICIAIS)
-  const [appliedFilters, setAppliedFilters] = useState<Filtros>(FILTROS_INICIAIS)
+  const [appliedFilters, setAppliedFilters] = useListState<Filtros>('appliedFilters', FILTROS_INICIAIS)
 
   const { data: requisicoes = [], isLoading } = useQuery({
     queryKey: qk.requisicoes.unidade(appliedFilters.contratacaoId),

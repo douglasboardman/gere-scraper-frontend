@@ -1,3 +1,4 @@
+import { useListState } from '@/hooks/useListState'
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -25,10 +26,10 @@ export function ContratosPage() {
   const { can, isAdmin, isGestorUnidade } = usePermission()
   const queryClient = useQueryClient()
   const identContratacao = searchParams.get('identContratacao') ?? undefined
-  const [uasgFilter, setUasgFilter] = useState('')
-  const [cnpjFilter, setCnpjFilter] = useState('')
-  const [objetoFilter, setObjetoFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
+  const [uasgFilter, setUasgFilter] = useListState('uasgFilter', '')
+  const [cnpjFilter, setCnpjFilter] = useListState('cnpjFilter', '')
+  const [objetoFilter, setObjetoFilter] = useListState('objetoFilter', '')
+  const [statusFilter, setStatusFilter] = useListState('statusFilter', '')
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
   const { data: contratos = [], isLoading } = useQuery({
