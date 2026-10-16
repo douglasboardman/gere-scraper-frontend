@@ -45,7 +45,7 @@ interface InfoCardProps {
   status: string
   identUnidade: unknown
   identUorg: string | undefined
-  contratacao?: { numContratacao: string; anoContratacao: string | number } | null
+  contratacao?: { numContratacao: string; anoContratacao: string | number; uasgUnGestora: string } | null
 }
 
 function InfoCard({ requisitante, unidade, uorg, tipo, justificativa, status, identUnidade, identUorg, contratacao }: InfoCardProps) {
@@ -72,10 +72,16 @@ function InfoCard({ requisitante, unidade, uorg, tipo, justificativa, status, id
         <p className="font-medium">{destDespesaLabel(tipo)}</p>
       </div>
       {contratacao && (
-        <div className="col-span-2">
-          <p className="text-muted-foreground uppercase font-semibold mb-0.5 text-[10px]">Contratação</p>
-          <p className="font-medium">{contratacao.numContratacao}/{contratacao.anoContratacao}</p>
-        </div>
+        <>
+          <div>
+            <p className="text-muted-foreground uppercase font-semibold mb-0.5 text-[10px]">Contratação</p>
+            <p className="font-medium">{contratacao.numContratacao}/{contratacao.anoContratacao}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground uppercase font-semibold mb-0.5 text-[10px]">UASG UN. GESTORA</p>
+            <p className="font-medium">{contratacao.uasgUnGestora}</p>
+          </div>
+        </>
       )}
       <div className="col-span-2">
         <p className="text-muted-foreground uppercase font-semibold mb-0.5 text-[10px]">Justificativa</p>
@@ -119,7 +125,12 @@ export function RequisicaoImprimirPage() {
     if (!raw || typeof raw !== 'string') return null
     const parts = raw.split('.')
     if (parts.length < 2) return null
-    return { numContratacao: parts[parts.length - 2], anoContratacao: parts[parts.length - 1] }
+    return {
+      numContratacao: parts[parts.length - 2],
+      anoContratacao: parts[parts.length - 1],
+      // A UASG no identificador é a gestora, inclusive em participações por adesão.
+      uasgUnGestora: /^(?:CON|OOB)-(\d{6})$/.exec(parts[0])?.[1] ?? '—',
+    }
   })()
 
   const observacoes = requisicao?.observacoes ?? (requisicao as unknown as { observacao?: string })?.observacao
