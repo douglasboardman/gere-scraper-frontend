@@ -40,10 +40,8 @@ export function useSSEStream<TState>({
   const retriesRef = useRef(0)
 
   useEffect(() => {
-    if (!jobId) {
-      setState(initialState)
-      return
-    }
+    setState(initialState)
+    if (!jobId) return
 
     retriesRef.current = 0
     let cancelled = false

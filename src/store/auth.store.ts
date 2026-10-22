@@ -4,6 +4,7 @@ import type { IUsuario } from '@/types'
 import { queryClient } from '@/lib/queryClient'
 
 export interface ActiveJobFormData {
+  identContratacao: string
   numContratacao: string
   anoContratacao: string
   uasgUnGestora: string

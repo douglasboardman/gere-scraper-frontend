@@ -1,4 +1,4 @@
-import { useMemo, useEffect, Fragment } from 'react'
+import { useMemo, useEffect, useId, Fragment } from 'react'
 import { useListState } from '@/hooks/useListState'
 import {
   useReactTable,
@@ -32,7 +32,12 @@ interface DataTableProps<TData> {
   isLoading?: boolean
   searchable?: boolean
   searchPlaceholder?: string
+  searchLabel?: string
+  searchDescription?: string
   emptyMessage?: string
+  emptySearchMessage?: string
+  hasActiveFilters?: boolean
+  onClearFilters?: () => void
   globalFilterFn?: FilterFn<TData>
   renderExpandedRow?: (row: Row<TData>, colSpan: number) => React.ReactNode
   pageResetKey?: unknown
@@ -45,12 +50,18 @@ export function DataTable<TData>({
   isLoading = false,
   searchable = true,
   searchPlaceholder = 'Buscar...',
+  searchLabel,
+  searchDescription,
   emptyMessage = 'Nenhum registro encontrado.',
+  emptySearchMessage,
+  hasActiveFilters = false,
+  onClearFilters,
   globalFilterFn,
   renderExpandedRow,
   pageResetKey,
   persistenceKey = 'main',
 }: DataTableProps<TData>) {
+  const searchId = useId()
   const resetKey = JSON.stringify(pageResetKey ?? null)
   const [view, setView] = useListState(`table:${persistenceKey}`, {
     globalFilter: '',
@@ -58,6 +69,11 @@ export function DataTable<TData>({
     resetKey,
   })
   const { globalFilter, pagination } = view
+  const hasSearchOrFilters = !!globalFilter.trim() || hasActiveFilters
+  const clearFilters = () => {
+    setGlobalFilter('')
+    onClearFilters?.()
+  }
   const setGlobalFilter = (update: Updater<string>) => setView((previous) => ({
     ...previous,
     globalFilter: typeof update === 'function' ? update(previous.globalFilter) : update,
@@ -118,16 +134,30 @@ export function DataTable<TData>({
   return (
     <div className="space-y-4">
       {searchable && (
-        <div className="flex items-center gap-2">
-          <div className="relative max-w-sm w-full group">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground transition-colors duration-150 group-focus-within:text-foreground" />
-            <Input
-              placeholder={searchPlaceholder}
-              value={globalFilter ?? ''}
-              onChange={(e) => setGlobalFilter(e.target.value)}
-              className="pl-8 transition-shadow duration-150 focus:shadow-xs"
-            />
+        <div className="space-y-2">
+          {searchLabel && <label htmlFor={searchId} className="block text-sm font-medium">{searchLabel}</label>}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative max-w-sm w-full group">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground transition-colors duration-150 group-focus-within:text-foreground" />
+              <Input
+                id={searchId}
+                aria-label={searchLabel ?? searchPlaceholder}
+                aria-describedby={searchDescription ? `${searchId}-description` : undefined}
+                placeholder={searchPlaceholder}
+                value={globalFilter ?? ''}
+                onChange={(e) => setGlobalFilter(e.target.value)}
+                className="pl-8 transition-shadow duration-150 focus:shadow-xs"
+              />
+            </div>
+            {onClearFilters && hasSearchOrFilters && (
+              <Button variant="outline" size="sm" onClick={clearFilters}>
+                Limpar pesquisa e filtros
+              </Button>
+            )}
           </div>
+          {searchDescription && (
+            <p id={`${searchId}-description`} className="text-sm text-muted-foreground">{searchDescription}</p>
+          )}
         </div>
       )}
 
@@ -169,7 +199,7 @@ export function DataTable<TData>({
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-                  {emptyMessage}
+                  {hasSearchOrFilters ? emptySearchMessage ?? emptyMessage : emptyMessage}
                 </TableCell>
               </TableRow>
             )}
@@ -200,7 +230,7 @@ export function DataTable<TData>({
 
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">
-            Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
+            {pageCount === 0 ? '0 resultados' : `Página ${table.getState().pagination.pageIndex + 1} de ${pageCount}`}
           </span>
           <Button
             variant="outline"

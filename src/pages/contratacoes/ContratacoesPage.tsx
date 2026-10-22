@@ -17,7 +17,8 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { usePermission } from '@/hooks/usePermission'
 import { useAuthStore } from '@/store/auth.store'
-import { ENTITY, normalizarTextoBusca } from '@/lib/utils'
+import { ENTITY } from '@/lib/utils'
+import { correspondeBuscaContratacao } from '@/lib/contratacao-search'
 import { qk } from '@/lib/query-keys'
 import { displayNumEdital } from '@/lib/identifier-utils'
 import type { IContratacao } from '@/types'
@@ -29,8 +30,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-const filtroGlobalSemAcentos: FilterFn<IContratacao> = (row, columnId, valorBusca) =>
-  normalizarTextoBusca(row.getValue(columnId)).includes(normalizarTextoBusca(valorBusca))
+const filtroGlobalContratacao: FilterFn<IContratacao> = (row, _columnId, valorBusca) =>
+  correspondeBuscaContratacao(row.original, String(valorBusca ?? ''))
 
 export function ContratacoesPage() {
   const navigate = useNavigate()
@@ -87,6 +88,7 @@ export function ContratacoesPage() {
     },
     {
       id: 'numContratacao',
+      accessorFn: (contratacao) => displayNumEdital(contratacao.identificador),
       header: 'Núm. Contratação',
       cell: ({ row }) => (
         <span className="font-mono text-sm">{displayNumEdital(row.original.identificador)}</span>
@@ -234,8 +236,14 @@ export function ContratacoesPage() {
         columns={columns}
         data={filtered}
         isLoading={isLoading}
-        emptyMessage="Nenhuma contratacao encontrada."
-        globalFilterFn={filtroGlobalSemAcentos}
+        searchLabel="Pesquisar contratações"
+        searchPlaceholder="Ex.: 23/2026"
+        searchDescription="Busque por número/ano, objeto, UASG gestora ou identificador."
+        emptyMessage={isAdmin ? 'Nenhuma contratação encontrada.' : 'Nenhuma contratação encontrada para sua unidade.'}
+        emptySearchMessage="Nenhuma contratação corresponde à pesquisa e aos filtros selecionados."
+        hasActiveFilters={statusFilter !== 'all'}
+        onClearFilters={() => setStatusFilter('all')}
+        globalFilterFn={filtroGlobalContratacao}
         pageResetKey={statusFilter}
       />
 

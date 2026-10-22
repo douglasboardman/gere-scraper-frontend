@@ -1,11 +1,14 @@
 import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Loader2 } from 'lucide-react'
-import { contratacoesApi } from '@/api/contratacoes.api'
+import { ArrowLeft, Loader2, Info } from 'lucide-react'
+import { contratacoesApi, getContratacaoJaImportada, type ContratacaoJaImportada } from '@/api/contratacoes.api'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { buildDetailUrl } from '@/lib/identifier-utils'
 import { getApiErrorMessage } from '@/lib/api-error'
 import { unidadesApi } from '@/api/unidades.api'
 import type { IContratacao, ModalidadeContratacao, AmparoLegal } from '@/types'
@@ -78,6 +81,7 @@ export function NovaContratacaoPage() {
   const queryClient = useQueryClient()
   const { setActiveJobId, setActiveJobFormData } = useAuthStore()
   const { isAdmin } = usePermission()
+  const [jaImportada, setJaImportada] = useState<ContratacaoJaImportada | null>(null)
 
   const { data: unidades = [] } = useQuery({
     queryKey: qk.unidades.all,
@@ -101,6 +105,7 @@ export function NovaContratacaoPage() {
   const modalidadesDisponiveis = amparoLegalAtual === 'LEI_8666_1993' ? modalidades8666 : modalidades14133
 
   const mutation = useMutation({
+    onMutate: () => setJaImportada(null),
     mutationFn: (data: NovaCompraFormData) =>
       contratacoesApi.criar({
         amparoLegal: data.amparoLegal as AmparoLegal,
@@ -117,6 +122,7 @@ export function NovaContratacaoPage() {
       }
       setActiveJobId(result.jobId)
       setActiveJobFormData({
+        identContratacao: result.contratacao.identificador,
         numContratacao: variables.numContratacao,
         anoContratacao: variables.anoContratacao,
         uasgUnGestora: variables.uasgUnGestora,
@@ -131,6 +137,12 @@ export function NovaContratacaoPage() {
       navigate('/contratacoes')
     },
     onError: (error: unknown) => {
+      const existente = getContratacaoJaImportada(error)
+      if (existente) {
+        setJaImportada(existente)
+        queryClient.invalidateQueries({ queryKey: qk.contratacoes.all })
+        return
+      }
       toast.error(getApiErrorMessage(error, 'Erro ao registrar contratação.'))
     },
   })
@@ -155,6 +167,22 @@ export function NovaContratacaoPage() {
           </Button>
         }
       />
+
+      {jaImportada && (
+        <Alert className="mb-4 max-w-2xl">
+          <Info className="h-4 w-4" />
+          <AlertTitle>Contratação já importada</AlertTitle>
+          <AlertDescription>
+            <p>{jaImportada.message}</p>
+            <Button
+              className="mt-3"
+              onClick={() => navigate(buildDetailUrl('/contratacoes/detalhe', jaImportada.identContratacao))}
+            >
+              Abrir contratação
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Card className="max-w-2xl">
         <CardHeader>

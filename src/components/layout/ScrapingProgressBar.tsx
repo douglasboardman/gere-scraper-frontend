@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
+import { buildDetailUrl, displayNumEdital } from '@/lib/identifier-utils'
 
 const AMPARO_LEGAL_LABELS: Record<string, string> = {
   LEI_14133_2021: 'Lei 14.133/2021 (Nova Lei de Licitações)',
@@ -47,9 +48,14 @@ export function ScrapingProgressBar() {
 
   useEffect(() => {
     if (status === 'completed' || status === 'failed') {
+      setMinimized(false)
       queryClient.invalidateQueries({ queryKey: qk.contratacoes.all })
     }
   }, [status, queryClient])
+
+  useEffect(() => {
+    setMinimized(false)
+  }, [activeJobId])
 
   useEffect(() => {
     if (status === 'failed' && errorCode === 'CONTRATACAO_NOT_FOUND') {
@@ -86,11 +92,6 @@ export function ScrapingProgressBar() {
 
   // Don't render if no active job
   if (!activeJobId) return null
-
-  // Hide if minimized and completed
-  if (minimized && status === 'completed') {
-    return null
-  }
 
   // When the "not a participant" dialog is open, render only the dialog (no progress bar)
   if (naoParticipanteDialogOpen) {
@@ -181,7 +182,7 @@ export function ScrapingProgressBar() {
           </div>
         ) : (
           <div className="max-w-[theme(screens.xl)] mx-auto">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               {/* Icon */}
               <div className="shrink-0">
                 {isCompleted ? (
@@ -198,7 +199,7 @@ export function ScrapingProgressBar() {
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-white text-sm font-medium truncate">
                     {isCompleted
-                      ? 'Processamento concluído!'
+                      ? 'Importação concluída!'
                       : isFailed
                       ? 'Erro no processamento'
                       : `Processando: ${mensagem || 'Aguarde...'}`}
@@ -224,7 +225,25 @@ export function ScrapingProgressBar() {
                     isFailed ? 'bg-red-700 [&>div]:bg-red-400' : 'bg-white/20 [&>div]:bg-green-400'
                   )}
                 />
+                {isCompleted && activeJobFormData && (
+                  <p className="mt-1 text-xs text-gray-300">
+                    Contratação {displayNumEdital(activeJobFormData.identContratacao)} · UASG gestora {activeJobFormData.uasgUnGestora}
+                  </p>
+                )}
               </div>
+
+              {isCompleted && activeJobFormData && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    navigate(buildDetailUrl('/contratacoes/detalhe', activeJobFormData.identContratacao))
+                    setActiveJobId(null)
+                  }}
+                >
+                  Abrir contratação
+                </Button>
+              )}
 
               {/* Percentage */}
               <div className="text-white text-sm font-semibold w-10 text-right shrink-0">

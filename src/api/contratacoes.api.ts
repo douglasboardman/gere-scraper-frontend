@@ -1,5 +1,23 @@
 import apiClient from './client'
+import { isAxiosError } from 'axios'
 import type { IContratacao, CriarContratacaoData } from '@/types'
+
+export interface ContratacaoJaImportada {
+  code: 'CONTRATACAO_JA_IMPORTADA'
+  identContratacao: string
+  uasgParticipante: string
+  message: string
+}
+
+export function getContratacaoJaImportada(error: unknown): ContratacaoJaImportada | null {
+  if (!isAxiosError<ContratacaoJaImportada>(error) || error.response?.status !== 409) return null
+  const data = error.response.data
+  return data?.code === 'CONTRATACAO_JA_IMPORTADA'
+    && typeof data.identContratacao === 'string'
+    && typeof data.uasgParticipante === 'string'
+    && typeof data.message === 'string'
+    ? data : null
+}
 
 export const contratacoesApi = {
   async listar(): Promise<IContratacao[]> {

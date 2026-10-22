@@ -48,6 +48,13 @@ Permite listar contratações acessíveis, iniciar importação por número/ano/
 
 Uma contratação compartilhada não é duplicada por unidade: a interface considera o status da participação da UASG atual.
 
+A pesquisa aceita número/ano com ou sem zeros à esquerda e espaços junto à barra
+(por exemplo, `23/2026`, `00023/2026` e `23 / 2026`), além de número isolado,
+objeto, UASG gestora e identificador. “Limpar pesquisa e filtros” restaura a consulta
+e todos os status. Uma tentativa de importar dados já existentes para a participante
+mostra um aviso persistente com “Abrir contratação”. A conclusão da importação
+também oferece esse acesso e reabre o acompanhamento caso tenha sido minimizado.
+
 ### Atas e itens
 
 Listagens e detalhes permitem navegar pelo encadeamento da contratação e, conforme perfil e estado, revisar descrições e disponibilidade.
