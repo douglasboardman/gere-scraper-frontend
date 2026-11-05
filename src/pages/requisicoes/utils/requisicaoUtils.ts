@@ -1,5 +1,4 @@
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { formatarDataVigencia } from "@/lib/vigencia";
 import { z } from "zod";
 import { extractCnpj } from "@/lib/identifier-utils";
 import type { IFornecimento, IItem, IItemRequisicao } from "@/types";
@@ -43,12 +42,7 @@ export function cnpjFromFornecedorId(identFornecedor: string): string {
 }
 
 export function fmtDate(dateStr?: string): string {
-  if (!dateStr) return "—";
-  try {
-    return format(new Date(dateStr), "dd/MM/yyyy", { locale: ptBR });
-  } catch {
-    return dateStr;
-  }
+  return formatarDataVigencia(dateStr);
 }
 
 export function valUnitario(f: IFornecimento): number {

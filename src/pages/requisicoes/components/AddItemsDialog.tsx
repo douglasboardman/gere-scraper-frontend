@@ -49,13 +49,14 @@ export function AddItemsDialog({
   const [catalogPage, setCatalogPage] = useState(1)
   const [catalogSearch, setCatalogSearch] = useState('')
 
-  const { data: fornecimentos = [], isLoading: loadingForn } = useQuery({
+  const { data: fornecimentos = [], isLoading: loadingForn, isFetching: atualizandoForn, isError: erroFornecimentos } = useQuery({
     queryKey: qk.fornecimentos.addItems(contratacaoIdStr, userUasg),
     queryFn: () =>
       contratacaoIdStr
         ? fornecimentosApi.listarPorContratacaoUnidade(contratacaoIdStr, userUasg)
         : fornecimentosApi.listarPorUnidade(userUasg),
     enabled: open && !!userUasg,
+    staleTime: 0,
   })
 
   const existingFornIds = new Set(
@@ -89,12 +90,17 @@ export function AddItemsDialog({
 
   function handleAdd(f: IFornecimento) {
     const item = resolveItem(f)
-    if (!item) return
+    if (!item || f.disponivelParaRequisicao === false) return
     map.addItem(f, item)
   }
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      const bloqueado = Array.from(map.items.keys()).some(id => {
+        const atual = fornecimentos.find(f => f.identificador === id)
+        return !atual || atual.disponivelParaRequisicao === false
+      })
+      if (bloqueado) throw new Error('Remova os itens indisponíveis ou com vigência encerrada antes de adicionar.')
       for (const [idForn, entry] of map.items.entries()) {
         await itemRequisicaoApi.criar({
           identRequisicao: requisicaoIdentificador,
@@ -133,6 +139,7 @@ export function AddItemsDialog({
           <DialogTitle>Adicionar Itens à Requisição</DialogTitle>
         </DialogHeader>
 
+        {erroFornecimentos && <p role="alert" className="px-6 text-sm text-destructive">Não foi possível atualizar a disponibilidade dos fornecimentos. Tente novamente.</p>}
         {loadingForn ? (
           <div className="flex flex-1 items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -143,7 +150,7 @@ export function AddItemsDialog({
             <div className="flex flex-col border-r" style={{ flex: '3' }}>
               <div className="px-4 py-3 border-b bg-muted/20 shrink-0 space-y-2">
                 <p className="text-sm font-semibold">
-                  Itens disponíveis{' '}
+                  Catálogo de itens{' '}
                   <span className="text-muted-foreground font-normal">
                     (
                     {catalogSearch.trim()
@@ -179,6 +186,7 @@ export function AddItemsDialog({
                     const isNewlyAdded = map.items.has(f.identificador)
                     const saldo = saldoDisp(f)
                     const isSaldoZero = saldo <= 0
+                    const bloqueado = f.disponivelParaRequisicao === false
 
                     return (
                       <div
@@ -186,7 +194,7 @@ export function AddItemsDialog({
                         className={cn(
                           'transition-colors',
                           (isAlreadyInReq || isNewlyAdded) && 'bg-primary/5',
-                          isSaldoZero && 'bg-muted/40 opacity-60',
+                          (isSaldoZero || bloqueado) && 'bg-muted/40 opacity-60',
                         )}
                       >
                         <div className="flex items-center gap-2 px-3 py-2.5">
@@ -205,6 +213,7 @@ export function AddItemsDialog({
                                 <span className="text-primary font-semibold">Já incluído</span>
                               )}
                             </div>
+                            {bloqueado && <p className="text-xs text-destructive mt-1">{f.motivoIndisponibilidade ?? 'Fornecimento indisponível.'}</p>}
                           </div>
 
                           <div className="flex items-center gap-1 shrink-0">
@@ -230,7 +239,7 @@ export function AddItemsDialog({
                                 variant={isNewlyAdded ? 'secondary' : 'default'}
                                 className="h-7 w-7"
                                 aria-label="Adicionar item"
-                                disabled={isNewlyAdded}
+                                disabled={isNewlyAdded || bloqueado || atualizandoForn}
                                 onClick={() => handleAdd(f)}
                               >
                                 <Plus className="h-3.5 w-3.5" />
@@ -480,7 +489,7 @@ export function AddItemsDialog({
           </Button>
           <Button
             disabled={
-              map.items.size === 0 ||
+              loadingForn || atualizandoForn || erroFornecimentos || map.items.size === 0 ||
               saveMutation.isPending ||
               Array.from(map.items.values()).some(
                 (e) => e.quantidade > saldoDisp(e.fornecimento),

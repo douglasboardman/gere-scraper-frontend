@@ -1,10 +1,9 @@
+import { formatarDataVigencia } from '@/lib/vigencia'
 import { useListState } from '@/hooks/useListState'
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
 import { formatCNPJ, ENTITY } from "@/lib/utils";
 import { displayNumEdital } from "@/lib/identifier-utils";
-import { ptBR } from "date-fns/locale";
 import { Eye, Search } from "lucide-react";
 import { ManageSearchIcon } from "@/components/icons/ManageSearchIcon";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -85,9 +84,9 @@ export function AtasPage() {
           return <span className="text-muted-foreground">—</span>;
         return (
           <span className="text-sm whitespace-nowrap">
-            {ini ? format(new Date(ini), "dd/MM/yyyy", { locale: ptBR }) : "?"}
+            {ini ? formatarDataVigencia(ini) : "?"}
             {" → "}
-            {fim ? format(new Date(fim), "dd/MM/yyyy", { locale: ptBR }) : "?"}
+            {fim ? formatarDataVigencia(fim) : "?"}
           </span>
         );
       },
@@ -95,7 +94,7 @@ export function AtasPage() {
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => <StatusBadge status={row.original.status} fimVigencia={row.original.fimVigencia} feminino />,
     },
     {
       id: "acoes",

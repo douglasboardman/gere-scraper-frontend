@@ -171,6 +171,8 @@ export interface IFornecedor {
 }
 
 export interface IFornecimento {
+  disponivelParaRequisicao?: boolean
+  motivoIndisponibilidade?: string | null
   identificador: string
   identItem: string | IItem
   identFornecedor: string

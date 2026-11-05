@@ -1,3 +1,4 @@
+import { formatarDataVigencia } from '@/lib/vigencia'
 import { useListState } from '@/hooks/useListState'
 import { useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -271,7 +272,7 @@ export function FornecimentosPage() {
         if (!fimVig) return <span className="text-sm text-muted-foreground">—</span>;
         return (
           <span className="text-sm font-mono whitespace-nowrap">
-            {new Date(fimVig).toLocaleDateString("pt-BR")}
+            {formatarDataVigencia(fimVig)}
           </span>
         );
       },
@@ -279,7 +280,7 @@ export function FornecimentosPage() {
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => <StatusBadge status={row.original.status} fimVigencia={getFimVigencia(row.original)} />,
     },
     {
       id: "acoes",

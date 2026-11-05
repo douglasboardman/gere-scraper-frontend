@@ -1,3 +1,4 @@
+import { formatarDataVigencia } from '@/lib/vigencia'
 import { useListState } from '@/hooks/useListState'
 import { useBackNavigation } from '@/hooks/useBackNavigation'
 import { useState, Fragment } from "react";
@@ -452,11 +453,11 @@ export function ContratacaoDetailPage() {
                           <p className="text-sm">{ata.nomeFornecedor ?? "—"}</p>
                         </TableCell>
                         <TableCell className="text-sm whitespace-nowrap">
-                          {ata.iniVigencia ? formatDate(ata.iniVigencia) : "—"}
+                          {ata.iniVigencia ? formatarDataVigencia(ata.iniVigencia) : "—"}
                           {" → "}
-                          {ata.fimVigencia ? formatDate(ata.fimVigencia) : "—"}
+                          {ata.fimVigencia ? formatarDataVigencia(ata.fimVigencia) : "—"}
                         </TableCell>
-                        <TableCell><StatusBadge status={ata.status} /></TableCell>
+                        <TableCell><StatusBadge status={ata.status} fimVigencia={ata.fimVigencia} feminino /></TableCell>
                         <TableCell className="text-right">
                           <Button
                             variant="ghost"

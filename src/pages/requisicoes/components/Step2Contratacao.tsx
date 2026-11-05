@@ -68,7 +68,8 @@ export function Step2Contratacao({
     },
   });
 
-  const { data: fornecimentos = [], isLoading: loadingForn } = useQuery({
+  const { data: fornecimentos = [], isLoading: loadingForn, isFetching: atualizandoFornecimentos } = useQuery({
+    staleTime: 0,
     queryKey: qk.fornecimentos.byUnidade(userUasg),
     queryFn: () => fornecimentosApi.listarPorUnidade(userUasg),
     enabled: !!userUasg,
@@ -78,10 +79,16 @@ export function Step2Contratacao({
     (f) => f.destDespesa === tipoRequisicao,
   );
 
+  const fornecimentosElegiveis = fornecimentosDestDespesa.filter(f => f.disponivelParaRequisicao !== false);
+
   const uniqueContratacaoIds = Array.from(
     new Set(
-      fornecimentosDestDespesa
-        .map((f) => extrairIdContratacao(f.identificador))
+      fornecimentosElegiveis
+        .map((f) => {
+          const item = typeof f.identItem === 'object' ? f.identItem : null;
+          const compra = item?.identContratacao;
+          return typeof compra === 'string' ? compra : compra?.identificador ?? extrairIdContratacao(f.identificador);
+        })
         .filter((id): id is string => id !== null),
     ),
   );
@@ -106,7 +113,7 @@ export function Step2Contratacao({
   // Busca configs em paralelo para todas as contratações disponíveis.
   // gcTime: 0 garante que o cache seja descartado ao desmontar o Step2,
   // evitando que dados stale influenciem o filtro de vigência na próxima montagem.
-  const { data: configs = [] } = useQuery({
+  const { data: configs = [], isLoading: loadingConfigs } = useQuery({
     queryKey: qk.configContratacao.wizardBatch(uniqueContratacaoIds),
     queryFn: async () => {
       if (uniqueContratacaoIds.length === 0) return [];
@@ -130,22 +137,13 @@ export function Step2Contratacao({
       .map((c) => [c.identContratacao, c]),
   );
 
-  const isLoading = loadingForn || loadingContratacoes;
+  const isLoading = loadingForn || loadingContratacoes || (uniqueContratacaoIds.length > 0 && loadingConfigs);
 
-  const hoje = new Date();
-
-  const contratacoesFiltradas = contratacoes.filter((c) => {
-    const statusOk =
-      (c.statusParticipacao ?? c.ultimaImportacao?.status) === "Disponivel";
-    if (!statusOk) return false;
-
-    const vigente = !c.fimVigencia || new Date(c.fimVigencia) >= hoje;
-    if (vigente) return true;
-
-    // Fora da vigência: só exibe se a unidade optou por permitir fornecimentos não vigentes
-    const config = configMap.get(c.identificador);
-    return config?.permitirReqFornecNaoVigentes === true;
-  });
+  // O catálogo da API determina a elegibilidade pela ata/contrato de cada
+  // fornecimento e pela configuração da unidade, sem encerrar a compra inteira.
+  const contratacoesFiltradas = contratacoes.filter((c) =>
+    (c.statusParticipacao ?? c.ultimaImportacao?.status) === "Disponivel",
+  );
 
   const filtered = contratacoesFiltradas.filter((c) => {
     if (!search) return true;
@@ -185,6 +183,13 @@ export function Step2Contratacao({
           <CardContent className="py-16 text-center text-muted-foreground text-sm">
             Sua unidade possui fornecimentos, mas nenhum com destinação de
             despesa <strong>{destDespesaLabel(tipoRequisicao)}</strong>.
+          </CardContent>
+        </Card>
+      ) : fornecimentosElegiveis.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 text-center text-muted-foreground text-sm">
+            Nenhum fornecimento disponível para requisição de {destDespesaLabel(tipoRequisicao)}.
+            Verifique a vigência das atas e dos contratos ou consulte o gestor da unidade.
           </CardContent>
         </Card>
       ) : contratacoes.length === 0 ? (
@@ -250,7 +255,7 @@ export function Step2Contratacao({
                 <Button
                   size="sm"
                   className="shrink-0 opacity-75 group-hover:opacity-100 transition-opacity"
-                  disabled={selecionarMutation.isPending}
+                  disabled={selecionarMutation.isPending || atualizandoFornecimentos}
                   onClick={() => {
                     setSelectingId(contratacao.identificador);
                     selecionarMutation.mutate(contratacao);

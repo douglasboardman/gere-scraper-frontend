@@ -1,12 +1,13 @@
+import { formatarDataVigencia } from '@/lib/vigencia'
 import { useListState } from '@/hooks/useListState'
 import { useBackNavigation } from '@/hooks/useBackNavigation'
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { useState, Fragment } from 'react'
 import { useNavigate, Link } from "react-router-dom";
 import { useIdParam } from "@/hooks/useIdParam";
 import { extractAnoContratacao, displayContratacaoFull } from "@/lib/identifier-utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { ArrowLeft, Pencil, X, Check, Eye } from "lucide-react";
 import { atasApi } from "@/api/atas.api";
@@ -103,9 +104,6 @@ export function AtaDetailPage() {
   const handleSave = () => {
     if (editStatus) updateMutation.mutate({ status: editStatus as StatusElemContratacaoAlt });
   };
-
-  const formatDate = (d?: string) =>
-    d ? format(new Date(d), "dd/MM/yyyy", { locale: ptBR }) : "—";
 
   const anoAta = () => {
     if (ata?.identContratacao) {
@@ -214,8 +212,8 @@ export function AtaDetailPage() {
                   ) : "—"}
                 </Field>
                 <Field label="Fornecedor">{ata.nomeFornecedor || "—"}</Field>
-                <Field label="Vigência Início">{formatDate(ata.iniVigencia)}</Field>
-                <Field label="Vigência Fim">{formatDate(ata.fimVigencia)}</Field>
+                <Field label="Vigência Início">{formatarDataVigencia(ata.iniVigencia)}</Field>
+                <Field label="Vigência Fim">{formatarDataVigencia(ata.fimVigencia)}</Field>
                 <Field label="Status">
                   {editMode ? (
                     <Select value={editStatus} onValueChange={setEditStatus}>
@@ -229,7 +227,7 @@ export function AtaDetailPage() {
                       </SelectContent>
                     </Select>
                   ) : (
-                    <StatusBadge status={ata.status} />
+                    <StatusBadge status={ata.status} fimVigencia={ata.fimVigencia} feminino />
                   )}
                 </Field>
               </div>

@@ -1,3 +1,4 @@
+import { vigenciaEncerrada } from '@/lib/vigencia'
 import { Badge } from '@/components/ui/badge'
 import type {
   StatusElemContratacaoAlt,
@@ -45,10 +46,15 @@ const statusMap: Record<string, StatusConfig> = {
 
 interface StatusBadgeProps {
   status: AnyStatus | string
+  fimVigencia?: string | null
+  feminino?: boolean
 }
 
-export function StatusBadge({ status }: StatusBadgeProps) {
-  const config = statusMap[status] ?? { label: status, variant: 'secondary' as BadgeVariant, dot: 'bg-slate-400' }
+export function StatusBadge({ status, fimVigencia, feminino = false }: StatusBadgeProps) {
+  const vencido = status === 'Disponivel' && vigenciaEncerrada(fimVigencia)
+  const config = vencido
+    ? { label: feminino ? 'Vencida' : 'Vencido', variant: 'destructive' as BadgeVariant, dot: 'bg-red-500' }
+    : statusMap[status] ?? { label: status, variant: 'secondary' as BadgeVariant, dot: 'bg-slate-400' }
   const isRunning = status === 'running'
 
   return (

@@ -191,13 +191,14 @@ function AddItemsDialog({
   const [catalogPage, setCatalogPage] = useState(1)
   const [catalogSearch, setCatalogSearch] = useState('')
 
-  const { data: fornecimentos = [], isLoading: loadingForn } = useQuery({
+  const { data: fornecimentos = [], isLoading: loadingForn, isFetching: atualizandoForn, isError: erroFornecimentos } = useQuery({
     queryKey: qk.fornecimentos.analise(contratacaoIdStr, userUasg),
     queryFn: () =>
       contratacaoIdStr
         ? fornecimentosApi.listarPorContratacaoUnidade(contratacaoIdStr, userUasg)
         : fornecimentosApi.listarPorUnidade(userUasg),
     enabled: open && !!userUasg,
+    staleTime: 0,
   })
 
   const { data: itens = [], isLoading: loadingItens } = useQuery({
@@ -235,6 +236,11 @@ function AddItemsDialog({
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      const bloqueado = Array.from(newItems.keys()).some(id => {
+        const atual = fornecimentos.find(f => f.identificador === id)
+        return !atual || atual.disponivelParaRequisicao === false
+      })
+      if (bloqueado) throw new Error('Remova os itens indisponíveis ou com vigência encerrada antes de adicionar.')
       for (const [idForn, entry] of newItems.entries()) {
         await itemRequisicaoApi.criar({
           identRequisicao: requisicaoIdentificador,
@@ -261,6 +267,7 @@ function AddItemsDialog({
         <DialogHeader className="px-6 py-4 border-b shrink-0">
           <DialogTitle>Adicionar Itens à Requisição</DialogTitle>
         </DialogHeader>
+        {erroFornecimentos && <p role="alert" className="px-6 text-sm text-destructive">Não foi possível atualizar a disponibilidade dos fornecimentos. Tente novamente.</p>}
         {isLoading ? (
           <div className="flex flex-1 items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -269,7 +276,7 @@ function AddItemsDialog({
           <div className="flex flex-1 overflow-hidden">
             <div className="flex flex-col border-r" style={{ flex: '3' }}>
               <div className="px-4 py-3 border-b bg-muted/20 shrink-0 space-y-2">
-                <p className="text-sm font-semibold">Itens disponíveis <span className="text-muted-foreground font-normal">({filteredForn.length})</span></p>
+                <p className="text-sm font-semibold">Catálogo de itens <span className="text-muted-foreground font-normal">({filteredForn.length})</span></p>
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                   <Input className="pl-8 h-7 text-xs" placeholder="Pesquisar..." value={catalogSearch}
@@ -284,8 +291,9 @@ function AddItemsDialog({
                   const isNew = newItems.has(f.identificador)
                   const saldo = saldoDisp(f)
                   const noSaldo = saldo <= 0
+                  const bloqueado = f.disponivelParaRequisicao === false
                   return (
-                    <div key={f.identificador} className={cn('transition-colors', (isAlready || isNew) && 'bg-primary/5', noSaldo && 'bg-muted/40 opacity-60')}>
+                    <div key={f.identificador} className={cn('transition-colors', (isAlready || isNew) && 'bg-primary/5', (noSaldo || bloqueado) && 'bg-muted/40 opacity-60')}>
                       <div className="flex items-center gap-2 px-3 py-2.5">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium leading-snug line-clamp-1">{item ? descBreve(item) : typeof f.identItem === 'string' ? f.identItem : '—'}</p>
@@ -294,16 +302,17 @@ function AddItemsDialog({
                             <span className="font-medium text-foreground">{formatCurrency(valUnitario(f))}</span>
                             {isAlready && <span className="text-primary font-semibold">Já incluído</span>}
                           </div>
+                          {bloqueado && <p className="text-xs text-destructive mt-1">{f.motivoIndisponibilidade ?? 'Fornecimento indisponível.'}</p>}
                         </div>
                         <div className="flex gap-1 shrink-0">
                           <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setExpandedId((p) => p === f.identificador ? null : f.identificador)}>
                             {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                           </Button>
                           {!noSaldo && !isAlready && (
-                            <Button size="icon" variant={isNew ? 'secondary' : 'default'} className="h-7 w-7" disabled={isNew} aria-label="Adicionar item"
+                            <Button size="icon" variant={isNew ? 'secondary' : 'default'} className="h-7 w-7" disabled={isNew || bloqueado || atualizandoForn} aria-label="Adicionar item"
                               onClick={() => {
                                 const it = resolveItem(f)
-                                if (!it) return
+                                if (!it || bloqueado) return
                                 setNewItems((p) => { if (p.has(f.identificador)) return p; const n = new Map(p); n.set(f.identificador, { fornecimento: f, item: it, quantidade: 1 }); return n })
                               }}>
                               <Plus className="h-3.5 w-3.5" />
@@ -375,7 +384,7 @@ function AddItemsDialog({
         )}
         <DialogFooter className="px-6 py-4 border-t shrink-0">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saveMutation.isPending}>Cancelar</Button>
-          <Button disabled={newItems.size === 0 || saveMutation.isPending} onClick={() => saveMutation.mutate()}>
+          <Button disabled={isLoading || atualizandoForn || erroFornecimentos || newItems.size === 0 || saveMutation.isPending} onClick={() => saveMutation.mutate()}>
             {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Adicionar {newItems.size > 0 ? `${newItems.size} item(s)` : 'Itens'}
           </Button>

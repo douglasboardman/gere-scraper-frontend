@@ -59,6 +59,18 @@ também oferece esse acesso e reabre o acompanhamento caso tenha sido minimizado
 
 Listagens e detalhes permitem navegar pelo encadeamento da contratação e, conforme perfil e estado, revisar descrições e disponibilidade.
 
+Atas disponíveis cuja vigência terminou aparecem como **Vencida** nas listagens,
+no detalhe e na aba da contratação. Essa indicação é calculada pela data e não
+altera o status administrativo no banco. Datas de vigência são exibidas como dias
+civis, sem deslocamento de um dia pelo fuso do navegador.
+
+O wizard usa a elegibilidade retornada pela API para selecionar contratações com
+fornecimentos utilizáveis. Na seleção de itens, fornecimentos vencidos ficam
+bloqueados e mostram o motivo; itens já selecionados são conferidos novamente
+antes da revisão. Os diálogos de inclusão do requisitante e do aprovador aplicam
+o mesmo bloqueio e atualizam o catálogo ao abrir. A exceção configurada pela unidade para requisições fora da
+vigência continua disponível. O backend revalida inclusão, envio e aprovação.
+
 ### Contratos
 
 Contratos podem ser cadastrados manualmente, importados das fontes consultadas pela API ou carregados em fluxos de renovação/importação de itens.

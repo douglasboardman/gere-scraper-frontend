@@ -34,6 +34,7 @@ import {
   unMedida,
   type SelectedItemEntry,
 } from "../utils/requisicaoUtils";
+import { formatarDataVigencia, vigenciaEncerrada } from '@/lib/vigencia';
 import { useQtdValorMap } from "../hooks/useQtdValorToggle";
 
 interface Step3ItensProps {
@@ -80,7 +81,8 @@ export function Step3Itens({
   );
   const atingiuMinimo = valorMinimo === null || totalValor >= valorMinimo;
 
-  const { data: fornecimentos = [], isLoading: loadingForn } = useQuery({
+  const { data: fornecimentos = [], isLoading: loadingForn, isFetching: atualizandoForn, isError: erroFornecimentos } = useQuery({
+    staleTime: 0,
     queryKey: qk.fornecimentos.wizard(
       selectedCompra.identificador,
       userUasg,
@@ -121,6 +123,19 @@ export function Step3Itens({
     return itemMap.get(f.identItem);
   }
 
+  function motivoBloqueio(f: IFornecimento): string | null {
+    if (f.disponivelParaRequisicao === false) return f.motivoIndisponibilidade ?? 'Fornecimento indisponível.';
+    if (f.disponivelParaRequisicao === true) return null;
+    const item = resolveItem(f);
+    const ata = item?.identAta && typeof item.identAta === 'object' ? item.identAta : null;
+    const contrato = f.identContrato && typeof f.identContrato === 'object' ? f.identContrato : null;
+    const origem = contrato ?? ata ?? selectedCompra;
+    if (!configContratacao?.permitirReqFornecNaoVigentes && vigenciaEncerrada(origem.fimVigencia)) {
+      return `Vigência encerrada em ${formatarDataVigencia(origem.fimVigencia)}.`;
+    }
+    return null;
+  }
+
   const CATALOG_PAGE_SIZE = 10;
   const filteredFornecimentos = catalogSearch.trim()
     ? fornecimentosFiltrados.filter((f) => {
@@ -148,11 +163,20 @@ export function Step3Itens({
 
   function handleAdd(f: IFornecimento) {
     const item = resolveItem(f);
-    if (!item) return;
+    if (!item || motivoBloqueio(f)) return;
     map.addItem(f, item);
   }
 
   function handleNext() {
+    if (isLoading || atualizandoForn || erroFornecimentos) return;
+    const bloqueado = Array.from(map.items.keys()).some(id => {
+      const atual = fornecimentos.find(f => f.identificador === id);
+      return !atual || motivoBloqueio(atual) !== null;
+    });
+    if (bloqueado) {
+      toast.warning('Remova os itens indisponíveis ou com vigência encerrada antes de prosseguir.');
+      return;
+    }
     if (map.items.size === 0) {
       toast.warning("Adicione pelo menos um item antes de prosseguir.");
       return;
@@ -222,6 +246,7 @@ export function Step3Itens({
         </div>
       )}
 
+      {erroFornecimentos && <p role="alert" className="text-sm text-destructive">Não foi possível atualizar a disponibilidade dos fornecimentos. Tente novamente antes de prosseguir.</p>}
       {isLoading ? (
         <div className="flex flex-1 items-center justify-center py-16">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -235,7 +260,7 @@ export function Step3Itens({
           <div className="col-span-3 flex flex-col border rounded-lg overflow-hidden">
             <div className="px-4 py-3 border-b bg-muted/20 shrink-0 space-y-2">
               <p className="text-sm font-semibold">
-                Itens disponíveis{" "}
+                Catálogo de itens{" "}
                 <span className="text-muted-foreground font-normal">
                   (
                   {catalogSearch.trim()
@@ -272,6 +297,7 @@ export function Step3Itens({
                   const vUnit = valUnitario(f);
                   const saldo = saldoEfetivo(f, reservaMap);
                   const isSaldoZero = saldo <= 0;
+                  const bloqueio = motivoBloqueio(f);
                   const reservado = reservaMap.get(f.identificador);
 
                   return (
@@ -280,7 +306,7 @@ export function Step3Itens({
                       className={cn(
                         "transition-colors",
                         isAdded && !isSaldoZero && "bg-primary/5",
-                        isSaldoZero && "bg-muted/40 opacity-60",
+                        (isSaldoZero || bloqueio) && "bg-muted/40 opacity-60",
                       )}
                     >
                       <div className="flex items-center gap-2 px-3 py-2.5">
@@ -306,6 +332,7 @@ export function Step3Itens({
                               </span>
                             )}
                           </div>
+                          {bloqueio && <p className="text-xs text-destructive mt-1">{bloqueio}</p>}
                         </div>
 
                         <div className="flex items-center gap-1 shrink-0">
@@ -333,7 +360,7 @@ export function Step3Itens({
                               aria-label={
                                 isAdded ? "Já adicionado" : "Adicionar item"
                               }
-                              disabled={isAdded}
+                              disabled={isAdded || !!bloqueio || atualizandoForn}
                               onClick={() => handleAdd(f)}
                             >
                               <Plus className="h-3.5 w-3.5" />
@@ -460,8 +487,13 @@ export function Step3Itens({
                   const saldoMax = saldoEfetivo(entry.fornecimento, reservaMap);
                   const uMed = unMedida(entry.item);
                   const qtdExcedeSaldo = entry.quantidade > saldoMax;
+                  const atual = fornecimentos.find(f => f.identificador === idForn);
+                  const bloqueio = !isLoading && !erroFornecimentos
+                    ? atual ? motivoBloqueio(atual) : 'Fornecimento indisponível. Remova este item.'
+                    : null;
                   return (
                     <div key={idForn} className="px-3 py-3 space-y-2.5">
+                      {bloqueio && <p className="text-xs text-destructive" role="alert">{bloqueio}</p>}
                       <div className="flex items-start justify-between gap-2">
                         <p className="text-xs font-medium leading-snug line-clamp-2 flex-1">
                           <span className="text-muted-foreground font-normal">
@@ -582,7 +614,7 @@ export function Step3Itens({
         </Button>
         <Button
           onClick={handleNext}
-          disabled={map.items.size === 0 || isLoading}
+          disabled={isLoading || atualizandoForn || erroFornecimentos || map.items.size === 0}
         >
           Revisar Requisição
           <ArrowRight className="ml-2 h-4 w-4" />

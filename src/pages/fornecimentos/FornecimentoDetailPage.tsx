@@ -1,3 +1,4 @@
+import { formatarDataVigencia } from '@/lib/vigencia'
 import { useBackNavigation } from '@/hooks/useBackNavigation'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -292,12 +293,12 @@ export function FornecimentoDetailPage() {
                   </SelectContent>
                 </Select>
               ) : (
-                <StatusBadge status={fornecimento.status} />
+                <StatusBadge status={fornecimento.status} fimVigencia={fimVigencia} />
               )}
             </Field>
             <Field label="Fim de Vigência">
               {fimVigencia
-                ? format(new Date(fimVigencia), 'dd/MM/yyyy', { locale: ptBR })
+                ? formatarDataVigencia(fimVigencia)
                 : '—'}
             </Field>
           </div>
