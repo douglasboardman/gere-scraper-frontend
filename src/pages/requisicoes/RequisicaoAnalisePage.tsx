@@ -1,6 +1,6 @@
 import { useBackNavigation } from '@/hooks/useBackNavigation'
 import { useState, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useIdParam } from '@/hooks/useIdParam'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
@@ -30,7 +30,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge'
 import { cn, formatCurrency, formatQtd, destDespesaLabel } from '@/lib/utils'
 import { qk } from '@/lib/query-keys'
 import { useAuthStore } from '@/store/auth.store'
-import type { IItemRequisicao, IFornecimento, IItem, IUsuario, IUnidade, IUorg } from '@/types'
+import type { IRequisicao, IItemRequisicao, IFornecimento, IItem, IUsuario, IUnidade, IUorg } from '@/types'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -399,6 +399,55 @@ function AddItemsDialog({
 // ---------------------------------------------------------------------------
 export function RequisicaoAnalisePage() {
   const id = useIdParam()
+  const location = useLocation()
+  if (!id) return <p role="alert">Identificador da requisição ausente.</p>
+  return <AcessoAnalise key={location.key} id={id} />
+}
+
+function AcessoAnalise({ id }: { id: string }) {
+  const navigate = useNavigate()
+  const consulta = useQuery({
+    queryKey: qk.requisicoes.analise(id),
+    queryFn: () => requisicoesApi.obter(id),
+    staleTime: 0,
+    refetchOnMount: 'always',
+  })
+
+  if (consulta.isError) {
+    return (
+      <div className="space-y-4">
+        <p role="alert">{getApiErrorMessage(consulta.error, 'Não foi possível consultar a requisição.')}</p>
+        <Button variant="outline" onClick={() => consulta.refetch()}>Tentar novamente</Button>
+      </div>
+    )
+  }
+
+  if (!consulta.isFetchedAfterMount || !consulta.data) {
+    return <div role="status">{consulta.isPaused ? 'Aguardando conexão para consultar a requisição…' : 'Consultando situação da requisição…'}</div>
+  }
+
+  const requisicao = consulta.data
+  if (requisicao.status !== 'Enviada') {
+    return (
+      <Card>
+        <CardHeader><h1 className="text-xl font-semibold">Requisição fora da fila de análise</h1></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span>{requisicao.identificador}</span>
+            <StatusBadge status={requisicao.status} />
+          </div>
+          <Button variant="outline" onClick={() => navigate('/requisicoes/pendentes')}>
+            Ver requisições pendentes
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return <FormularioAnalise id={id} requisicao={requisicao} />
+}
+
+function FormularioAnalise({ id, requisicao }: { id: string; requisicao: IRequisicao }) {
   const navigate = useNavigate()
   const goBack = useBackNavigation('/requisicoes/pendentes')
   const queryClient = useQueryClient()
@@ -411,64 +460,45 @@ export function RequisicaoAnalisePage() {
   const [confirmAction, setConfirmAction] = useState<'aprovar' | 'rejeitar' | null>(null)
   const [showLeaveAlert, setShowLeaveAlert] = useState(false)
 
-  const { data: requisicao, isLoading } = useQuery({
-    queryKey: qk.requisicoes.analise(id!),
-    queryFn: () => requisicoesApi.obter(id!),
-    enabled: !!id,
-    select: (data) => {
-      // Inicializa o campo observacoes somente uma vez
-      return data
-    },
-  })
-
-  // Inicializar observacoes quando os dados chegam
   const originalObservacoes = requisicao?.observacoes ?? (requisicao as unknown as { observacao?: string } | undefined)?.observacao ?? ''
   const currentObservacoes = observacoes !== null ? observacoes : originalObservacoes
 
   const { data: itensRequisicao = [], isLoading: loadingItens } = useQuery({
-    queryKey: qk.requisicoes.itensAnalise(requisicao?.identificador!),
-    queryFn: () => itemRequisicaoApi.listar(requisicao!.identificador),
-    enabled: !!requisicao?.identificador,
+    queryKey: qk.requisicoes.itensAnalise(requisicao.identificador),
+    queryFn: () => itemRequisicaoApi.listar(requisicao.identificador),
   })
 
   const invalidateItems = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: qk.requisicoes.itensAnalise(requisicao?.identificador!) })
+    queryClient.invalidateQueries({ queryKey: qk.requisicoes.itensAnalise(requisicao.identificador) })
     setItemsMutated(true)
-  }, [queryClient, requisicao?.identificador])
+  }, [queryClient, requisicao.identificador])
 
   const isDirty = currentObservacoes !== originalObservacoes || itemsMutated
   const canRejeitar = currentObservacoes.trim() !== originalObservacoes.trim() && currentObservacoes.trim() !== ''
 
+  const onErroDecisao = (erro: unknown) => {
+    toast.error(getApiErrorMessage(erro))
+    void queryClient.invalidateQueries({ queryKey: qk.requisicoes.analise(id) })
+  }
+
   const aprovarMutation = useMutation({
-    mutationFn: async () => {
-      if (currentObservacoes !== originalObservacoes) {
-        await requisicoesApi.atualizar(id!, { observacoes: currentObservacoes })
-      }
-      return requisicoesApi.aprovar(id!)
-    },
+    mutationFn: () => requisicoesApi.aprovar(id, currentObservacoes !== originalObservacoes ? currentObservacoes : undefined),
     onSuccess: () => {
       toast.success('Requisição aprovada.')
       queryClient.invalidateQueries({ queryKey: qk.requisicoes.all })
       navigate('/requisicoes/pendentes')
     },
-    onError: (e: unknown) => {
-      toast.error(getApiErrorMessage(e))
-    },
+    onError: onErroDecisao,
   })
 
   const rejeitarMutation = useMutation({
-    mutationFn: async () => {
-      await requisicoesApi.atualizar(id!, { observacoes: currentObservacoes })
-      return requisicoesApi.rejeitar(id!)
-    },
+    mutationFn: () => requisicoesApi.rejeitar(id, currentObservacoes),
     onSuccess: () => {
       toast.success('Requisição rejeitada.')
       queryClient.invalidateQueries({ queryKey: qk.requisicoes.all })
       navigate('/requisicoes/pendentes')
     },
-    onError: (e: unknown) => {
-      toast.error(getApiErrorMessage(e))
-    },
+    onError: onErroDecisao,
   })
 
   const removeItemMutation = useMutation({
@@ -487,25 +517,12 @@ export function RequisicaoAnalisePage() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    )
-  }
-
-  if (!requisicao) return <div>Requisição não encontrada.</div>
-
   const valorTotal = itensRequisicao.reduce((sum, i) => sum + (i.valTotal ?? 0), 0)
   const unidade = typeof requisicao.identUnidade === 'string' ? null : (requisicao.identUnidade as IUnidade)
   const uorg = requisicao.uorg as IUorg | undefined
   const userUasg = unidade?.uasg ?? ''
   const isAutor = requisicao.identRequisitante === user?.id
   const podeEditarItens =
-    requisicao.status === 'Enviada' &&
     !isAutor &&
     (user?.role === 'gestor_unidade' || user?.role === 'gestor_orgao')
   const requisitante = typeof requisicao.requisitante === 'string'

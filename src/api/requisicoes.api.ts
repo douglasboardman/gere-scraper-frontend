@@ -33,8 +33,8 @@ export const requisicoesApi = {
     return data
   },
 
-  async aprovar(identificador: string): Promise<IRequisicao> {
-    const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${encodeURIComponent(identificador)}/aprovar`)
+  async aprovar(identificador: string, observacoes?: string): Promise<IRequisicao> {
+    const { data } = await apiClient.patch<IRequisicao>(`/requisicoes/${encodeURIComponent(identificador)}/aprovar`, { observacoes })
     return data
   },
 
