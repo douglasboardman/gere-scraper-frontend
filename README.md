@@ -264,3 +264,5 @@ Alterar uma busca ou filtro inicia uma nova pesquisa na primeira página. Se uma
 ### Preparação de atas
 
 Em **Atas → Preparação de atas**, o gestor do órgão pode conferir o histórico do pregão, validar e importar pacotes e baixar os arquivos originais de cada rodada. O backend verifica a UASG da conta. O frontend de produção usa o proxy relativo `/api` do Apache.
+
+Na rodada importada, o gestor do órgão informa o número, o início e o fim da vigência publicados para cada ata e aciona **Homologar Importação**. A barra acompanha a consolidação no servidor. A página recupera o andamento ao ser reaberta. As demais atas da rodada continuam disponíveis para homologação individual.

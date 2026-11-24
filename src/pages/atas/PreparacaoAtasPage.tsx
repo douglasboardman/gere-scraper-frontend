@@ -1,3 +1,4 @@
+import { HomologarAta } from './HomologarAta'
 import { useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -24,6 +25,8 @@ export function PreparacaoAtasPage() {
   const consulta = useQuery({
     queryKey: ['preparacao-atas', compra],
     queryFn: () => api.consultar(compra),
+    refetchInterval: query => query.state.data?.rodadas.some(r => r.atas.some(a =>
+      a.homologacao?.estado === 'pendente' || a.homologacao?.estado === 'executando')) ? 4000 : false,
     enabled: isGestorOrgao && /^\d{17}$/.test(compra),
   })
   if (!isGestorOrgao) return <Navigate to="/atas" replace />
@@ -198,12 +201,13 @@ export function PreparacaoAtasPage() {
                   · {r.id}
                 </p>
                 {r.atas.map((a) => (
-                  <details key={a.chave}>
+                  <section key={a.chave} className="rounded-md border p-4 space-y-3">
+                  <details>
                     <summary>
                       {a.nome} · {a.cnpj} · {a.itens.length} item(ns)
                     </summary>
                     <p>
-                      Vigência de {a.inicio} a {a.fim}. {a.conciliacao}.
+                      {a.conciliacao}.
                     </p>
                     <p>
                       Itens:{' '}
@@ -222,6 +226,8 @@ export function PreparacaoAtasPage() {
                       </Link>
                     )}
                   </details>
+                  {r.importadaEm && <HomologarAta compra={compra} rodada={r.id} ata={a} />}
+                  </section>
                 ))}
                 <div className="flex flex-wrap gap-2">
                   <Button

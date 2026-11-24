@@ -110,6 +110,7 @@ export type AtualizarConfigContratacaoData = Partial<Pick<IConfigContratacao,
 >>
 
 export interface IAtaRegPrecos {
+  homologacao?: { numero: string } | null
   identificador: string
   numAta: string
   identContratacao: string | IContratacao

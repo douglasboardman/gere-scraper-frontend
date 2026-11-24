@@ -143,7 +143,7 @@ export function AtaDetailPage() {
   return (
     <div>
       <PageHeader
-        title={`Ata Nº ${ata.numAta}/${anoAta()}`}
+        title={`Ata Nº ${ata.homologacao?.numero ?? `${ata.numAta}/${anoAta()}`}`}
         subtitle={subtitleAta}
         actions={
           <div className="flex gap-2">
@@ -187,7 +187,7 @@ export function AtaDetailPage() {
             <CardContent className="pt-6">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-5">
                 <Field label="Nº Ata">
-                  <span className="font-mono">{ata.numAta}</span>
+                  <span className="font-mono">{ata.homologacao?.numero ?? ata.numAta}</span>
                 </Field>
                 <Field label="ID Contratação">
                   {typeof ata.identContratacao === "string" ? (

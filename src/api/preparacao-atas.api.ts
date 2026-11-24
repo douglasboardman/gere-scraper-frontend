@@ -1,6 +1,19 @@
 import { apiClient } from './client'
 
+export interface PublicacaoAta {
+  numero: string
+  inicio: string
+  fim: string
+}
+export interface HomologacaoAta extends PublicacaoAta {
+  tentativa: string
+  estado: 'pendente' | 'executando' | 'concluida' | 'falha'
+  progresso: number
+  mensagem: string
+  identAta: string | null
+}
 export interface AtaPreparada {
+  homologacao: HomologacaoAta | null
   chave: string
   nome: string
   cnpj: string
@@ -36,6 +49,9 @@ export interface PreviaPacote {
 }
 const base = '/preparacao-atas'
 export const preparacaoAtasApi = {
+  async homologar(compra: string, rodada: string, cnpj: string, dados: PublicacaoAta) {
+    return (await apiClient.post<HomologacaoAta>(base + '/' + compra + '/' + rodada + '/homologar', { cnpj, ...dados })).data
+  },
   async consultar(compra: string) {
     return (
       await apiClient.get<{ conferido: boolean; rodadas: Rodada[] }>(
