@@ -260,3 +260,7 @@ A interface requer navegadores compatíveis com Tailwind 4: Safari 16.4+, Chrome
 Busca, filtros aplicados, página e quantidade de linhas são guardados no `sessionStorage`, por usuário, endereço e parâmetros da listagem. Ao abrir um detalhe e voltar, a pesquisa é restaurada, inclusive após recarregar a aba. As tabelas da administração de notificações têm configurações separadas; abas dos detalhes também são preservadas ao navegar entre entidades relacionadas.
 
 Alterar uma busca ou filtro inicia uma nova pesquisa na primeira página. Se uma atualização reduzir a quantidade de registros, a paginação é ajustada para uma página existente. O botão Voltar retorna à origem pelo histórico e, em um detalhe aberto diretamente, usa a listagem correspondente. Nenhum dado das entidades ou token é salvo por essa persistência; se o armazenamento do navegador estiver indisponível, a tela continua funcionando sem restauração.
+
+### Preparação de atas
+
+Em **Atas → Preparação de atas**, o gestor do órgão pode conferir o histórico do pregão, validar e importar pacotes e baixar os arquivos originais de cada rodada. O backend verifica a UASG da conta. O frontend de produção usa o proxy relativo `/api` do Apache.

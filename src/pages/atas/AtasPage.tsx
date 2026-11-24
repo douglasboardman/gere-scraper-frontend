@@ -1,3 +1,4 @@
+import { usePermission } from "@/hooks/usePermission";
 import { formatarDataVigencia } from '@/lib/vigencia'
 import { useListState } from '@/hooks/useListState'
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -19,6 +20,7 @@ import type { IAtaRegPrecos } from "@/types";
 export function AtasPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { isGestorOrgao } = usePermission();
   const identContratacao = searchParams.get("identContratacao") ?? undefined;
   const [fornecedorFilter, setFornecedorFilter] = useListState('fornecedorFilter', "");
 
@@ -136,6 +138,7 @@ export function AtasPage() {
             : "Todas as atas registradas no sistema"
         }
         entity={ENTITY.ata}
+        actions={isGestorOrgao && <Button onClick={() => navigate("/atas/preparacao")}>Preparação de atas</Button>}
       />
 
       <div className="relative max-w-sm w-full mb-4">

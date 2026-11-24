@@ -14,6 +14,7 @@ import { ContratacoesPage } from '@/pages/contratacoes/ContratacoesPage'
 import { NovaContratacaoPage } from '@/pages/contratacoes/NovaContratacaoPage'
 import { ContratacaoDetailPage } from '@/pages/contratacoes/ContratacaoDetailPage'
 import { AtasPage } from '@/pages/atas/AtasPage'
+import { PreparacaoAtasPage } from '@/pages/atas/PreparacaoAtasPage'
 import { AtaDetailPage } from '@/pages/atas/AtaDetailPage'
 import { ItensPage } from '@/pages/itens/ItensPage'
 import { ItemDetailPage } from '@/pages/itens/ItemDetailPage'
@@ -161,6 +162,10 @@ export const router = createBrowserRouter([
           {
             path: 'atas',
             element: <AtasPage />,
+          },
+          {
+            path: 'atas/preparacao',
+            element: <PreparacaoAtasPage />,
           },
           {
             path: 'atas/detalhe',
